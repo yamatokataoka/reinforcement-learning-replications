@@ -1,5 +1,11 @@
+# python
 .ipynb_checkpoints
-__pycache__
+
+__pycache__/
+*.py[cod]
+
+# vi
 *.swp
 
+# local
 local.ipynb
