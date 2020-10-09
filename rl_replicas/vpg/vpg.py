@@ -17,6 +17,8 @@ class VPG():
   """
   Vanilla Policy Gradient (REINFORCE) with GAE for advantage estimation
 
+  VPG, also known as Reinforce, trains stochastic policy in an on-policy way.
+
   :param policy_class: (Type[ActorCriticPolicy]) The policy model class
   :param env: (gym.Env or str) The environment to learn from
   :param learning_rate: (float) The learning rate for the optimizer
@@ -99,9 +101,9 @@ class VPG():
       episode_advantages: np.ndarray = np.zeros(steps_per_epoch, dtype=np.float32)
       discounted_returns: np.ndarray = np.zeros(steps_per_epoch, dtype=np.float32)
 
-      # e.g. [log_prob_one, log_prob_two ...]
-      all_log_probs: List[torch.Tensor] = []
-      all_values: List[torch.Tensor] = []
+      # e.g. [observation_one, observation_two ...]
+      all_observations: List[torch.Tensor] = []
+      all_actions: List[torch.Tensor] = []
 
       all_entropies: np.ndarray = np.zeros(steps_per_epoch, dtype=np.float32)
 
@@ -117,24 +119,20 @@ class VPG():
       for current_step in range(steps_per_epoch):
         observation_tensor: torch.Tensor = torch.from_numpy(observation).float()
 
+        all_observations.append(observation_tensor)
+
         policy_dist: Categorical
         value: torch.Tensor
-        policy_dist, value = self.policy(observation_tensor)
-
-        all_values.append(value)
+        with torch.no_grad():
+          policy_dist, value = self.policy(observation_tensor)
 
         values.append(value.detach().item())
 
         action: torch.Tensor = policy_dist.sample()
-        log_prob: torch.Tensor = policy_dist.log_prob(action)
 
-        all_log_probs.append(log_prob)
+        all_actions.append(action)
 
-        entropy: np.ndarray = policy_dist.entropy().detach().numpy()
-
-        all_entropies[current_step] = entropy
-
-        action_ndarray = action.detach().numpy()
+        action_ndarray = action.clone().detach().numpy()
 
         reward: float
         episode_done: bool
@@ -154,12 +152,13 @@ class VPG():
 
           # if trajectory didn't reach terminal state, bootstrap value target
           if epoch_ended:
-            with torch.no_grad():
-              observation_tensor = torch.from_numpy(observation).float()
-              last_value: torch.Tensor
+            observation_tensor = torch.from_numpy(observation).float()
+            last_value: torch.Tensor
 
+            with torch.no_grad():
               _, last_value = self.policy(observation_tensor)
-              last_value_float = last_value.detach().item()
+
+            last_value_float = last_value.detach().item()
           else:
             last_value_float = 0.0
           values.append(last_value_float)
@@ -187,29 +186,34 @@ class VPG():
       if current_epoch == epochs-1:
         logger.warn('Saving model is not implemented')
 
+      # Forward pass both for value_fn and policy
+      all_observations_tensor: torch.Tensor = torch.stack(all_observations)
+      all_actions_tensor: torch.Tensor = torch.stack(all_actions)
+
+      policy_dists: Categorical
+      all_values: torch.Tensor
+      policy_dists, all_values = self.policy(all_observations_tensor)
+      all_log_probs: torch.Tensor = policy_dists.log_prob(all_actions_tensor)
+
       # the advantage normalization
       # TODO: make it a function
       episode_advantages_tensor: torch.Tensor = torch.from_numpy(episode_advantages)
 
       episode_advantages_tensor = (episode_advantages_tensor - episode_advantages_tensor.mean()) / episode_advantages_tensor.std()
 
-      all_log_probs_tensor: torch.Tensor = torch.stack(all_log_probs)
+      policy_loss: torch.Tensor = -(all_log_probs * episode_advantages_tensor).mean()
 
-      policy_loss: torch.Tensor = -(all_log_probs_tensor * episode_advantages_tensor).mean()
-
-      all_values_tensor: torch.Tensor = torch.stack(all_values)
       discounted_returns_tensor: torch.Tensor = torch.from_numpy(discounted_returns)
 
-      value_loss: torch.Tensor = ((all_values_tensor - discounted_returns_tensor) ** 2).mean()
+      value_loss: torch.Tensor = ((all_values - discounted_returns_tensor) ** 2).mean()
 
+      # Train policy and Value function with a single step of gradient descent
       self.policy.optimizer.zero_grad()
-      # Train policy with a single step of gradient descent
       policy_loss.backward()
-
-      # Value function learning
       value_loss.backward()
-
       self.policy.optimizer.step()
+
+      all_entropies = policy_dist.entropy().detach().numpy()
 
       mean_entropy: np.ndarray = all_entropies.mean()
 
@@ -238,10 +242,10 @@ class VPG():
 
       logger.info('Average Episode Length: {:<8.3g}'.format(np.mean(episode_lengths)))
 
-      logger.info('Average Episode Value:  {:<8.3g}'.format(all_values_tensor.detach().mean()))
-      logger.info('Std Episode Value:      {:<8.3g}'.format(all_values_tensor.detach().std()))
-      logger.info('Maximum Episode Value:  {:<8.3g}'.format(all_values_tensor.detach().max()))
-      logger.info('Minimum Episode Value:  {:<8.3g}'.format(all_values_tensor.detach().min()))
+      logger.info('Average Episode Value:  {:<8.3g}'.format(all_values.mean()))
+      logger.info('Std Episode Value:      {:<8.3g}'.format(all_values.std()))
+      logger.info('Maximum Episode Value:  {:<8.3g}'.format(all_values.max()))
+      logger.info('Minimum Episode Value:  {:<8.3g}'.format(all_values.min()))
 
       logger.info('Total env interactions: {}'.format((current_epoch+1) * steps_per_epoch))
 
