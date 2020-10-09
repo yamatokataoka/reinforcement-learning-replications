@@ -68,10 +68,10 @@ class VPG():
     :param epochs: (int) The number of epochs (equivalent to number of policy updates) to perform
     :param steps_per_epoch: (int) The number of steps to run per epoch; in other words, batch size is steps.
     """
-    epoch_policy_losses: List[np.ndarray] = []
-    epoch_value_losses: List[np.ndarray] = []
+    epoch_policy_losses: List[float] = []
+    epoch_value_losses: List[float] = []
 
-    epoch_entropies: List[np.ndarray] = []
+    epoch_entropies: List[float] = []
 
     previous_policy_loss: float = 0.0
     previous_value_loss: float = 0.0
@@ -207,10 +207,10 @@ class VPG():
 
       all_entropies = policy_dist.entropy().detach().numpy()
 
-      mean_entropy: np.ndarray = all_entropies.mean()
+      mean_entropy: float = all_entropies.mean()
 
-      epoch_policy_losses.append(policy_loss.detach().numpy())
-      epoch_value_losses.append(value_loss.detach().numpy())
+      epoch_policy_losses.append(policy_loss.detach().item())
+      epoch_value_losses.append(value_loss.detach().item())
 
       epoch_entropies.append(mean_entropy)
 
