@@ -229,8 +229,8 @@ class VPG():
 
       logger.info('Average Episode Return: {:<8.3g}'.format(np.mean(episode_returns)))
       logger.info('Std Episode Return:     {:<8.3g}'.format(np.std(episode_returns)))
-      logger.info('Maximum Episode Return: {}'.format(np.max(episode_returns)))
-      logger.info('Minimum Episode Return: {}'.format(np.min(episode_returns)))
+      logger.info('Maximum Episode Return: {:<8.3g}'.format(np.max(episode_returns)))
+      logger.info('Minimum Episode Return: {:<8.3g}'.format(np.min(episode_returns)))
 
       logger.info('Average Episode Length: {:<8.3g}'.format(np.mean(episode_lengths)))
 
