@@ -7,7 +7,8 @@ from torch.distributions.categorical import Categorical
 import gym
 import numpy as np
 
-from rl_replicas.common.policies import ActorCriticPolicy
+from rl_replicas.common.policies import DeterministicMLPPolicy
+from rl_replicas.common.value_functions import MLPValueFunction
 from rl_replicas.common.utils import discount_cumulative_sum, seed_random_generators
 from rl_replicas import log
 
@@ -19,9 +20,9 @@ class VPG():
 
   VPG, also known as Reinforce, trains stochastic policy in an on-policy way.
 
-  :param policy_class: (Type[ActorCriticPolicy]) The policy model class
+  :param policy: (DeterministicMLPPolicy) The policy
+  :param value_function: (MLPValueFunction) The value function
   :param env: (gym.Env or str) The environment to learn from
-  :param learning_rate: (float) The learning rate for the optimizer
   :param gamma: (float) Discount factor
   :param gae_lambda: (float) Factor for trade-off of bias vs variance for Generalized Advantage Estimator. Equivalent to classic advantage when set to 1.
   :param seed: (int) The seed for the pseudo-random generators
@@ -29,38 +30,24 @@ class VPG():
   """
   def __init__(
     self,
-    policy_class: Type[ActorCriticPolicy],
-    env: Union[gym.Env, str],
-    learning_rate: float = 3e-4,
+    policy: DeterministicMLPPolicy,
+    value_function: MLPValueFunction,
+    env: gym.Env,
     gamma: float = 0.99,
     gae_lambda: float = 0.97,
     seed: Optional[int] = None,
     n_value_gradients: int = 80
   ) -> None:
-    if isinstance(policy_class, str):
-      raise NotImplementedError
-    else:
-      self.policy_class = policy_class
-    self.learning_rate = learning_rate
+    self.policy = policy
+    self.value_function = value_function
+    self.env = env
     self.gamma = gamma
     self.gae_lambda = gae_lambda
     if seed is not None:
       self.seed: int = seed
     self.n_value_gradients = n_value_gradients
 
-    if env is not None:
-      if isinstance(env, str):
-        logger.info('Create environment from the given name: {}'.format(env))
-        self.env = gym.make(env)
-
-      self.env = env
-
-    self.observation_space: gym.spaces.Space = self.env.observation_space
     self.action_space: gym.spaces.Space = self.env.action_space
-
-    self.policy: ActorCriticPolicy = self.policy_class(self.observation_space,
-                                                       self.action_space,
-                                                       self.learning_rate)
 
     if self.seed is not None:
       self._seed()
@@ -124,7 +111,8 @@ class VPG():
         policy_dist: Categorical
         value: torch.Tensor
         with torch.no_grad():
-          policy_dist, value = self.policy(observation_tensor)
+          policy_dist = self.policy(observation_tensor)
+          value = self.value_function(observation_tensor)
 
         values.append(value.detach().item())
 
@@ -156,7 +144,7 @@ class VPG():
             last_value: torch.Tensor
 
             with torch.no_grad():
-              _, last_value = self.policy(observation_tensor)
+              last_value = self.value_function(observation_tensor)
 
             last_value_float = last_value.detach().item()
           else:
@@ -192,7 +180,8 @@ class VPG():
 
       policy_dists: Categorical
       all_values: torch.Tensor
-      policy_dists, all_values = self.policy(all_observations_tensor)
+      policy_dists = self.policy(all_observations_tensor)
+      all_values = self.value_function(all_observations_tensor)
       all_log_probs: torch.Tensor = policy_dists.log_prob(all_actions_tensor)
 
       # the advantage normalization
@@ -210,8 +199,11 @@ class VPG():
       # Train policy and Value function with a single step of gradient descent
       self.policy.optimizer.zero_grad()
       policy_loss.backward()
-      value_loss.backward()
       self.policy.optimizer.step()
+
+      self.value_function.optimizer.zero_grad()
+      value_loss.backward()
+      self.value_function.optimizer.step()
 
       all_entropies = policy_dist.entropy().detach().numpy()
 
