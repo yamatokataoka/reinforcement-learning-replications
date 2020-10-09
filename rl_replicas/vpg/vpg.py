@@ -1,5 +1,4 @@
 import time
-import sys
 from typing import Optional, Type, Union, List
 
 import torch
