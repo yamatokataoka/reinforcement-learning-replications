@@ -173,14 +173,11 @@ class VPG():
       if current_epoch == epochs-1:
         logger.warn('Saving model is not implemented')
 
-      # Forward pass both for value_fn and policy
       all_observations_tensor: torch.Tensor = torch.stack(all_observations)
       all_actions_tensor: torch.Tensor = torch.stack(all_actions)
 
       policy_dists: Categorical
-      all_values: torch.Tensor
       policy_dists = self.policy(all_observations_tensor)
-      all_values = self.value_function(all_observations_tensor)
       all_log_probs: torch.Tensor = policy_dists.log_prob(all_actions_tensor)
 
       # the advantage normalization
@@ -191,18 +188,21 @@ class VPG():
 
       policy_loss: torch.Tensor = -(all_log_probs * episode_advantages_tensor).mean()
 
-      discounted_returns_tensor: torch.Tensor = torch.from_numpy(discounted_returns)
-
-      value_loss: torch.Tensor = ((all_values - discounted_returns_tensor) ** 2).mean()
-
       # Train policy and Value function with a single step of gradient descent
       self.policy.optimizer.zero_grad()
       policy_loss.backward()
       self.policy.optimizer.step()
 
-      self.value_function.optimizer.zero_grad()
-      value_loss.backward()
-      self.value_function.optimizer.step()
+      discounted_returns_tensor: torch.Tensor = torch.from_numpy(discounted_returns)
+      all_values: torch.Tensor
+      value_loss: torch.Tensor
+
+      for _ in range(self.n_value_gradients):
+        all_values = self.value_function(all_observations_tensor)
+        self.value_function.optimizer.zero_grad()
+        value_loss = self._compute_value_function_loss(all_values, discounted_returns_tensor)
+        value_loss.backward()
+        self.value_function.optimizer.step()
 
       all_entropies = policy_dist.entropy().detach().numpy()
 
@@ -244,6 +244,15 @@ class VPG():
       logger.info('Avarage Value function Loss: {:8.3f}'.format(np.mean(epoch_value_losses)))
       logger.info('Avarage Entropy:        {:<8.3g}'.format(np.mean(epoch_entropies)))
       logger.info('Time:                   {:<8.3g}'.format(time.time()-self.start_time))
+
+  def _compute_value_function_loss(
+    self,
+    values: torch.Tensor,
+    returns: torch.Tensor
+  ) -> torch.Tensor:
+    value_loss: torch.Tensor = ((values - returns) ** 2).mean()
+
+    return value_loss
 
   def predict(
     self,
