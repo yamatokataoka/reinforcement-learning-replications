@@ -199,8 +199,9 @@ class VPG():
 
       for _ in range(self.n_value_gradients):
         all_values = self.value_function(all_observations_tensor)
+        squeezed_all_values = torch.squeeze(all_values, -1)
         self.value_function.optimizer.zero_grad()
-        value_loss = self._compute_value_function_loss(all_values, discounted_returns_tensor)
+        value_loss = self._compute_value_function_loss(squeezed_all_values, discounted_returns_tensor)
         value_loss.backward()
         self.value_function.optimizer.step()
 
