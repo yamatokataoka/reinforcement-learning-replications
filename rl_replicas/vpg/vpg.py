@@ -3,6 +3,7 @@ from typing import Optional, Type, Union, List
 
 import torch
 from torch.distributions.categorical import Categorical
+from torch.utils.tensorboard import SummaryWriter
 import gym
 import numpy as np
 
@@ -60,6 +61,7 @@ class VPG():
     self,
     epochs: int = 50,
     steps_per_epoch: int = 4000,
+    tensorboard_location: Optional[str] = None,
   ) -> None:
     """
     Learn the model
@@ -67,6 +69,9 @@ class VPG():
     :param epochs: (int) The number of epochs (equivalent to number of policy updates) to perform
     :param steps_per_epoch: (int) The number of steps to run per epoch; in other words, batch size is steps.
     """
+    if tensorboard_location is not None:
+      writer = SummaryWriter(tensorboard_location)
+
     epoch_policy_losses: List[float] = []
     epoch_value_losses: List[float] = []
 
@@ -76,6 +81,7 @@ class VPG():
     previous_value_loss: float = 0.0
 
     self.start_time = time.time()
+    current_total_steps: int = 0
 
     observation: np.ndarray = self.env.reset()
 
@@ -129,6 +135,7 @@ class VPG():
         rewards.append(reward)
 
         episode_length += 1
+        current_total_steps += 1
 
         epoch_ended = current_step == steps_per_epoch-1
 
@@ -163,8 +170,18 @@ class VPG():
           discounted_return: np.ndarray = discount_cumulative_sum(rewards, self.gamma)[:-1]
           discounted_returns[episode_slice] = discounted_return
 
-          episode_returns.append(np.sum(rewards))
+          episode_true_return = np.sum(rewards)
+
+          episode_returns.append(episode_true_return)
           episode_lengths.append(episode_length)
+
+          if episode_done:
+            writer.add_scalar('env/episode_true_return',
+                              episode_true_return,
+                              current_total_steps)
+            writer.add_scalar('env/episode_length',
+                              episode_length,
+                              current_total_steps)
 
           observation, episode_length = self.env.reset(), 0
           rewards, values = [], []
@@ -216,6 +233,18 @@ class VPG():
 
       logger.info('Loss of the current policy:         {:<8.3g}'.format(policy_loss))
       logger.info('Loss of the current value function: {:<8.3g}'.format(value_loss))
+      writer.add_scalar('policy/loss',
+                        policy_loss,
+                        current_total_steps)
+      writer.add_scalar('policy/entropy',
+                        mean_entropy,
+                        current_total_steps)
+      writer.add_scalar('policy/log_prob_std',
+                        all_log_probs.std(),
+                        current_total_steps)
+      writer.add_scalar('value/loss',
+                        value_loss,
+                        current_total_steps)
 
       if previous_policy_loss and previous_value_loss:
         logger.info('Difference of the previous policy loss:         {:<8.3g}'.format(policy_loss-previous_policy_loss))
@@ -239,12 +268,16 @@ class VPG():
       logger.info('Maximum Episode Value:  {:<8.3g}'.format(all_values.max()))
       logger.info('Minimum Episode Value:  {:<8.3g}'.format(all_values.min()))
 
-      logger.info('Total env interactions: {}'.format((current_epoch+1) * steps_per_epoch))
+      logger.info('Total env interactions: {}'.format(current_total_steps))
 
       logger.info('Avarage Policy Loss:    {:<8.3g}'.format(np.mean(epoch_policy_losses)))
       logger.info('Avarage Value function Loss: {:8.3f}'.format(np.mean(epoch_value_losses)))
       logger.info('Avarage Entropy:        {:<8.3g}'.format(np.mean(epoch_entropies)))
       logger.info('Time:                   {:<8.3g}'.format(time.time()-self.start_time))
+
+    if writer:
+      writer.flush()
+      writer.close()
 
   def _compute_value_function_loss(
     self,
