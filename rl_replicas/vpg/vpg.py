@@ -62,6 +62,7 @@ class VPG():
     epochs: int = 50,
     steps_per_epoch: int = 4000,
     tensorboard_location: Optional[str] = None,
+    model_location: Optional[str] = None
   ) -> None:
     """
     Learn the model
@@ -186,9 +187,8 @@ class VPG():
           observation, episode_length = self.env.reset(), 0
           rewards, values = [], []
 
-      # Save model
       if current_epoch == epochs-1:
-        logger.warn('Saving model is not implemented')
+        torch.save(self.policy.network, model_location)
 
       all_observations_tensor: torch.Tensor = torch.stack(all_observations)
       all_actions_tensor: torch.Tensor = torch.stack(all_actions)
