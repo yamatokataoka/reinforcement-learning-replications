@@ -7,7 +7,7 @@ from torch.utils.tensorboard import SummaryWriter
 import gym
 import numpy as np
 
-from rl_replicas.common.policies import DeterministicMLPPolicy
+from rl_replicas.common.policies import MLPPolicy
 from rl_replicas.common.value_functions import MLPValueFunction
 from rl_replicas.common.utils import discount_cumulative_sum, seed_random_generators
 from rl_replicas import log
@@ -20,7 +20,7 @@ class VPG():
 
   VPG, also known as Reinforce, trains stochastic policy in an on-policy way.
 
-  :param policy: (DeterministicMLPPolicy) The policy
+  :param policy: (MLPPolicy) The policy
   :param value_function: (MLPValueFunction) The value function
   :param env: (gym.Env or str) The environment to learn from
   :param gamma: (float) Discount factor
@@ -30,7 +30,7 @@ class VPG():
   """
   def __init__(
     self,
-    policy: DeterministicMLPPolicy,
+    policy: MLPPolicy,
     value_function: MLPValueFunction,
     env: gym.Env,
     gamma: float = 0.99,

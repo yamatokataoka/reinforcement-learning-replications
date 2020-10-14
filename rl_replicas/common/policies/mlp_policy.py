@@ -7,9 +7,9 @@ import gym
 
 from rl_replicas.common.torch_net import mlp
 
-class DeterministicMLPPolicy(nn.Module):
+class MLPPolicy(nn.Module):
   """
-  A deterministic policy network.
+  A MLP policy.
 
   The policy network selects action based on the observation of the environment.
   It uses a PyTorch neural network module to fit the function of pi(s).
