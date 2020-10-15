@@ -50,7 +50,7 @@ class VPG():
 
     self.action_space: gym.spaces.Space = self.env.action_space
 
-    if self.seed is not None:
+    if seed is not None:
       self._seed()
 
   def _seed(self) -> None:
