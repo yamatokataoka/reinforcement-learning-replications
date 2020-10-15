@@ -192,10 +192,6 @@ class VPG():
           observation, episode_length = self.env.reset(), 0
           rewards, values = [], []
 
-      if current_epoch == epochs-1 and model_saving:
-        model_path: str = os.path.join(output_dir, 'model.th')
-        torch.save(self.policy.network, model_path)
-
       all_observations_tensor: torch.Tensor = torch.stack(all_observations)
       all_actions_tensor: torch.Tensor = torch.stack(all_actions)
 
@@ -281,6 +277,22 @@ class VPG():
       logger.info('Avarage Value function Loss: {:8.3f}'.format(np.mean(epoch_value_losses)))
       logger.info('Avarage Entropy:        {:<8.3g}'.format(np.mean(epoch_entropies)))
       logger.info('Time:                   {:<8.3g}'.format(time.time()-self.start_time))
+
+      if model_saving:
+        logger.info('Set up model saving')
+        os.makedirs(output_dir, exist_ok=True)
+        model_path: str = os.path.join(output_dir, 'model.th')
+
+        logger.info('Save model')
+        torch.save({
+            'epoch': current_epoch+1,
+            'total_steps': current_total_steps,
+            'policy_state_dict': self.policy.network.state_dict(),
+            'policy_optimizer_state_dict': self.policy.optimizer.state_dict(),
+            'value_fn_state_dict': self.value_function.network.state_dict(),
+            'value_fn_optimizer_state_dict': self.value_function.optimizer.state_dict()
+          },
+          model_path)
 
     if tensorboard:
       writer.flush()
