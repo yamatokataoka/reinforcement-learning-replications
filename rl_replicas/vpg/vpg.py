@@ -1,3 +1,4 @@
+import os
 import time
 from typing import Optional, Type, Union, List
 
@@ -61,8 +62,9 @@ class VPG():
     self,
     epochs: int = 50,
     steps_per_epoch: int = 4000,
-    tensorboard_location: Optional[str] = None,
-    model_location: Optional[str] = None
+    output_dir: str = '.',
+    tensorboard: bool = False,
+    model_saving: bool = False
   ) -> None:
     """
     Learn the model
@@ -70,8 +72,11 @@ class VPG():
     :param epochs: (int) The number of epochs (equivalent to number of policy updates) to perform
     :param steps_per_epoch: (int) The number of steps to run per epoch; in other words, batch size is steps.
     """
-    if tensorboard_location is not None:
-      writer = SummaryWriter(tensorboard_location)
+    if tensorboard:
+      logger.info('Set up tensorboard')
+      os.makedirs(output_dir, exist_ok=True)
+      tensorboard_path: str = os.path.join(output_dir, 'tensorboard')
+      writer = SummaryWriter(tensorboard_path)
 
     epoch_policy_losses: List[float] = []
     epoch_value_losses: List[float] = []
@@ -176,7 +181,7 @@ class VPG():
           episode_returns.append(episode_true_return)
           episode_lengths.append(episode_length)
 
-          if episode_done:
+          if episode_done and tensorboard:
             writer.add_scalar('env/episode_true_return',
                               episode_true_return,
                               current_total_steps)
@@ -187,8 +192,9 @@ class VPG():
           observation, episode_length = self.env.reset(), 0
           rewards, values = [], []
 
-      if current_epoch == epochs-1:
-        torch.save(self.policy.network, model_location)
+      if current_epoch == epochs-1 and model_saving:
+        model_path: str = os.path.join(output_dir, 'model.th')
+        torch.save(self.policy.network, model_path)
 
       all_observations_tensor: torch.Tensor = torch.stack(all_observations)
       all_actions_tensor: torch.Tensor = torch.stack(all_actions)
@@ -233,18 +239,19 @@ class VPG():
 
       logger.info('Loss of the current policy:         {:<8.3g}'.format(policy_loss))
       logger.info('Loss of the current value function: {:<8.3g}'.format(value_loss))
-      writer.add_scalar('policy/loss',
-                        policy_loss,
-                        current_total_steps)
-      writer.add_scalar('policy/entropy',
-                        mean_entropy,
-                        current_total_steps)
-      writer.add_scalar('policy/log_prob_std',
-                        all_log_probs.std(),
-                        current_total_steps)
-      writer.add_scalar('value/loss',
-                        value_loss,
-                        current_total_steps)
+      if tensorboard:
+        writer.add_scalar('policy/loss',
+                          policy_loss,
+                          current_total_steps)
+        writer.add_scalar('policy/entropy',
+                          mean_entropy,
+                          current_total_steps)
+        writer.add_scalar('policy/log_prob_std',
+                          all_log_probs.std(),
+                          current_total_steps)
+        writer.add_scalar('value/loss',
+                          value_loss,
+                          current_total_steps)
 
       if previous_policy_loss and previous_value_loss:
         logger.info('Difference of the previous policy loss:         {:<8.3g}'.format(policy_loss-previous_policy_loss))
@@ -275,7 +282,7 @@ class VPG():
       logger.info('Avarage Entropy:        {:<8.3g}'.format(np.mean(epoch_entropies)))
       logger.info('Time:                   {:<8.3g}'.format(time.time()-self.start_time))
 
-    if writer:
+    if tensorboard:
       writer.flush()
       writer.close()
 
@@ -298,4 +305,5 @@ class VPG():
     :param observation: the input observation
     :return: the model's action
     """
+    # should convert from np.ndarray to torch.Tensor
     return self.policy.predict(observation)
