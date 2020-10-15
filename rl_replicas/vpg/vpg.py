@@ -76,7 +76,7 @@ class VPG():
       logger.info('Set up tensorboard')
       os.makedirs(output_dir, exist_ok=True)
       tensorboard_path: str = os.path.join(output_dir, 'tensorboard')
-      writer = SummaryWriter(tensorboard_path)
+      writer: SummaryWriter = SummaryWriter(tensorboard_path)
 
     epoch_policy_losses: List[float] = []
     epoch_value_losses: List[float] = []
@@ -86,7 +86,7 @@ class VPG():
     previous_policy_loss: float = 0.0
     previous_value_loss: float = 0.0
 
-    self.start_time = time.time()
+    self.start_time: float = time.time()
     current_total_steps: int = 0
 
     observation: np.ndarray = self.env.reset()
@@ -119,11 +119,9 @@ class VPG():
 
         all_observations.append(observation_tensor)
 
-        policy_dist: Categorical
-        value: torch.Tensor
         with torch.no_grad():
-          policy_dist = self.policy(observation_tensor)
-          value = self.value_function(observation_tensor)
+          policy_dist: Categorical = self.policy(observation_tensor)
+          value: torch.Tensor = self.value_function(observation_tensor)
 
         values.append(value.detach().item())
 
@@ -135,7 +133,6 @@ class VPG():
 
         reward: float
         episode_done: bool
-
         observation, reward, episode_done, _ = self.env.step(action_ndarray)
 
         rewards.append(reward)
@@ -143,7 +140,7 @@ class VPG():
         episode_length += 1
         current_total_steps += 1
 
-        epoch_ended = current_step == steps_per_epoch-1
+        epoch_ended: bool = current_step == steps_per_epoch-1
 
         # At at the end of a trajectory or when one gets cut off by an epoch ending.
         if episode_done or epoch_ended:
@@ -151,12 +148,12 @@ class VPG():
             logger.warn('The trajectory cut off at {} steps on the current episode'.format(episode_length))
 
           # if trajectory didn't reach terminal state, bootstrap value target
+          last_value_float: float
           if epoch_ended:
             observation_tensor = torch.from_numpy(observation).float()
-            last_value: torch.Tensor
 
             with torch.no_grad():
-              last_value = self.value_function(observation_tensor)
+              last_value: torch.Tensor = self.value_function(observation_tensor)
 
             last_value_float = last_value.detach().item()
           else:
@@ -176,7 +173,7 @@ class VPG():
           discounted_return: np.ndarray = discount_cumulative_sum(rewards, self.gamma)[:-1]
           discounted_returns[episode_slice] = discounted_return
 
-          episode_true_return = np.sum(rewards)
+          episode_true_return: float = np.sum(rewards).item()
 
           episode_returns.append(episode_true_return)
           episode_lengths.append(episode_length)
@@ -195,8 +192,7 @@ class VPG():
       all_observations_tensor: torch.Tensor = torch.stack(all_observations)
       all_actions_tensor: torch.Tensor = torch.stack(all_actions)
 
-      policy_dists: Categorical
-      policy_dists = self.policy(all_observations_tensor)
+      policy_dists: Categorical = self.policy(all_observations_tensor)
       all_log_probs: torch.Tensor = policy_dists.log_prob(all_actions_tensor)
 
       # the advantage normalization
@@ -215,7 +211,6 @@ class VPG():
       discounted_returns_tensor: torch.Tensor = torch.from_numpy(discounted_returns)
       all_values: torch.Tensor
       value_loss: torch.Tensor
-
       for _ in range(self.n_value_gradients):
         all_values = self.value_function(all_observations_tensor)
         squeezed_all_values = torch.squeeze(all_values, -1)
