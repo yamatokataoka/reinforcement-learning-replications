@@ -228,31 +228,8 @@ class VPG():
 
       epoch_entropies.append(mean_entropy)
 
-      logger.info('Loss of the current policy:         {:<8.3g}'.format(policy_loss))
-      logger.info('Loss of the current value function: {:<8.3g}'.format(value_loss))
-      if tensorboard:
-        writer.add_scalar('policy/loss',
-                          policy_loss,
-                          current_total_steps)
-        writer.add_scalar('policy/entropy',
-                          mean_entropy,
-                          current_total_steps)
-        writer.add_scalar('policy/log_prob_std',
-                          all_log_probs.std(),
-                          current_total_steps)
-        writer.add_scalar('value/loss',
-                          value_loss,
-                          current_total_steps)
-
-      if previous_policy_loss and previous_value_loss:
-        logger.info('Difference of the previous policy loss:         {:<8.3g}'.format(policy_loss-previous_policy_loss))
-        logger.info('Difference of the previous value function loss: {:<8.3g}'.format(value_loss-previous_value_loss))
-
-      previous_policy_loss = policy_loss.detach().item()
-      previous_value_loss = value_loss.detach().item()
-
-      # info about the current learning
-      logger.info('Epoch: {}'.format(current_epoch))
+      # logging about the current learning
+      logger.info('Epoch: {}'.format(current_epoch+1))
 
       logger.info('Average Episode Return: {:<8.3g}'.format(np.mean(episode_returns)))
       logger.info('Std Episode Return:     {:<8.3g}'.format(np.std(episode_returns)))
@@ -268,10 +245,34 @@ class VPG():
 
       logger.info('Total env interactions: {}'.format(current_total_steps))
 
-      logger.info('Avarage Policy Loss:    {:<8.3g}'.format(np.mean(epoch_policy_losses)))
-      logger.info('Avarage Value function Loss: {:8.3f}'.format(np.mean(epoch_value_losses)))
+      logger.info('Current Loss of policy:         {:<8.3g}'.format(policy_loss))
+      logger.info('Current Loss of value function: {:<8.3g}'.format(value_loss))
+
+      if previous_policy_loss and previous_value_loss:
+        logger.info('Difference of the previous policy loss:         {:<8.3g}'.format(policy_loss-previous_policy_loss))
+        logger.info('Difference of the previous value function loss: {:<8.3g}'.format(value_loss-previous_value_loss))
+
+      previous_policy_loss = policy_loss.detach().item()
+      previous_value_loss = value_loss.detach().item()
+
+      logger.info('Avarage Policy Loss:         {:<8.3g}'.format(np.mean(epoch_policy_losses)))
+      logger.info('Avarage Value function Loss: {:<8.3f}'.format(np.mean(epoch_value_losses)))
       logger.info('Avarage Entropy:        {:<8.3g}'.format(np.mean(epoch_entropies)))
       logger.info('Time:                   {:<8.3g}'.format(time.time()-self.start_time))
+
+      if tensorboard:
+        writer.add_scalar('policy/loss',
+                          policy_loss,
+                          current_total_steps)
+        writer.add_scalar('policy/entropy',
+                          mean_entropy,
+                          current_total_steps)
+        writer.add_scalar('policy/log_prob_std',
+                          all_log_probs.std(),
+                          current_total_steps)
+        writer.add_scalar('value/loss',
+                          value_loss,
+                          current_total_steps)
 
       if model_saving:
         logger.info('Set up model saving')
