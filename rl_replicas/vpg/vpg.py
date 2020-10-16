@@ -307,5 +307,8 @@ class VPG():
     :param observation: the input observation
     :return: the model's action
     """
-    # should convert from np.ndarray to torch.Tensor
-    return self.policy.predict(observation)
+    observation_tensor: torch.Tensor = torch.from_numpy(observation).float()
+    action: torch.Tensor = self.policy.predict(observation_tensor)
+    action_ndarray: np.ndarray = action.detach().numpy()
+
+    return action_ndarray
