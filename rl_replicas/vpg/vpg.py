@@ -103,8 +103,6 @@ class VPG():
       all_observations: List[torch.Tensor] = []
       all_actions: List[torch.Tensor] = []
 
-      all_entropies: np.ndarray = np.zeros(steps_per_epoch, dtype=np.float32)
-
       # list of the lengths of episode on the current epoch
       episode_lengths: List[int] = []
       episode_returns: List[float] = []
@@ -219,12 +217,11 @@ class VPG():
         value_loss.backward()
         self.value_function.optimizer.step()
 
-      all_entropies = policy_dist.entropy().detach().numpy()
-
-      mean_entropy: float = all_entropies.mean()
-
       epoch_policy_losses.append(policy_loss.detach().item())
       epoch_value_losses.append(value_loss.detach().item())
+
+      all_entropies: torch.Tensor = all_policy_dists.entropy()
+      mean_entropy: float = all_entropies.mean().detach().item()
 
       epoch_entropies.append(mean_entropy)
 
