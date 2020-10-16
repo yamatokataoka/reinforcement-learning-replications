@@ -96,7 +96,7 @@ class VPG():
       # variables on the current epoch
       # e.g. [ep_one_return, ep_one_return, (repeat the episode length times) ..., ep_two_return, ...]
       episode_advantages: np.ndarray = np.zeros(steps_per_epoch, dtype=np.float32)
-      discounted_returns: np.ndarray = np.zeros(steps_per_epoch, dtype=np.float32)
+      episode_discounted_returns: np.ndarray = np.zeros(steps_per_epoch, dtype=np.float32)
 
       all_observations: List[torch.Tensor] = []
       all_actions: List[torch.Tensor] = []
@@ -164,8 +164,8 @@ class VPG():
 
           episode_advantages[episode_slice] = episode_advantage
 
-          discounted_return: np.ndarray = discount_cumulative_sum(rewards, self.gamma)[:-1]
-          discounted_returns[episode_slice] = discounted_return
+          episode_discounted_return: np.ndarray = discount_cumulative_sum(rewards, self.gamma)[:-1]
+          episode_discounted_returns[episode_slice] = episode_discounted_return
 
           episode_true_return: float = np.sum(rewards).item()
 
@@ -202,14 +202,14 @@ class VPG():
       policy_loss.backward()
       self.policy.optimizer.step()
 
-      discounted_returns_tensor: torch.Tensor = torch.from_numpy(discounted_returns)
+      episode_discounted_returns_tensor: torch.Tensor = torch.from_numpy(episode_discounted_returns)
       all_values: torch.Tensor
       value_loss: torch.Tensor
       for _ in range(self.n_value_gradients):
         all_values = self.value_function(all_observations_tensor)
         squeezed_all_values = torch.squeeze(all_values, -1)
         self.value_function.optimizer.zero_grad()
-        value_loss = self._compute_value_function_loss(squeezed_all_values, discounted_returns_tensor)
+        value_loss = self._compute_value_function_loss(squeezed_all_values, episode_discounted_returns_tensor)
         value_loss.backward()
         self.value_function.optimizer.step()
 
