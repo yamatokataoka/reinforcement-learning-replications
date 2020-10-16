@@ -2,6 +2,9 @@
 Reinforcement Learning Replications is a set of modular Pytorch implementations of reinforcement learning algorithms.
 
 ## Benchmarks
+
+![CartPole-v0](./docs/CartPole-v0.gif)
+
 ### Vanilla Policy Gradient (REINFORCE)
 #### CartPole-v0
 
