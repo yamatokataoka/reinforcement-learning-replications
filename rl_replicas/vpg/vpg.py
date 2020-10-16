@@ -257,7 +257,8 @@ class VPG():
 
       logger.info('Avarage Policy Loss:         {:<8.3g}'.format(np.mean(epoch_policy_losses)))
       logger.info('Avarage Value function Loss: {:<8.3f}'.format(np.mean(epoch_value_losses)))
-      logger.info('Avarage Entropy:        {:<8.3g}'.format(np.mean(epoch_entropies)))
+      logger.info('Avarage Entropy:             {:<8.3g}'.format(np.mean(epoch_entropies)))
+
       logger.info('Time:                   {:<8.3g}'.format(time.time()-self.start_time))
 
       if tensorboard:
