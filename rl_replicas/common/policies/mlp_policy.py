@@ -19,6 +19,7 @@ class MLPPolicy(nn.Module):
   :param learning_rate: (float) The learning rate for the optimizer
   :param activation_function: (Type[nn.Module]) Activation function
   :param optimizer_class: (Type[torch.optim.Optimizer]) The optimizer class, `torch.optim.Adam` by default
+  :param network_architecture: (List[int]) The network architecture, `[64, 64]` by default
   """
 
   def __init__(
@@ -27,7 +28,8 @@ class MLPPolicy(nn.Module):
     action_space: gym.spaces.Space,
     learning_rate: float = 3e-4,
     activation_function: Type[nn.Module] = nn.Tanh,
-    optimizer_class: Type[torch.optim.Optimizer] = torch.optim.Adam
+    optimizer_class: Type[torch.optim.Optimizer] = torch.optim.Adam,
+    network_architecture: List[int] = [64, 64]
   ):
     super().__init__()
 
@@ -36,9 +38,7 @@ class MLPPolicy(nn.Module):
     self.learning_rate = learning_rate
     self.activation_function = activation_function
     self.optimizer_class = optimizer_class
-
-    # Default
-    self.network_architecture: List[int] = [64, 64]
+    self.network_architecture = network_architecture
 
     self._setup_network()
     self._setup_optimizer()
