@@ -124,7 +124,7 @@ class VPG():
 
         all_actions.append(action)
 
-        action_ndarray = action.clone().detach().numpy()
+        action_ndarray = action.detach().numpy()
         reward: float
         episode_done: bool
         observation, reward, episode_done, _ = self.env.step(action_ndarray)
