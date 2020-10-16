@@ -80,7 +80,6 @@ class VPG():
 
     epoch_policy_losses: List[float] = []
     epoch_value_losses: List[float] = []
-
     epoch_entropies: List[float] = []
 
     previous_policy_loss: float = 0.0
@@ -99,11 +98,9 @@ class VPG():
       episode_advantages: np.ndarray = np.zeros(steps_per_epoch, dtype=np.float32)
       discounted_returns: np.ndarray = np.zeros(steps_per_epoch, dtype=np.float32)
 
-      # e.g. [observation_one, observation_two ...]
       all_observations: List[torch.Tensor] = []
       all_actions: List[torch.Tensor] = []
 
-      # list of the lengths of episode on the current epoch
       episode_lengths: List[int] = []
       episode_returns: List[float] = []
 
@@ -128,7 +125,6 @@ class VPG():
         all_actions.append(action)
 
         action_ndarray = action.clone().detach().numpy()
-
         reward: float
         episode_done: bool
         observation, reward, episode_done, _ = self.env.step(action_ndarray)
