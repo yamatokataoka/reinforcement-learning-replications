@@ -192,8 +192,8 @@ class VPG():
       all_observations_tensor: torch.Tensor = torch.stack(all_observations)
       all_actions_tensor: torch.Tensor = torch.stack(all_actions)
 
-      policy_dists: Categorical = self.policy(all_observations_tensor)
-      all_log_probs: torch.Tensor = policy_dists.log_prob(all_actions_tensor)
+      all_policy_dists: Categorical = self.policy(all_observations_tensor)
+      all_log_probs: torch.Tensor = all_policy_dists.log_prob(all_actions_tensor)
 
       # the advantage normalization
       # TODO: make it a function
