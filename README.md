@@ -8,7 +8,7 @@ Reinforcement Learning Replications is a set of modular Pytorch implementations 
 ### Vanilla Policy Gradient (REINFORCE)
 #### CartPole-v0
 
-![VPG CartPole-v0](./docs/VPG_CartPole-v0_3seeds.png)
+![CartPole-v0 with VPG](./docs/vpg/CartPole-v0_3seeds.png)
 
 You can change seed from 0 to 2.
 
