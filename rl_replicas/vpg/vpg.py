@@ -10,7 +10,7 @@ import numpy as np
 
 from rl_replicas.common.policies import MLPPolicy
 from rl_replicas.common.value_functions import MLPValueFunction
-from rl_replicas.common.utils import discount_cumulative_sum, seed_random_generators
+from rl_replicas.common.utils import discount_cumulative_sum, seed_random_generators, gae
 from rl_replicas import log
 
 logger = log.get_logger(__name__)
@@ -93,8 +93,8 @@ class VPG():
     for current_epoch in range(epochs):
 
       # Variables on the current epoch
-      episode_advantages: np.ndarray = np.zeros(steps_per_epoch, dtype=np.float32)
-      episode_discounted_returns: np.ndarray = np.zeros(steps_per_epoch, dtype=np.float32)
+      all_advantages: np.ndarray = np.zeros(steps_per_epoch, dtype=np.float32)
+      all_discounted_returns: np.ndarray = np.zeros(steps_per_epoch, dtype=np.float32)
 
       all_observations: List[torch.Tensor] = []
       all_actions: List[torch.Tensor] = []
@@ -158,11 +158,11 @@ class VPG():
           deltas: np.ndarray = rewards[:-1] + self.gamma * values_ndarray[1:] - values_ndarray[:-1]
           episode_advantage: np.ndarray = discount_cumulative_sum(deltas, self.gamma * self.gae_lambda)
 
-          episode_advantages[episode_slice] = episode_advantage
+          all_advantages[episode_slice] = episode_advantage
 
           # Calculate rewards-to-go over an episode, to be targets for the value function
           episode_discounted_return: np.ndarray = discount_cumulative_sum(rewards, self.gamma)[:-1]
-          episode_discounted_returns[episode_slice] = episode_discounted_return
+          all_discounted_returns[episode_slice] = episode_discounted_return
 
           episode_true_return: float = np.sum(rewards).item()
 
@@ -186,12 +186,12 @@ class VPG():
       all_policy_dists: Categorical = self.policy(all_observations_tensor)
       all_log_probs: torch.Tensor = all_policy_dists.log_prob(all_actions_tensor)
 
-      episode_advantages_tensor: torch.Tensor = torch.from_numpy(episode_advantages)
+      all_advantages_tensor: torch.Tensor = torch.from_numpy(all_advantages)
 
       # Normalize advantage
-      episode_advantages_tensor = (episode_advantages_tensor - episode_advantages_tensor.mean()) / episode_advantages_tensor.std()
+      all_advantages_tensor = (all_advantages_tensor - all_advantages_tensor.mean()) / all_advantages_tensor.std()
 
-      policy_loss: torch.Tensor = -(all_log_probs * episode_advantages_tensor).mean()
+      policy_loss: torch.Tensor = -(all_log_probs * all_advantages_tensor).mean()
 
       # Train policy
       self.policy.optimizer.zero_grad()
@@ -199,14 +199,14 @@ class VPG():
       self.policy.optimizer.step()
 
       # Train value function
-      episode_discounted_returns_tensor: torch.Tensor = torch.from_numpy(episode_discounted_returns)
+      all_discounted_returns_tensor: torch.Tensor = torch.from_numpy(all_discounted_returns)
       all_values: torch.Tensor
       value_loss: torch.Tensor
       for _ in range(self.n_value_gradients):
         all_values = self.value_function(all_observations_tensor)
         squeezed_all_values = torch.squeeze(all_values, -1)
         self.value_function.optimizer.zero_grad()
-        value_loss = self._compute_value_function_loss(squeezed_all_values, episode_discounted_returns_tensor)
+        value_loss = self._compute_value_function_loss(squeezed_all_values, all_discounted_returns_tensor)
         value_loss.backward()
         self.value_function.optimizer.step()
 
