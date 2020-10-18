@@ -34,3 +34,23 @@ def seed_random_generators(seed: int) -> None:
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
+
+def gae(
+  rewards: np.ndarray,
+  gamma: float,
+  values: np.ndarray,
+  gae_lambda: float
+) -> np.ndarray:
+  """
+  Compute Generalized Advantage Estimation (GAE)
+
+  :param rewards: (np.ndarray) Rewards for all states
+  :param gamma: (float) Discount factor
+  :param values: (np.ndarray) Values for all states
+  :param gae_lambda: (float) A smoothing parameter for reducing the variance
+  :return gaes: GAEs for all states
+  """
+  deltas: np.ndarray = rewards[:-1] + gamma * values[1:] - values[:-1]
+  gaes: np.ndarray = discount_cumulative_sum(deltas, gamma * gae_lambda)
+
+  return gaes

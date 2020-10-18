@@ -155,8 +155,8 @@ class VPG():
 
           # Calculate advantage over an episode
           values_ndarray: np.ndarray = np.asarray(values)
-          deltas: np.ndarray = rewards[:-1] + self.gamma * values_ndarray[1:] - values_ndarray[:-1]
-          episode_advantage: np.ndarray = discount_cumulative_sum(deltas, self.gamma * self.gae_lambda)
+          rewards_ndarray: np.ndarray = np.asarray(rewards)
+          episode_advantage: np.ndarray = gae(rewards_ndarray, self.gamma, values_ndarray, self.gae_lambda)
 
           all_advantages[episode_slice] = episode_advantage
 
