@@ -90,11 +90,9 @@ class VPG():
 
     observation: np.ndarray = self.env.reset()
 
-    # collect experiences
     for current_epoch in range(epochs):
 
-      # variables on the current epoch
-      # e.g. [ep_one_return, ep_one_return, (repeat the episode length times) ..., ep_two_return, ...]
+      # Variables on the current epoch
       episode_advantages: np.ndarray = np.zeros(steps_per_epoch, dtype=np.float32)
       episode_discounted_returns: np.ndarray = np.zeros(steps_per_epoch, dtype=np.float32)
 
@@ -104,7 +102,7 @@ class VPG():
       episode_lengths: List[int] = []
       episode_returns: List[float] = []
 
-      # the variables on the current episode
+      # Variables on the current episode
       rewards: List[float] = []
       values: List[float] = []
       episode_length: int = 0
@@ -136,12 +134,10 @@ class VPG():
 
         epoch_ended: bool = current_step == steps_per_epoch-1
 
-        # At at the end of a trajectory or when one gets cut off by an epoch ending.
         if episode_done or epoch_ended:
           if epoch_ended and not(episode_done):
             logger.warn('The trajectory cut off at {} steps on the current episode'.format(episode_length))
 
-          # if trajectory didn't reach terminal state, bootstrap value target
           last_value_float: float
           if epoch_ended:
             observation_tensor = torch.from_numpy(observation).float()
@@ -157,13 +153,14 @@ class VPG():
 
           episode_slice = slice(current_step-episode_length+1, current_step+1)
 
-          # Calculate GAE advantage
+          # Calculate advantage over an episode
           values_ndarray: np.ndarray = np.asarray(values)
           deltas: np.ndarray = rewards[:-1] + self.gamma * values_ndarray[1:] - values_ndarray[:-1]
           episode_advantage: np.ndarray = discount_cumulative_sum(deltas, self.gamma * self.gae_lambda)
 
           episode_advantages[episode_slice] = episode_advantage
 
+          # Calculate rewards-to-go over an episode, to be targets for the value function
           episode_discounted_return: np.ndarray = discount_cumulative_sum(rewards, self.gamma)[:-1]
           episode_discounted_returns[episode_slice] = episode_discounted_return
 
@@ -189,19 +186,19 @@ class VPG():
       all_policy_dists: Categorical = self.policy(all_observations_tensor)
       all_log_probs: torch.Tensor = all_policy_dists.log_prob(all_actions_tensor)
 
-      # the advantage normalization
-      # TODO: make it a function
       episode_advantages_tensor: torch.Tensor = torch.from_numpy(episode_advantages)
 
+      # Normalize advantage
       episode_advantages_tensor = (episode_advantages_tensor - episode_advantages_tensor.mean()) / episode_advantages_tensor.std()
 
       policy_loss: torch.Tensor = -(all_log_probs * episode_advantages_tensor).mean()
 
-      # Train policy and Value function with a single step of gradient descent
+      # Train policy
       self.policy.optimizer.zero_grad()
       policy_loss.backward()
       self.policy.optimizer.step()
 
+      # Train value function
       episode_discounted_returns_tensor: torch.Tensor = torch.from_numpy(episode_discounted_returns)
       all_values: torch.Tensor
       value_loss: torch.Tensor
@@ -221,7 +218,7 @@ class VPG():
 
       epoch_entropies.append(mean_entropy)
 
-      # logging about the current learning
+      # Log about the current epoch
       logger.info('Epoch: {}'.format(current_epoch+1))
 
       logger.info('Average Episode Return: {:<8.3g}'.format(np.mean(episode_returns)))
