@@ -1,9 +1,7 @@
 import random
 
-import scipy.signal
-from typing import Optional
-
 import numpy as np
+import scipy.signal
 import torch
 
 def discount_cumulative_sum(vector, discount):
