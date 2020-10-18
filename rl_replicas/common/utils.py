@@ -4,23 +4,21 @@ import numpy as np
 import scipy.signal
 import torch
 
-def discount_cumulative_sum(vector, discount):
+def discount_cumulative_sum(vector: np.ndarray, discount: float) -> np.ndarray:
   """
-  Compute discounted cumulative sums of vectors.
+  Compute discounted cumulative sums of vector.
 
-  input:
-      vector
-      e.g. [x0,
-            x1,
-            x2]
-      discount
-
-  output:
-      [x0 + discount * x1 + discount^2 * x2,
-       x1 + discount * x2,
-       x2]
+  :param vector: (np.ndarray) An target vector
+  e.g. [x0,
+        x1,
+        x2]
+  :param discount: (float) Discount factor
+  :return: discounted cumulative sums of an vector
+  e.g. [x0 + discount * x1 + discount^2 * x2,
+        x1 + discount * x2,
+        x2]
   """
-  return scipy.signal.lfilter([1], [1, float(-discount)], vector[::-1], axis=0)[::-1]
+  return scipy.signal.lfilter([1], [1, -discount], vector[::-1], axis=0)[::-1]
 
 def seed_random_generators(seed: int) -> None:
     """
