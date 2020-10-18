@@ -271,7 +271,7 @@ class VPG():
       if model_saving:
         logger.info('Set up model saving')
         os.makedirs(output_dir, exist_ok=True)
-        model_path: str = os.path.join(output_dir, 'model.th')
+        model_path: str = os.path.join(output_dir, 'model.pt')
 
         logger.info('Save model')
         torch.save({
