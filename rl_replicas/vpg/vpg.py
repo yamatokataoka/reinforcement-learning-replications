@@ -87,6 +87,7 @@ class VPG():
 
     self.start_time: float = time.time()
     current_total_steps: int = 0
+    current_total_episodes: int = 0
 
     observation: np.ndarray = self.env.reset()
 
@@ -177,6 +178,9 @@ class VPG():
                               episode_length,
                               current_total_steps)
 
+          if episode_done:
+            current_total_episodes += 1
+
           observation, episode_length = self.env.reset(), 0
           rewards, values = [], []
 
@@ -234,6 +238,7 @@ class VPG():
       logger.info('Minimum Episode Value:  {:<8.3g}'.format(all_values.min()))
 
       logger.info('Total env interactions: {}'.format(current_total_steps))
+      logger.info('Total episodes:         {:<8.3g}'.format(current_total_episodes))
 
       logger.info('Current Loss of policy:         {:<8.3g}'.format(policy_loss))
       logger.info('Current Loss of value function: {:<8.3g}'.format(value_loss))
