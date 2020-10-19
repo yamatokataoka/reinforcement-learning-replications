@@ -79,9 +79,14 @@ class VPG():
       tensorboard_path: str = os.path.join(output_dir, 'tensorboard')
       writer: SummaryWriter = SummaryWriter(tensorboard_path)
 
-    epoch_policy_losses: List[float] = []
-    epoch_value_losses: List[float] = []
-    epoch_entropies: List[float] = []
+    policy_losses: List[float] = []
+    value_losses: List[float] = []
+
+    all_episode_returns: List[float] = []
+    all_episode_lengths: List[int] = []
+
+    all_entropies: List[float] = []
+    all_values: List[float] = []
 
     self.start_time: float = time.time()
     current_total_steps: int = 0
@@ -92,14 +97,11 @@ class VPG():
     for current_epoch in range(epochs):
 
       # Variables on the current epoch
-      all_advantages: np.ndarray = np.zeros(steps_per_epoch, dtype=np.float32)
-      all_discounted_returns: np.ndarray = np.zeros(steps_per_epoch, dtype=np.float32)
+      advantages_on_epoch: np.ndarray = np.zeros(steps_per_epoch, dtype=np.float32)
+      discounted_returns_on_epoch: np.ndarray = np.zeros(steps_per_epoch, dtype=np.float32)
 
-      all_observations: List[torch.Tensor] = []
-      all_actions: List[torch.Tensor] = []
-
-      episode_lengths: List[int] = []
-      episode_returns: List[float] = []
+      observations_on_epoch: List[torch.Tensor] = []
+      actions_on_epoch: List[torch.Tensor] = []
 
       # Variables on the current episode
       rewards: List[float] = []
@@ -109,7 +111,7 @@ class VPG():
       for current_step in range(steps_per_epoch):
         observation_tensor: torch.Tensor = torch.from_numpy(observation).float()
 
-        all_observations.append(observation_tensor)
+        observations_on_epoch.append(observation_tensor)
 
         with torch.no_grad():
           policy_dist: Categorical = self.policy(observation_tensor)
@@ -119,7 +121,7 @@ class VPG():
 
         action: torch.Tensor = policy_dist.sample()
 
-        all_actions.append(action)
+        actions_on_epoch.append(action)
 
         action_ndarray = action.detach().numpy()
         reward: float
@@ -157,16 +159,16 @@ class VPG():
           rewards_ndarray: np.ndarray = np.asarray(rewards)
           episode_advantage: np.ndarray = gae(rewards_ndarray, self.gamma, values_ndarray, self.gae_lambda)
 
-          all_advantages[episode_slice] = episode_advantage
+          advantages_on_epoch[episode_slice] = episode_advantage
 
           # Calculate rewards-to-go over an episode, to be targets for the value function
           episode_discounted_return: np.ndarray = discount_cumulative_sum(rewards, self.gamma)[:-1]
-          all_discounted_returns[episode_slice] = episode_discounted_return
+          discounted_returns_on_epoch[episode_slice] = episode_discounted_return
 
           episode_true_return: float = np.sum(rewards).item()
 
-          episode_returns.append(episode_true_return)
-          episode_lengths.append(episode_length)
+          all_episode_returns.append(episode_true_return)
+          all_episode_lengths.append(episode_length)
 
           if episode_done and tensorboard:
             writer.add_scalar('env/episode_true_return',
@@ -182,18 +184,19 @@ class VPG():
           observation, episode_length = self.env.reset(), 0
           rewards, values = [], []
 
-      all_observations_tensor: torch.Tensor = torch.stack(all_observations)
-      all_actions_tensor: torch.Tensor = torch.stack(all_actions)
+      # Update policy and value function on the current epoch
+      observations_tensor: torch.Tensor = torch.stack(observations_on_epoch)
+      actions_tensor: torch.Tensor = torch.stack(actions_on_epoch)
 
-      all_policy_dists: Categorical = self.policy(all_observations_tensor)
-      all_log_probs: torch.Tensor = all_policy_dists.log_prob(all_actions_tensor)
+      policy_dist: Categorical = self.policy(observations_tensor)
+      log_probs: torch.Tensor = policy_dist.log_prob(actions_tensor)
 
-      all_advantages_tensor: torch.Tensor = torch.from_numpy(all_advantages)
+      advantages_tensor: torch.Tensor = torch.from_numpy(advantages_on_epoch)
 
       # Normalize advantage
-      all_advantages_tensor = (all_advantages_tensor - all_advantages_tensor.mean()) / all_advantages_tensor.std()
+      advantages_tensor = (advantages_tensor - advantages_tensor.mean()) / advantages_tensor.std()
 
-      policy_loss: torch.Tensor = -(all_log_probs * all_advantages_tensor).mean()
+      policy_loss: torch.Tensor = -(log_probs * advantages_tensor).mean()
 
       # Train policy
       self.policy.optimizer.zero_grad()
@@ -201,39 +204,39 @@ class VPG():
       self.policy.optimizer.step()
 
       # Train value function
-      all_discounted_returns_tensor: torch.Tensor = torch.from_numpy(all_discounted_returns)
-      all_values: torch.Tensor
+      discounted_returns_tensor: torch.Tensor = torch.from_numpy(discounted_returns_on_epoch)
+      values: torch.Tensor
       value_loss: torch.Tensor
       for _ in range(self.n_value_gradients):
-        all_values = self.value_function(all_observations_tensor)
-        squeezed_all_values = torch.squeeze(all_values, -1)
+        values = self.value_function(observations_tensor)
+        squeezed_values = torch.squeeze(values, -1)
         self.value_function.optimizer.zero_grad()
-        value_loss = nn.MSELoss()(squeezed_values_on_epoch, discounted_returns_on_epoch_tensor)
+        value_loss = nn.MSELoss()(squeezed_values, discounted_returns_tensor)
         value_loss.backward()
         self.value_function.optimizer.step()
 
-      epoch_policy_losses.append(policy_loss.detach().item())
-      epoch_value_losses.append(value_loss.detach().item())
+      policy_losses.append(policy_loss.detach().item())
+      value_losses.append(value_loss.detach().item())
 
-      all_entropies: torch.Tensor = all_policy_dists.entropy()
-      mean_entropy: float = all_entropies.mean().detach().item()
+      entropies: torch.Tensor = policy_dist.entropy()
 
-      epoch_entropies.append(mean_entropy)
+      all_entropies.append(entropies.detach().tolist())
+      all_values.append(squeezed_values.detach().tolist())
 
       # Stats over all epochs and episodes
       logger.info('Epoch: {}'.format(current_epoch+1))
 
-      logger.info('Average Episode Return: {:<8.3g}'.format(np.mean(episode_returns)))
-      logger.info('Std Episode Return:     {:<8.3g}'.format(np.std(episode_returns)))
-      logger.info('Maximum Episode Return: {:<8.3g}'.format(np.max(episode_returns)))
-      logger.info('Minimum Episode Return: {:<8.3g}'.format(np.min(episode_returns)))
+      logger.info('Average Episode Return: {:<8.3g}'.format(np.mean(all_episode_returns)))
+      logger.info('Std Episode Return:     {:<8.3g}'.format(np.std(all_episode_returns)))
+      logger.info('Maximum Episode Return: {:<8.3g}'.format(np.max(all_episode_returns)))
+      logger.info('Minimum Episode Return: {:<8.3g}'.format(np.min(all_episode_returns)))
 
-      logger.info('Average Episode Length: {:<8.3g}'.format(np.mean(episode_lengths)))
+      logger.info('Average Episode Length: {:<8.3g}'.format(np.mean(all_episode_lengths)))
 
-      logger.info('Average Episode Value:  {:<8.3g}'.format(all_values.mean()))
-      logger.info('Std Episode Value:      {:<8.3g}'.format(all_values.std()))
-      logger.info('Maximum Episode Value:  {:<8.3g}'.format(all_values.max()))
-      logger.info('Minimum Episode Value:  {:<8.3g}'.format(all_values.min()))
+      logger.info('Average Value:          {:<8.3g}'.format(np.mean(all_values)))
+      logger.info('Std Value:              {:<8.3g}'.format(np.std(all_values)))
+      logger.info('Maximum Value:          {:<8.3g}'.format(np.max(all_values)))
+      logger.info('Minimum Value:          {:<8.3g}'.format(np.min(all_values)))
 
       logger.info('Total env interactions: {:<8.3g}'.format(current_total_steps))
       logger.info('Total episodes:         {:<8.3g}'.format(current_total_episodes))
@@ -241,9 +244,10 @@ class VPG():
       logger.info('Current Loss of policy:         {:<8.3g}'.format(policy_loss))
       logger.info('Current Loss of value function: {:<8.3g}'.format(value_loss))
 
-      logger.info('Avarage Policy Loss:         {:<8.3g}'.format(np.mean(epoch_policy_losses)))
-      logger.info('Avarage Value function Loss: {:<8.3g}'.format(np.mean(epoch_value_losses)))
-      logger.info('Avarage Entropy:             {:<8.3g}'.format(np.mean(epoch_entropies)))
+      logger.info('Avarage Policy Loss:         {:<8.3g}'.format(np.mean(policy_losses)))
+      logger.info('Avarage Value function Loss: {:<8.3g}'.format(np.mean(value_losses)))
+
+      logger.info('Avarage Entropy:        {:<8.3g}'.format(np.mean(all_entropies)))
 
       logger.info('Time:                   {:<8.3g}'.format(time.time()-self.start_time))
 
@@ -251,14 +255,14 @@ class VPG():
         writer.add_scalar('policy/loss',
                           policy_loss,
                           current_total_steps)
-        writer.add_scalar('policy/entropy',
-                          mean_entropy,
-                          current_total_steps)
-        writer.add_scalar('policy/log_prob_std',
-                          all_log_probs.std(),
-                          current_total_steps)
         writer.add_scalar('value/loss',
                           value_loss,
+                          current_total_steps)
+        writer.add_scalar('policy/avarage_entropy',
+                          np.mean(all_entropies),
+                          current_total_steps)
+        writer.add_scalar('policy/log_prob_std',
+                          log_probs.std(),
                           current_total_steps)
 
       if model_saving:
