@@ -222,7 +222,7 @@ class VPG():
 
       epoch_entropies.append(mean_entropy)
 
-      # Log about the current epoch
+      # Stats over all epochs and episodes
       logger.info('Epoch: {}'.format(current_epoch+1))
 
       logger.info('Average Episode Return: {:<8.3g}'.format(np.mean(episode_returns)))
@@ -237,7 +237,7 @@ class VPG():
       logger.info('Maximum Episode Value:  {:<8.3g}'.format(all_values.max()))
       logger.info('Minimum Episode Value:  {:<8.3g}'.format(all_values.min()))
 
-      logger.info('Total env interactions: {}'.format(current_total_steps))
+      logger.info('Total env interactions: {:<8.3g}'.format(current_total_steps))
       logger.info('Total episodes:         {:<8.3g}'.format(current_total_episodes))
 
       logger.info('Current Loss of policy:         {:<8.3g}'.format(policy_loss))
@@ -251,7 +251,7 @@ class VPG():
       previous_value_loss = value_loss.detach().item()
 
       logger.info('Avarage Policy Loss:         {:<8.3g}'.format(np.mean(epoch_policy_losses)))
-      logger.info('Avarage Value function Loss: {:<8.3f}'.format(np.mean(epoch_value_losses)))
+      logger.info('Avarage Value function Loss: {:<8.3g}'.format(np.mean(epoch_value_losses)))
       logger.info('Avarage Entropy:             {:<8.3g}'.format(np.mean(epoch_entropies)))
 
       logger.info('Time:                   {:<8.3g}'.format(time.time()-self.start_time))
