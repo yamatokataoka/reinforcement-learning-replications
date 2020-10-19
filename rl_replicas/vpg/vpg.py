@@ -3,6 +3,7 @@ import time
 from typing import Optional, Type, Union, List
 
 import torch
+import torch.nn as nn
 from torch.distributions.categorical import Categorical
 from torch.utils.tensorboard import SummaryWriter
 import gym
@@ -210,7 +211,7 @@ class VPG():
         all_values = self.value_function(all_observations_tensor)
         squeezed_all_values = torch.squeeze(all_values, -1)
         self.value_function.optimizer.zero_grad()
-        value_loss = self._compute_value_function_loss(squeezed_all_values, all_discounted_returns_tensor)
+        value_loss = nn.MSELoss()(squeezed_values_on_epoch, discounted_returns_on_epoch_tensor)
         value_loss.backward()
         self.value_function.optimizer.step()
 
@@ -289,15 +290,6 @@ class VPG():
     if tensorboard:
       writer.flush()
       writer.close()
-
-  def _compute_value_function_loss(
-    self,
-    values: torch.Tensor,
-    returns: torch.Tensor
-  ) -> torch.Tensor:
-    value_loss: torch.Tensor = ((values - returns) ** 2).mean()
-
-    return value_loss
 
   def predict(
     self,
