@@ -83,9 +83,6 @@ class VPG():
     epoch_value_losses: List[float] = []
     epoch_entropies: List[float] = []
 
-    previous_policy_loss: float = 0.0
-    previous_value_loss: float = 0.0
-
     self.start_time: float = time.time()
     current_total_steps: int = 0
     current_total_episodes: int = 0
@@ -243,13 +240,6 @@ class VPG():
 
       logger.info('Current Loss of policy:         {:<8.3g}'.format(policy_loss))
       logger.info('Current Loss of value function: {:<8.3g}'.format(value_loss))
-
-      if previous_policy_loss and previous_value_loss:
-        logger.info('Difference of the previous policy loss:         {:<8.3g}'.format(policy_loss-previous_policy_loss))
-        logger.info('Difference of the previous value function loss: {:<8.3g}'.format(value_loss-previous_value_loss))
-
-      previous_policy_loss = policy_loss.detach().item()
-      previous_value_loss = value_loss.detach().item()
 
       logger.info('Avarage Policy Loss:         {:<8.3g}'.format(np.mean(epoch_policy_losses)))
       logger.info('Avarage Value function Loss: {:<8.3g}'.format(np.mean(epoch_value_losses)))
