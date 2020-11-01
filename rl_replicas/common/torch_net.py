@@ -5,7 +5,7 @@ import torch.nn as nn
 
 def mlp(
   sizes: List[int],
-  activation: Type[nn.Module],
+  activation: Type[nn.Module] = nn.Tanh,
   output_activation: Type[nn.Module] = nn.Identity
 ) -> nn.Module:
   layers: List[nn.Module] = []
