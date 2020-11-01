@@ -1,4 +1,4 @@
 """
 Value Functions
 """
-from rl_replicas.common.value_functions.mlp_value_function import MLPValueFunction
+from rl_replicas.common.value_functions.value_function import ValueFunction
