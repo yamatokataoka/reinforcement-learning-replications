@@ -72,6 +72,9 @@ class VPG():
 
     :param epochs: (int) The number of epochs (equivalent to number of policy updates) to perform
     :param steps_per_epoch: (int) The number of steps to run per epoch; in other words, batch size is steps.
+    :param output_dir: (str) The directory of output
+    :param tensorboard: (bool) Whether or not to log for tensorboard
+    :param model_saving: (bool) Whether or not to save trained model (Save and overwrite at each end of epoch)
     """
     if tensorboard:
       logger.info('Set up tensorboard')
