@@ -223,8 +223,8 @@ class VPG():
 
       entropies: torch.Tensor = policy_dist.entropy()
 
-      all_entropies.append(entropies.detach().tolist())
-      all_values.append(squeezed_values.detach().tolist())
+      all_entropies.extend(entropies.detach().tolist())
+      all_values.extend(squeezed_values.detach().tolist())
 
       # Stats over all epochs and episodes
       logger.info('Epoch: {}'.format(current_epoch+1))
