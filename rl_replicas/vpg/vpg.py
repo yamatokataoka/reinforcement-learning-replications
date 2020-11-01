@@ -187,6 +187,22 @@ class VPG():
           observation, episode_length = self.env.reset(), 0
           rewards, values = [], []
 
+      if model_saving:
+        logger.info('Set up model saving')
+        os.makedirs(output_dir, exist_ok=True)
+        model_path: str = os.path.join(output_dir, 'model.pt')
+
+        logger.info('Save model')
+        torch.save({
+            'epoch': current_epoch+1,
+            'total_steps': current_total_steps,
+            'policy_state_dict': self.policy.network.state_dict(),
+            'policy_optimizer_state_dict': self.policy.optimizer.state_dict(),
+            'value_fn_state_dict': self.value_function.network.state_dict(),
+            'value_fn_optimizer_state_dict': self.value_function.optimizer.state_dict()
+          },
+          model_path)
+
       # Update policy and value function on the current epoch
       observations_tensor: torch.Tensor = torch.stack(observations_on_epoch)
       actions_tensor: torch.Tensor = torch.stack(actions_on_epoch)
@@ -267,22 +283,6 @@ class VPG():
         writer.add_scalar('policy/log_prob_std',
                           log_probs.std(),
                           current_total_steps)
-
-      if model_saving:
-        logger.info('Set up model saving')
-        os.makedirs(output_dir, exist_ok=True)
-        model_path: str = os.path.join(output_dir, 'model.pt')
-
-        logger.info('Save model')
-        torch.save({
-            'epoch': current_epoch+1,
-            'total_steps': current_total_steps,
-            'policy_state_dict': self.policy.network.state_dict(),
-            'policy_optimizer_state_dict': self.policy.optimizer.state_dict(),
-            'value_fn_state_dict': self.value_function.network.state_dict(),
-            'value_fn_optimizer_state_dict': self.value_function.optimizer.state_dict()
-          },
-          model_path)
 
     if tensorboard:
       writer.flush()
