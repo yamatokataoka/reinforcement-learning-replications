@@ -9,8 +9,8 @@ from torch.utils.tensorboard import SummaryWriter
 import gym
 import numpy as np
 
-from rl_replicas.common.policies import Policy
-from rl_replicas.common.value_functions import ValueFunction
+from rl_replicas.common.policy import Policy
+from rl_replicas.common.value_function import ValueFunction
 from rl_replicas.common.utils import discount_cumulative_sum, seed_random_generators, gae
 from rl_replicas import log
 
