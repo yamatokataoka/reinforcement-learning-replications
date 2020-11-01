@@ -90,6 +90,7 @@ class VPG():
 
     all_entropies: List[float] = []
     all_values: List[float] = []
+    all_log_probs: List[float] = []
 
     self.start_time: float = time.time()
     current_total_steps: int = 0
@@ -241,6 +242,7 @@ class VPG():
 
       all_entropies.extend(entropies.detach().tolist())
       all_values.extend(squeezed_values.detach().tolist())
+      all_log_probs.extend(log_probs.detach().tolist())
 
       # Stats over all epochs and episodes
       logger.info('Epoch: {}'.format(current_epoch+1))
@@ -281,7 +283,7 @@ class VPG():
                           np.mean(all_entropies),
                           current_total_steps)
         writer.add_scalar('policy/log_prob_std',
-                          log_probs.std(),
+                          np.std(all_log_probs),
                           current_total_steps)
 
     if tensorboard:
