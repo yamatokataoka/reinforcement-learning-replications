@@ -1,4 +1,5 @@
 import random
+from typing import List, Tuple
 
 import numpy as np
 import scipy.signal
@@ -50,3 +51,16 @@ def gae(
   gaes: np.ndarray = discount_cumulative_sum(deltas, gamma * gae_lambda)
 
   return gaes
+
+def unflatten_tensors(flattened: np.ndarray, tensor_shapes: List[torch.Size]) -> List[torch.Tensor]:
+    """
+    Unflatten a flattened tensors into a list of tensors.
+
+    :param flattened: (np.ndarray) Flattened tensors.
+    :param tensor_shapes: (List[torch.Size]) Tensor shapes.
+    :return: (List[np.ndarray]) Unflattened list of tensors.
+    """
+    tensor_sizes = list(map(np.prod, tensor_shapes))
+    indices = np.cumsum(tensor_sizes)[:-1]
+
+    return [np.reshape(pair[0], pair[1]) for pair in zip(np.split(flattened, indices), tensor_shapes)]
