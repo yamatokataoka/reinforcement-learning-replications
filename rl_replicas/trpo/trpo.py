@@ -250,6 +250,8 @@ class TRPO():
       policy_loss.backward()
       self.policy.optimizer.step(compute_surrogate_loss, compute_kl_constraint)
 
+      old_policy.load_state_dict(self.policy.state_dict())
+
       # Train value function
       discounted_returns_tensor: torch.Tensor = torch.from_numpy(discounted_returns_on_epoch)
       values: torch.Tensor
