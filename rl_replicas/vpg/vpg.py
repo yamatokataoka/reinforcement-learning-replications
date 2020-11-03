@@ -92,7 +92,7 @@ class VPG():
     all_values: List[float] = []
     all_log_probs: List[float] = []
 
-    self.start_time: float = time.time()
+    start_time: float = time.time()
     current_total_steps: int = 0
     current_total_episodes: int = 0
 
@@ -270,7 +270,7 @@ class VPG():
 
       logger.info('Avarage Entropy:        {:<8.3g}'.format(np.mean(all_entropies)))
 
-      logger.info('Time:                   {:<8.3g}'.format(time.time()-self.start_time))
+      logger.info('Time:                   {:<8.3g}'.format(time.time()-start_time))
 
       if tensorboard:
         writer.add_scalar('policy/loss',
