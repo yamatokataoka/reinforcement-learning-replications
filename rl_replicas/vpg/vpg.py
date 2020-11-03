@@ -276,14 +276,14 @@ class VPG():
         writer.add_scalar('policy/loss',
                           policy_loss,
                           current_total_steps)
-        writer.add_scalar('value/loss',
-                          value_loss,
-                          current_total_steps)
         writer.add_scalar('policy/avarage_entropy',
                           np.mean(all_entropies),
                           current_total_steps)
         writer.add_scalar('policy/log_prob_std',
                           np.std(all_log_probs),
+                          current_total_steps)
+        writer.add_scalar('value/loss',
+                          value_loss,
                           current_total_steps)
 
     if tensorboard:
