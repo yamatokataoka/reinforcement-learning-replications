@@ -120,12 +120,12 @@ class ConjugateGradientOptimizer(Optimizer):
 
   def _build_hessian_vector_product(
     self,
-    hessian_vector_function: Callable,
+    hessian_target_vector_function: Callable,
     params: List[torch.Tensor]
-  ):
+  ) -> Callable:
     param_shapes: List[torch.Size] = [p.shape or torch.Size([1]) for p in params]
-    hessian_vector = hessian_vector_function()
-    hessian_vector_grads = torch.autograd.grad(hessian_vector, params, create_graph=True)
+    hessian_target_vector = hessian_target_vector_function()
+    hessian_target_vector_grads: torch.Tensor = torch.autograd.grad(hessian_target_vector, params, create_graph=True)
 
     def _eval(vector):
       """
@@ -134,17 +134,22 @@ class ConjugateGradientOptimizer(Optimizer):
       :param vector (torch.Tensor): The vector to be multiplied with Hessian.
       :return: (torch.Tensor) The product of Hessian of function f and v.
       """
-      unflatten_vector = unflatten_tensors(vector, param_shapes)
+      unflatten_vector: torch.Tensor = unflatten_tensors(vector, param_shapes)
 
-      assert len(hessian_vector_grads) == len(unflatten_vector)
-      grad_vector_product = torch.sum(torch.stack([torch.sum(g * x) for g, x in zip(hessian_vector_grads, unflatten_vector)]))
+      assert len(hessian_target_vector_grads) == len(unflatten_vector)
+      grad_vector_product_list: List[torch.Tensor] = []
+      for g, x in zip(hessian_target_vector_grads, unflatten_vector):
+        single_grad_vector_product = torch.sum(g * x)
+        grad_vector_product_list.append(single_grad_vector_product)
 
-      hvp = list(torch.autograd.grad(grad_vector_product, params, retain_graph=True))
+      grad_vector_product = torch.sum(torch.stack(grad_vector_product_list))
+
+      hvp: List[torch.Tensor] = list(torch.autograd.grad(grad_vector_product, params, retain_graph=True))
       for i, (hx, p) in enumerate(zip(hvp, params)):
         if hx is None:
           hvp[i] = torch.zeros_like(p)
 
-      flat_output = torch.cat([h.reshape(-1) for h in hvp])
+      flat_output: torch.Tensor = torch.cat([h.reshape(-1) for h in hvp])
       return flat_output + self.hvp_damping_coefficient * vector
 
     return _eval
