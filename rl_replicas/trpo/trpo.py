@@ -73,8 +73,8 @@ class TRPO(OnPolicyAlgorithm):
         old_policy_dist: Categorical = self.old_policy(observations)
         old_log_probs: torch.Tensor = old_policy_dist.log_prob(actions)
 
-      log_prob_ratio: torch.Tensor = (log_probs - old_log_probs).exp()
-      surrogate_loss: torch.Tensor = -(log_prob_ratio * advantages).mean()
+      likelihood_ratio: torch.Tensor = (log_probs - old_log_probs).exp()
+      surrogate_loss: torch.Tensor = -(likelihood_ratio * advantages).mean()
 
       return surrogate_loss
 
