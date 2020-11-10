@@ -121,12 +121,12 @@ class OnPolicyAlgorithm(ABC):
       logger.info('Total env interactions: {:<8.3g}'.format(self.current_total_steps))
       logger.info('Total episodes:         {:<8.3g}'.format(self.current_total_episodes))
 
-      logger.info('Time:                   {:<8.3g}'.format(time.time()-start_time))
-
       logger.info('Average Episode Return: {:<8.3g}'.format(np.mean(episode_returns)))
       logger.info('Average Episode Length: {:<8.3g}'.format(np.mean(episode_lengths)))
 
       self.train(one_epoch_experience)
+
+      logger.info('Time:                   {:<8.3g}'.format(time.time()-start_time))
 
     if tensorboard:
       self.writer.flush()
