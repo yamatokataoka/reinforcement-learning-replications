@@ -122,6 +122,9 @@ class OnPolicyAlgorithm(ABC):
       logger.info('Total episodes:         {:<8.3g}'.format(self.current_total_episodes))
 
       logger.info('Average Episode Return: {:<8.3g}'.format(np.mean(episode_returns)))
+      logger.info('Max Episode Return:     {:<8.3g}'.format(np.max(episode_returns)))
+      logger.info('Min Episode Return:     {:<8.3g}'.format(np.min(episode_returns)))
+
       logger.info('Average Episode Length: {:<8.3g}'.format(np.mean(episode_lengths)))
 
       self.train(one_epoch_experience)
