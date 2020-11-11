@@ -225,12 +225,16 @@ class OnPolicyAlgorithm(ABC):
         episode_lengths_list.append(episode_length)
 
         if episode_done and self.writer:
-          self.writer.add_scalar('env/episode_true_return',
-                                 episode_true_return,
-                                 self.current_total_steps)
-          self.writer.add_scalar('env/episode_length',
-                                 episode_length,
-                                 self.current_total_steps)
+          self.writer.add_scalar(
+            'env/episode_true_return',
+            episode_true_return,
+            self.current_total_steps
+          )
+          self.writer.add_scalar(
+            'env/episode_length',
+            episode_length,
+            self.current_total_steps
+          )
 
         if episode_done:
           self.current_total_episodes += 1

@@ -117,18 +117,27 @@ class TRPO(OnPolicyAlgorithm):
     logger.info('Value Function Loss: {:<8.3g}'.format(value_loss_before))
 
     if self.writer:
-      self.writer.add_scalar('policy/loss',
-                             policy_loss_before,
-                             self.current_total_steps)
-      self.writer.add_scalar('policy/avarage_entropy',
-                             entropies.mean(),
-                             self.current_total_steps)
-      self.writer.add_scalar('policy/log_prob_std',
-                             log_probs.std(),
-                             self.current_total_steps)
-      self.writer.add_scalar('value/loss',
-                             value_loss_before,
-                             self.current_total_steps)
+      self.writer.add_scalar(
+        'policy/loss',
+        policy_loss_before,
+        self.current_total_steps
+      )
+      self.writer.add_scalar(
+        'policy/avarage_entropy',
+        entropies.mean(),
+        self.current_total_steps
+      )
+      self.writer.add_scalar(
+        'policy/log_prob_std',
+        log_probs.std(),
+        self.current_total_steps
+      )
+
+      self.writer.add_scalar(
+        'value/loss',
+        value_loss_before,
+        self.current_total_steps
+      )
 
   def compute_value_loss(
     self,
