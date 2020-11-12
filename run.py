@@ -8,6 +8,7 @@ import torch.nn as nn
 
 from rl_replicas.vpg import VPG
 from rl_replicas.trpo import TRPO
+from rl_replicas.ppo import PPO
 from rl_replicas.common.policy import Policy
 from rl_replicas.common.value_function import ValueFunction
 from rl_replicas.common.optimizers import ConjugateGradientOptimizer
@@ -62,6 +63,11 @@ elif algorithm_name == 'trpo':
     network = policy_network,
     optimizer = ConjugateGradientOptimizer(params=policy_network.parameters())
   )
+elif algorithm_name == 'ppo':
+  policy: Policy = Policy(
+    network = policy_network,
+    optimizer = torch.optim.Adam(policy_network.parameters(), lr=policy_learning_rate)
+  )
 else:
   print('Invalid algorithm name: {}'.format(algorithm_name))
 
@@ -77,6 +83,8 @@ if algorithm_name == 'vpg':
   model: VPG = VPG(policy, value_function, env, seed=0)
 elif algorithm_name == 'trpo':
   model: TRPO = TRPO(policy, value_function, env, seed=0)
+elif algorithm_name == 'ppo':
+  model: PPO = PPO(policy, value_function, env, seed=0)
 else:
   print('Invalid algorithm name: {}'.format(algorithm_name))
 
