@@ -64,7 +64,7 @@ class VPG(OnPolicyAlgorithm):
 
     # for logging
     policy_loss_before: torch.Tensor = policy_loss.detach()
-    entropies: torch.Tensor = policy_dist.entropy()
+    entropies: torch.Tensor = policy_dist.entropy().detach()
 
     # Train policy
     self.policy.optimizer.zero_grad()

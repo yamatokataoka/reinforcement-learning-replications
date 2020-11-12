@@ -85,7 +85,7 @@ class TRPO(OnPolicyAlgorithm):
     policy_loss: torch.Tensor = compute_surrogate_loss()
 
     # for logging
-    policy_loss_before: torch.Tensor = policy_loss
+    policy_loss_before: torch.Tensor = policy_loss.detach()
     with torch.no_grad():
       policy_dist: Categorical = self.policy(observations)
     log_probs: torch.Tensor = policy_dist.log_prob(actions)
