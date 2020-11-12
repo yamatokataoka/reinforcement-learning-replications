@@ -1,7 +1,7 @@
 from typing import Optional
 
 import torch
-import torch.nn as nn
+from torch.nn import functional as F
 from torch.distributions.categorical import Categorical
 import gym
 
@@ -63,8 +63,8 @@ class VPG(OnPolicyAlgorithm):
     policy_loss: torch.Tensor = -(log_probs * advantages).mean()
 
     # for logging
-    entropies: torch.Tensor = policy_dist.entropy()
     policy_loss_before: torch.Tensor = policy_loss.detach()
+    entropies: torch.Tensor = policy_dist.entropy()
 
     # Train policy
     self.policy.optimizer.zero_grad()
@@ -120,6 +120,6 @@ class VPG(OnPolicyAlgorithm):
   ) -> torch.Tensor:
     values: torch.Tensor = self.value_function(observations)
     squeezed_values: torch.Tensor = torch.squeeze(values, -1)
-    value_loss: torch.Tensor = nn.MSELoss()(squeezed_values, discounted_returns)
+    value_loss: torch.Tensor = F.mse_loss(squeezed_values, discounted_returns)
 
     return value_loss
