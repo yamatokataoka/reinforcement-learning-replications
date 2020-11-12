@@ -59,9 +59,11 @@ class VPG(OnPolicyAlgorithm):
 
     policy_dist: Categorical = self.policy(observations)
     log_probs: torch.Tensor = policy_dist.log_prob(actions)
-    entropies: torch.Tensor = policy_dist.entropy()
 
     policy_loss: torch.Tensor = -(log_probs * advantages).mean()
+
+    # for logging
+    entropies: torch.Tensor = policy_dist.entropy()
     policy_loss_before: torch.Tensor = policy_loss.detach()
 
     # Train policy
@@ -71,6 +73,7 @@ class VPG(OnPolicyAlgorithm):
 
     discounted_returns: torch.Tensor = one_epoch_experience['discounted_returns']
 
+    # for logging
     with torch.no_grad():
       value_loss_before: torch.Tensor = self.compute_value_loss(observations, discounted_returns)
 
@@ -81,11 +84,11 @@ class VPG(OnPolicyAlgorithm):
       value_loss.backward()
       self.value_function.optimizer.step()
 
-    logger.info('Policy Loss:         {:<8.3g}'.format(policy_loss_before))
-    logger.info('Avarage Entropy:     {:<8.3g}'.format(entropies.mean()))
-    logger.info('Log Prob STD:        {:<8.3g}'.format(log_probs.std()))
+    logger.info('Policy Loss:            {:<8.3g}'.format(policy_loss_before))
+    logger.info('Avarage Entropy:        {:<8.3g}'.format(entropies.mean()))
+    logger.info('Log Prob STD:           {:<8.3g}'.format(log_probs.std()))
 
-    logger.info('Value Function Loss: {:<8.3g}'.format(value_loss_before))
+    logger.info('Value Function Loss:    {:<8.3g}'.format(value_loss_before))
 
     if self.writer:
       self.writer.add_scalar(

@@ -59,12 +59,6 @@ class TRPO(OnPolicyAlgorithm):
     # Normalize advantage
     advantages = (advantages - advantages.mean()) / advantages.std()
 
-    with torch.no_grad():
-      policy_dist: Categorical = self.policy(observations)
-
-    log_probs: torch.Tensor = policy_dist.log_prob(actions)
-    entropies: torch.Tensor = policy_dist.entropy()
-
     def compute_surrogate_loss() -> torch.Tensor:
       policy_dist: Categorical = self.policy(observations)
       log_probs: torch.Tensor = policy_dist.log_prob(actions)
@@ -89,7 +83,13 @@ class TRPO(OnPolicyAlgorithm):
       return kl_constraint.mean()
 
     policy_loss: torch.Tensor = compute_surrogate_loss()
+
+    # for logging
     policy_loss_before: torch.Tensor = policy_loss
+    with torch.no_grad():
+      policy_dist: Categorical = self.policy(observations)
+    log_probs: torch.Tensor = policy_dist.log_prob(actions)
+    entropies: torch.Tensor = policy_dist.entropy()
 
     # Train policy
     self.policy.optimizer.zero_grad()
@@ -100,6 +100,7 @@ class TRPO(OnPolicyAlgorithm):
 
     discounted_returns: torch.Tensor = one_epoch_experience['discounted_returns']
 
+    # for logging
     with torch.no_grad():
       value_loss_before: torch.Tensor = self.compute_value_loss(observations, discounted_returns)
 
@@ -110,11 +111,11 @@ class TRPO(OnPolicyAlgorithm):
       value_loss.backward()
       self.value_function.optimizer.step()
 
-    logger.info('Policy Loss:         {:<8.3g}'.format(policy_loss_before))
-    logger.info('Avarage Entropy:     {:<8.3g}'.format(entropies.mean()))
-    logger.info('Log Prob STD:        {:<8.3g}'.format(log_probs.std()))
+    logger.info('Policy Loss:            {:<8.3g}'.format(policy_loss_before))
+    logger.info('Avarage Entropy:        {:<8.3g}'.format(entropies.mean()))
+    logger.info('Log Prob STD:           {:<8.3g}'.format(log_probs.std()))
 
-    logger.info('Value Function Loss: {:<8.3g}'.format(value_loss_before))
+    logger.info('Value Function Loss:    {:<8.3g}'.format(value_loss_before))
 
     if self.writer:
       self.writer.add_scalar(
