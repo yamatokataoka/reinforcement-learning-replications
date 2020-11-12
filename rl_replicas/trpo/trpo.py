@@ -57,7 +57,7 @@ class TRPO(OnPolicyAlgorithm):
     advantages: torch.Tensor = one_epoch_experience['advantages']
 
     # Normalize advantage
-    advantages = (advantages - advantages.mean()) / advantages.std()
+    advantages = (advantages - torch.mean(advantages)) / torch.std(advantages)
 
     def compute_surrogate_loss() -> torch.Tensor:
       policy_dist: Categorical = self.policy(observations)
@@ -67,8 +67,8 @@ class TRPO(OnPolicyAlgorithm):
         old_policy_dist: Categorical = self.old_policy(observations)
         old_log_probs: torch.Tensor = old_policy_dist.log_prob(actions)
 
-      likelihood_ratio: torch.Tensor = (log_probs - old_log_probs).exp()
-      surrogate_loss: torch.Tensor = -(likelihood_ratio * advantages).mean()
+      likelihood_ratio: torch.Tensor = torch.exp(log_probs - old_log_probs)
+      surrogate_loss: torch.Tensor = -torch.mean(likelihood_ratio * advantages)
 
       return surrogate_loss
 
@@ -80,7 +80,7 @@ class TRPO(OnPolicyAlgorithm):
 
       kl_constraint: torch.Tensor = torch.distributions.kl.kl_divergence(old_policy_dist, policy_dist)
 
-      return kl_constraint.mean()
+      return torch.mean(kl_constraint)
 
     policy_loss: torch.Tensor = compute_surrogate_loss()
 
@@ -112,8 +112,8 @@ class TRPO(OnPolicyAlgorithm):
       self.value_function.optimizer.step()
 
     logger.info('Policy Loss:            {:<8.3g}'.format(policy_loss_before))
-    logger.info('Avarage Entropy:        {:<8.3g}'.format(entropies.mean()))
-    logger.info('Log Prob STD:           {:<8.3g}'.format(log_probs.std()))
+    logger.info('Avarage Entropy:        {:<8.3g}'.format(torch.mean(entropies)))
+    logger.info('Log Prob STD:           {:<8.3g}'.format(torch.std(log_probs)))
 
     logger.info('Value Function Loss:    {:<8.3g}'.format(value_loss_before))
 
@@ -125,12 +125,12 @@ class TRPO(OnPolicyAlgorithm):
       )
       self.writer.add_scalar(
         'policy/avarage_entropy',
-        entropies.mean(),
+        torch.mean(entropies),
         self.current_total_steps
       )
       self.writer.add_scalar(
         'policy/log_prob_std',
-        log_probs.std(),
+        torch.std(log_probs),
         self.current_total_steps
       )
 

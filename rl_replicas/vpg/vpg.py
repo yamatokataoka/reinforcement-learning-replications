@@ -55,12 +55,12 @@ class VPG(OnPolicyAlgorithm):
     advantages: torch.Tensor = one_epoch_experience['advantages']
 
     # Normalize advantage
-    advantages = (advantages - advantages.mean()) / advantages.std()
+    advantages = (advantages - torch.mean(advantages)) / torch.std(advantages)
 
     policy_dist: Categorical = self.policy(observations)
     log_probs: torch.Tensor = policy_dist.log_prob(actions)
 
-    policy_loss: torch.Tensor = -(log_probs * advantages).mean()
+    policy_loss: torch.Tensor = -torch.mean(log_probs * advantages)
 
     # for logging
     policy_loss_before: torch.Tensor = policy_loss.detach()
@@ -85,8 +85,8 @@ class VPG(OnPolicyAlgorithm):
       self.value_function.optimizer.step()
 
     logger.info('Policy Loss:            {:<8.3g}'.format(policy_loss_before))
-    logger.info('Avarage Entropy:        {:<8.3g}'.format(entropies.mean()))
-    logger.info('Log Prob STD:           {:<8.3g}'.format(log_probs.std()))
+    logger.info('Avarage Entropy:        {:<8.3g}'.format(torch.mean(entropies)))
+    logger.info('Log Prob STD:           {:<8.3g}'.format(torch.std(log_probs)))
 
     logger.info('Value Function Loss:    {:<8.3g}'.format(value_loss_before))
 
@@ -98,12 +98,12 @@ class VPG(OnPolicyAlgorithm):
       )
       self.writer.add_scalar(
         'policy/avarage_entropy',
-        entropies.mean(),
+        torch.mean(entropies),
         self.current_total_steps
       )
       self.writer.add_scalar(
         'policy/log_prob_std',
-        log_probs.std(),
+        torch.std(log_probs),
         self.current_total_steps
       )
 
