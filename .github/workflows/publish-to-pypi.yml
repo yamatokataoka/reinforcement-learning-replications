@@ -12,6 +12,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+      - name: Get the tag name
+        id: get_tag
+        run: echo ::set-output name=tag_name::${GITHUB_REF#refs/tags/}
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -20,7 +23,7 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           release_name: ${{ github.ref }}
-          body: Reinforcement Learning Replications ${{ github.ref }}
+          body: Reinforcement Learning Replications ${{ steps.get_tag.outputs.tag_name }}
           draft: false
           prerelease: false
 
