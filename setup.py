@@ -2,8 +2,17 @@ from setuptools import setup, find_packages
 
 VERSION = '0.0.1'
 
-with open('README.md', 'r') as f:
-    long_description = f.read()
+long_description = """
+
+# Quick reference
+
+* **Github Repository**: [https://github.com/yamatokataoka/reinforcement-learning-replications](https://github.com/yamatokataoka/reinforcement-learning-replications)
+
+# What is Reinforcement Learning Replications?
+
+Reinforcement Learning Replications is a set of Pytorch implementations of reinforcement learning algorithms.
+
+"""
 
 setup(
   name='rl_replicas',
