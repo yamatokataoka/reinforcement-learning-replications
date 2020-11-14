@@ -86,7 +86,8 @@ elif algorithm_name == 'ppo':
 else:
   print('Invalid algorithm name: {}'.format(algorithm_name))
 
-print('Start experiment to: {}'.format(output_dir))
+if tensorboard or model_saving:
+  print('Start experiment to: {}'.format(output_dir))
 
 print('epochs:              {}'.format(epochs))
 print('steps_per_epoch:     {}'.format(steps_per_epoch))
