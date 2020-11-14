@@ -6,9 +6,7 @@ import gym
 import torch
 import torch.nn as nn
 
-from rl_replicas.vpg import VPG
-from rl_replicas.trpo import TRPO
-from rl_replicas.ppo import PPO
+from rl_replicas.algorithms import VPG, TRPO, PPO
 from rl_replicas.common.policy import Policy
 from rl_replicas.common.value_function import ValueFunction
 from rl_replicas.common.optimizers import ConjugateGradientOptimizer
