@@ -95,9 +95,9 @@ print('algorithm:           {}'.format(algorithm_name))
 print('environment:         {}'.format(environment_name))
 print('seed:                {}'.format(model.seed))
 
-print('policy_learning_rate: {}'.format(policy_learning_rate))
+print('value_function_learning_rate: {}'.format(value_function_learning_rate))
 if algorithm_name != 'trpo':
-  print('value_function_learning_rate: {}'.format(value_function_learning_rate))
+  print('policy_learning_rate: {}'.format(policy_learning_rate))
 
 model.learn(
   epochs=epochs,
