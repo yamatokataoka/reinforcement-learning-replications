@@ -33,7 +33,7 @@ class ConjugateGradientOptimizer(Optimizer):
     backtrack_ratio: float = 0.8,
     hvp_damping_coefficient: float = 1e-5
   ):
-    # no default values
+    # no need defaults
     defaults: dict = {}
     super().__init__(params, defaults)
     self.max_constraint = max_constraint
@@ -113,7 +113,6 @@ class ConjugateGradientOptimizer(Optimizer):
     """
     if 'hvp_damping_coefficient' not in state['state']:
       logger.warn('Resuming ConjugateGradientOptimizer with lost state.')
-    self.defaults = state['defaults']
     # Set the fields manually so that the setter gets called.
     self.state = state['state']
     self.param_groups = state['param_groups']
