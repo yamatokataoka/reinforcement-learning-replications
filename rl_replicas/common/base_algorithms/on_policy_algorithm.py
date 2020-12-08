@@ -28,11 +28,11 @@ class OneEpochExperience(TypedDict):
 
 class OnPolicyAlgorithm(ABC):
   """
-  The base of RL algorithms
+  The base of on-policy algorithms
 
   :param policy: (Policy) The policy
   :param value_function: (ValueFunction) The value function
-  :param env: (gym.Env or str) The environment to learn from
+  :param env: (gym.Env) The environment to learn from
   :param gamma: (float) Discount factor
   :param gae_lambda: (float) Factor for trade-off of bias vs variance for Generalized Advantage Estimator. Equivalent to classic advantage when set to 1.
   :param seed: (int) The seed for the pseudo-random generators
@@ -95,7 +95,7 @@ class OnPolicyAlgorithm(ABC):
 
     for current_epoch in range(epochs):
 
-      one_epoch_experience: OneEpochExperience = self.collect_experience_one_epoch(steps_per_epoch)
+      one_epoch_experience: OneEpochExperience = self.collect_one_expoch_experience(steps_per_epoch)
 
       if model_saving:
         logger.info('Set up model saving')
@@ -116,7 +116,7 @@ class OnPolicyAlgorithm(ABC):
       episode_returns: List[float] = one_epoch_experience['episode_returns']
       episode_lengths: List[int] = one_epoch_experience['episode_lengths']
 
-      logger.info('Epoch: {}'.format(current_epoch+1))
+      logger.info('Epoch: {}'.format(current_epoch))
 
       logger.info('Total env interactions: {:<8.3g}'.format(self.current_total_steps))
       logger.info('Total episodes:         {:<8.3g}'.format(self.current_total_episodes))
@@ -136,7 +136,7 @@ class OnPolicyAlgorithm(ABC):
       self.writer.flush()
       self.writer.close()
 
-  def collect_experience_one_epoch(self, steps_per_epoch: int) -> OneEpochExperience:
+  def collect_one_expoch_experience(self, steps_per_epoch: int) -> OneEpochExperience:
     one_epoch_experience: OneEpochExperience = {
       'observations': None,
       'actions': None,
