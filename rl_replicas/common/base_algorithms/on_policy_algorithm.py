@@ -76,7 +76,7 @@ class OnPolicyAlgorithm(ABC):
     """
     Learn the model
 
-    :param epochs: (int) The number of epochs (equivalent to number of policy updates) to perform
+    :param epochs: (int) The number of epochs to run and train.
     :param steps_per_epoch: (int) The number of steps to run per epoch; in other words, batch size is steps.
     :param output_dir: (str) The directory of output
     :param tensorboard: (bool) Whether or not to log for tensorboard
@@ -95,7 +95,7 @@ class OnPolicyAlgorithm(ABC):
 
     for current_epoch in range(epochs):
 
-      one_epoch_experience: OneEpochExperience = self.collect_one_expoch_experience(steps_per_epoch)
+      one_epoch_experience: OneEpochExperience = self.collect_one_epoch_experience(steps_per_epoch)
 
       if model_saving:
         logger.info('Set up model saving')
@@ -104,7 +104,7 @@ class OnPolicyAlgorithm(ABC):
 
         logger.info('Save model')
         torch.save({
-            'epoch': current_epoch+1,
+            'epoch': current_epoch,
             'total_steps': self.current_total_steps,
             'policy_state_dict': self.policy.network.state_dict(),
             'policy_optimizer_state_dict': self.policy.optimizer.state_dict(),
@@ -136,7 +136,7 @@ class OnPolicyAlgorithm(ABC):
       self.writer.flush()
       self.writer.close()
 
-  def collect_one_expoch_experience(self, steps_per_epoch: int) -> OneEpochExperience:
+  def collect_one_epoch_experience(self, steps_per_epoch: int) -> OneEpochExperience:
     one_epoch_experience: OneEpochExperience = {
       'observations': None,
       'actions': None,
