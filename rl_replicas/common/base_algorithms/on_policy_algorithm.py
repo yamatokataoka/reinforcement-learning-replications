@@ -128,9 +128,9 @@ class OnPolicyAlgorithm(ABC):
 
       logger.info('Average Episode Length: {:<8.3g}'.format(np.mean(episode_lengths)))
 
-      self.train(one_epoch_experience)
-
       logger.info('Time:                   {:<8.3g}'.format(time.time()-start_time))
+
+      self.train(one_epoch_experience)
 
     if tensorboard:
       self.writer.flush()
