@@ -1,10 +1,5 @@
-from typing import List, Tuple, Type
-
 import torch
 import torch.nn as nn
-import gym
-
-from rl_replicas.common.torch_net import mlp
 
 class ValueFunction(nn.Module):
   """
