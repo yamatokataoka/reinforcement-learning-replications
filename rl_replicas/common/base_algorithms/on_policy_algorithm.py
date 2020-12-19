@@ -84,12 +84,11 @@ class OnPolicyAlgorithm(ABC):
     """
     self.tensorboard = tensorboard
 
-    self.writer: SummaryWriter
     if self.tensorboard:
       logger.info('Set up tensorboard')
       os.makedirs(output_dir, exist_ok=True)
       tensorboard_path: str = os.path.join(output_dir, 'tensorboard')
-      self.writer = SummaryWriter(tensorboard_path)
+      self.writer: SummaryWriter = SummaryWriter(tensorboard_path)
 
     start_time: float = time.time()
     self.current_total_steps: int = 0
