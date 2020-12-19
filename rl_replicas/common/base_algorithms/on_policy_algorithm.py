@@ -82,8 +82,10 @@ class OnPolicyAlgorithm(ABC):
     :param tensorboard: (bool) Whether or not to log for tensorboard
     :param model_saving: (bool) Whether or not to save trained model (Save and overwrite at each end of epoch)
     """
-    self.writer: SummaryWriter = None
-    if tensorboard:
+    self.tensorboard = tensorboard
+
+    self.writer: SummaryWriter
+    if self.tensorboard:
       logger.info('Set up tensorboard')
       os.makedirs(output_dir, exist_ok=True)
       tensorboard_path: str = os.path.join(output_dir, 'tensorboard')
@@ -132,7 +134,7 @@ class OnPolicyAlgorithm(ABC):
 
       self.train(one_epoch_experience)
 
-    if tensorboard:
+    if self.tensorboard:
       self.writer.flush()
       self.writer.close()
 
@@ -225,7 +227,7 @@ class OnPolicyAlgorithm(ABC):
         episode_returns_list.append(episode_true_return)
         episode_lengths_list.append(episode_length)
 
-        if episode_done and self.writer:
+        if episode_done and self.tensorboard:
           self.writer.add_scalar(
             'env/episode_true_return',
             episode_true_return,

@@ -117,7 +117,7 @@ class TRPO(OnPolicyAlgorithm):
 
     logger.info('Value Function Loss:    {:<8.3g}'.format(value_loss_before))
 
-    if self.writer:
+    if self.tensorboard:
       self.writer.add_scalar(
         'policy/loss',
         policy_loss_before,
