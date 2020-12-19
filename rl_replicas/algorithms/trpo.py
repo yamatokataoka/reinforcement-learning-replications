@@ -94,7 +94,7 @@ class TRPO(OnPolicyAlgorithm):
     # Train policy
     self.policy.optimizer.zero_grad()
     policy_loss.backward()
-    self.policy.optimizer.step(compute_surrogate_loss, compute_kl_constraint)
+    self.policy.optimizer.step(compute_surrogate_loss, compute_kl_constraint) # type: ignore[call-arg, arg-type]
 
     self.old_policy.load_state_dict(self.policy.state_dict())
 
