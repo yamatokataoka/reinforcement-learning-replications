@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 
 from rl_replicas.algorithms import VPG, TRPO, PPO
+from rl_replicas.common.base_algorithms import OnPolicyAlgorithm
 from rl_replicas.common.policies import Policy, CategoricalPolicy
 from rl_replicas.common.value_function import ValueFunction
 from rl_replicas.common.optimizers import ConjugateGradientOptimizer
@@ -78,12 +79,13 @@ value_function: ValueFunction = ValueFunction(
   optimizer = torch.optim.Adam(value_function_network.parameters(), lr=value_function_learning_rate)
 )
 
+model: OnPolicyAlgorithm
 if algorithm_name == 'vpg':
-  model: VPG = VPG(policy, value_function, env, seed=0)
+  model = VPG(policy, value_function, env, seed=0)
 elif algorithm_name == 'trpo':
-  model: TRPO = TRPO(policy, value_function, env, seed=0)
+  model = TRPO(policy, value_function, env, seed=0)
 elif algorithm_name == 'ppo':
-  model: PPO = PPO(policy, value_function, env, seed=0)
+  model = PPO(policy, value_function, env, seed=0)
 else:
   print('Invalid algorithm name: {}'.format(algorithm_name))
 
