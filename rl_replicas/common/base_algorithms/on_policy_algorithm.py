@@ -77,7 +77,7 @@ class OnPolicyAlgorithm(ABC):
     Learn the model
 
     :param epochs: (int) The number of epochs to run and train.
-    :param steps_per_epoch: (int) The number of steps to run per epoch; in other words, batch size is steps.
+    :param steps_per_epoch: (int) The number of steps to run per epoch.
     :param output_dir: (str) The directory of output
     :param tensorboard: (bool) Whether or not to log for tensorboard
     :param model_saving: (bool) Whether or not to save trained model (Save and overwrite at each end of epoch)
@@ -139,10 +139,10 @@ class OnPolicyAlgorithm(ABC):
 
   def collect_one_epoch_experience(self, steps_per_epoch: int) -> OneEpochExperience:
     one_epoch_experience: OneEpochExperience = {
-      'observations': None,
-      'actions': None,
-      'advantages': None,
-      'discounted_returns': None,
+      'observations': torch.Tensor(),
+      'actions': torch.Tensor(),
+      'advantages': torch.Tensor(),
+      'discounted_returns': torch.Tensor(),
       'episode_returns': [],
       'episode_lengths': []
     }
