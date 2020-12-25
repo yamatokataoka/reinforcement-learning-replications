@@ -6,7 +6,7 @@ from torch.distributions.categorical import Categorical
 import gym
 
 from rl_replicas.common.base_algorithms.on_policy_algorithm import OnPolicyAlgorithm, OneEpochExperience
-from rl_replicas.common.policy import Policy
+from rl_replicas.common.policies import Policy
 from rl_replicas.common.value_function import ValueFunction
 from rl_replicas import log
 
