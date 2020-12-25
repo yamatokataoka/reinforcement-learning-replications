@@ -3,7 +3,7 @@ import torch.nn as nn
 
 class ValueFunction(nn.Module):
   """
-  A Value Function
+  The Value Function
 
   :param optimizer: (torch.optim.Optimizer) The optimizer.
   :param network: (nn.Module) The network.
@@ -13,7 +13,7 @@ class ValueFunction(nn.Module):
     self,
     network: nn.Module,
     optimizer: torch.optim.Optimizer
-  ):
+  ) -> None:
     super().__init__()
 
     self.network = network
@@ -21,9 +21,10 @@ class ValueFunction(nn.Module):
 
   def forward(self, observation: torch.Tensor) -> torch.Tensor:
     """
-    Forward pass in value function
+    Forward pass in the value function
 
     :param observation: (torch.Tensor) The current observation of the environment
+    :return value: (torch.Tensor) The value
     """
     value: torch.Tensor = self.network(observation)
 
