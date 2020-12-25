@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 
 from rl_replicas.algorithms import VPG, TRPO, PPO
-from rl_replicas.common.policy import Policy
+from rl_replicas.common.policies import Policy, CategoricalPolicy
 from rl_replicas.common.value_function import ValueFunction
 from rl_replicas.common.optimizers import ConjugateGradientOptimizer
 from rl_replicas.common.torch_net import mlp
@@ -51,18 +51,19 @@ policy_network = mlp(
   sizes = [env.observation_space.shape[0]]+policy_network_architecture+[env.action_space.n]
 )
 
+policy: Policy
 if algorithm_name == 'vpg':
-  policy: Policy = Policy(
+  policy = CategoricalPolicy(
     network = policy_network,
     optimizer = torch.optim.Adam(policy_network.parameters(), lr=policy_learning_rate)
   )
 elif algorithm_name == 'trpo':
-  policy: Policy = Policy(
+  policy = CategoricalPolicy(
     network = policy_network,
     optimizer = ConjugateGradientOptimizer(params=policy_network.parameters())
   )
 elif algorithm_name == 'ppo':
-  policy: Policy = Policy(
+  policy = CategoricalPolicy(
     network = policy_network,
     optimizer = torch.optim.Adam(policy_network.parameters(), lr=policy_learning_rate)
   )

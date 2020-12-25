@@ -24,7 +24,7 @@ import gym
 import torch
 
 from rl_replicas.algorithms import VPG
-from rl_replicas.common.policy import Policy
+from rl_replicas.common.policies import CategoricalPolicy
 from rl_replicas.common.value_function import ValueFunction
 from rl_replicas.common.torch_net import mlp
 
@@ -44,7 +44,7 @@ policy_network = mlp(
   sizes = [env.observation_space.shape[0]]+policy_network_architecture+[env.action_space.n]
 )
 
-policy: Policy = Policy(
+policy: CategoricalPolicy = CategoricalPolicy(
   network = policy_network,
   optimizer = torch.optim.Adam(policy_network.parameters(), lr=policy_learning_rate)
 )
