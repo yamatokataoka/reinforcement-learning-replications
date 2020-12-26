@@ -8,7 +8,7 @@ import torch.nn as nn
 from rl_replicas.algorithms import DDPG
 from rl_replicas.common.policies import DeterministicPolicy
 from rl_replicas.common.q_function import QFunction
-from rl_replicas.common.torch_net import mlp
+from rl_replicas.common.networks import MLP
 
 env_name = 'Pendulum-v0' # CartPole-v0, LunarLander-v2, LunarLanderContinuous-v2 and Pendulum-v0
 output_dir = './test/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -24,16 +24,16 @@ observation_size: int = env.observation_space.shape[0]
 action_size: int = env.action_space.shape[0]
 action_limit: float = env.action_space.high[0]
 
-policy_network = mlp(
+policy_network: nn.Module = MLP(
   sizes = [observation_size]+policy_network_architecture+[action_size],
-  output_activation = nn.Tanh
+  output_activation_function = nn.Tanh
 )
 policy: DeterministicPolicy = DeterministicPolicy(
   network = policy_network,
   optimizer = torch.optim.Adam(policy_network.parameters(), lr=policy_learning_rate)
 )
 
-q_function_network = mlp(
+q_function_network: nn.Module = MLP(
   sizes = [observation_size+action_size]+q_function_network_architecture+[1]
 )
 q_function: QFunction = QFunction(

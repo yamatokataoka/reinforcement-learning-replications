@@ -11,7 +11,7 @@ from rl_replicas.common.base_algorithms import OnPolicyAlgorithm
 from rl_replicas.common.policies import Policy, CategoricalPolicy
 from rl_replicas.common.value_function import ValueFunction
 from rl_replicas.common.optimizers import ConjugateGradientOptimizer
-from rl_replicas.common.torch_net import mlp
+from rl_replicas.common.networks import MLP
 
 import argparse
 parser = argparse.ArgumentParser()
@@ -48,7 +48,7 @@ output_dir: str = os.path.join(
   datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 )
 
-policy_network = mlp(
+policy_network: nn.Module = MLP(
   sizes = [env.observation_space.shape[0]]+policy_network_architecture+[env.action_space.n]
 )
 
@@ -71,7 +71,7 @@ elif algorithm_name == 'ppo':
 else:
   print('Invalid algorithm name: {}'.format(algorithm_name))
 
-value_function_network = mlp(
+value_function_network: nn.Module = MLP(
   sizes = [env.observation_space.shape[0]]+value_function_network_architecture+[1]
 )
 value_function: ValueFunction = ValueFunction(
