@@ -1,5 +1,5 @@
 import random
-from typing import List, Tuple
+from typing import Iterable, List, Tuple
 
 import numpy as np
 import scipy.signal
@@ -64,3 +64,19 @@ def unflatten_tensors(flattened: np.ndarray, tensor_shapes: List[torch.Size]) ->
     indices = np.cumsum(tensor_sizes)[:-1]
 
     return [np.reshape(pair[0], pair[1]) for pair in zip(np.split(flattened, indices), tensor_shapes)]
+
+def polyak_average(
+  params: Iterable[torch.nn.Parameter],
+  target_params: Iterable[torch.nn.Parameter],
+  tau: float
+) -> None:
+    """
+    Perform Polyak averaging on target_params using params.
+
+    :param params: (Iterable[torch.nn.Parameter]) The parameters to use to update the target params
+    :param target_params: (Iterable[torch.nn.Parameter]) The parameters to update
+    :param tau: the soft update coefficient ("Polyak update", between 0 and 1)
+    """
+    with torch.no_grad():
+      for param, target_param in zip(params, target_params):
+        target_param.data.copy_((1.0 - tau) * target_param.data + tau * param.data)
