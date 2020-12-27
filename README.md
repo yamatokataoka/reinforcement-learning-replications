@@ -22,11 +22,12 @@ import datetime
 
 import gym
 import torch
+import torch.nn as nn
 
 from rl_replicas.algorithms import VPG
 from rl_replicas.common.policies import CategoricalPolicy
 from rl_replicas.common.value_function import ValueFunction
-from rl_replicas.common.torch_net import mlp
+from rl_replicas.common.networks import MLP
 
 env_name = 'CartPole-v0' # CartPole-v0 or LunarLander-v2
 output_dir = './runs/vpg/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -40,7 +41,7 @@ value_function_learning_rate = 1e-3
 
 env = gym.make(env_name)
 
-policy_network = mlp(
+policy_network: nn.Module = MLP(
   sizes = [env.observation_space.shape[0]]+policy_network_architecture+[env.action_space.n]
 )
 
@@ -49,7 +50,7 @@ policy: CategoricalPolicy = CategoricalPolicy(
   optimizer = torch.optim.Adam(policy_network.parameters(), lr=policy_learning_rate)
 )
 
-value_function_network = mlp(
+value_function_network: nn.Module = MLP(
   sizes = [env.observation_space.shape[0]]+value_function_network_architecture+[1]
 )
 value_function: ValueFunction = ValueFunction(
