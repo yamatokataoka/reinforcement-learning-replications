@@ -13,7 +13,7 @@ def discount_cumulative_sum(vector: np.ndarray, discount: float) -> np.ndarray:
   e.g. [x0,
         x1,
         x2]
-  :param discount: (float) Discount factor
+  :param discount: (float) The discount factor for the cumulative return
   :return: discounted cumulative sums of an vector
   e.g. [x0 + discount * x1 + discount^2 * x2,
         x1 + discount * x2,
@@ -42,7 +42,7 @@ def gae(
   Compute Generalized Advantage Estimation (GAE)
 
   :param rewards: (np.ndarray) Rewards for all states
-  :param gamma: (float) Discount factor
+  :param gamma: (float) The discount factor for the cumulative return
   :param values: (np.ndarray) Values for all states
   :param gae_lambda: (float) A smoothing parameter for reducing the variance
   :return gaes: GAEs for all states
