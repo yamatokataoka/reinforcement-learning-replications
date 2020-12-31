@@ -10,7 +10,7 @@ from rl_replicas.common.policies import DeterministicPolicy
 from rl_replicas.common.q_function import QFunction
 from rl_replicas.common.networks import MLP
 
-env_name = 'Pendulum-v0' # CartPole-v0, LunarLander-v2, LunarLanderContinuous-v2 and Pendulum-v0
+env_name = 'Pendulum-v0' # Pendulum-v0 or LunarLanderContinuous-v2
 output_dir = './test/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 
 policy_network_architecture: List[int] = [256, 256]
@@ -26,6 +26,7 @@ action_limit: float = env.action_space.high[0]
 
 policy_network: nn.Module = MLP(
   sizes = [observation_size]+policy_network_architecture+[action_size],
+  activation_function = nn.ReLU,
   output_activation_function = nn.Tanh
 )
 policy: DeterministicPolicy = DeterministicPolicy(
@@ -34,7 +35,8 @@ policy: DeterministicPolicy = DeterministicPolicy(
 )
 
 q_function_network: nn.Module = MLP(
-  sizes = [observation_size+action_size]+q_function_network_architecture+[1]
+  sizes = [observation_size+action_size]+q_function_network_architecture+[1],
+  activation_function = nn.ReLU
 )
 q_function: QFunction = QFunction(
   network = q_function_network,
@@ -42,6 +44,8 @@ q_function: QFunction = QFunction(
 )
 
 model: DDPG = DDPG(policy, q_function, env)
+
+print(f'Experiment to {output_dir}')
 
 model.learn(
   epochs = 50,
@@ -52,6 +56,10 @@ model.learn(
   steps_before_update = 1000,
   train_steps = 50,
   output_dir = output_dir,
-  tensorboard = False,
-  model_saving = False
+  num_evaluation_episodes = 3,
+  evaluation_interval = 4000,
+  tensorboard = True,
+  model_saving = True
 )
+
+print(f'Experimented to {output_dir}')
