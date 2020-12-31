@@ -72,7 +72,7 @@ class DDPG(OffPolicyAlgorithm):
         next_actions: torch.Tensor = self.target_policy(next_observations)
         target_q_values: torch.Tensor = self.target_q_function(next_observations, next_actions)
 
-      targets: torch.Tensor = rewards + self.gamma * (1 - dones) * target_q_values
+        targets: torch.Tensor = rewards + self.gamma * (1 - dones) * target_q_values
 
       q_function_loss: torch.Tensor = F.mse_loss(q_values, targets)
       q_function_losses.append(q_function_loss.item())

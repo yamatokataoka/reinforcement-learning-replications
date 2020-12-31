@@ -55,6 +55,11 @@ class OffPolicyAlgorithm(ABC):
     if seed is not None:
       self._seed()
 
+    for param in self.target_policy.network.parameters():
+      param.requires_grad = False
+    for param in self.target_q_function.network.parameters():
+      param.requires_grad = False
+
   def _seed(self) -> None:
     seed_random_generators(self.seed)
     self.env.action_space.seed(self.seed)
