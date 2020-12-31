@@ -16,14 +16,14 @@ logger = log.get_logger(__name__)
 
 class DDPG(OffPolicyAlgorithm):
   """
-  Deep Deterministic Policy Gradient
+  Deep Deterministic Policy Gradient (DDPG)
 
   :param policy: (Policy) The policy
   :param q_function: (QFunction) The Q function
-  :param env: (gym.Env or str) The environment to learn from
-  :param gamma: (float) Discount factor
-  :param tau: (float) Interpolation factor in polyak averaging for target networks.
-  :param action_noise_scale: (float) Stddev for Gaussian exploration noise added to policy at training time.
+  :param env: (gym.Env) The environment to learn from
+  :param gamma: (float) The discount factor for the cumulative return
+  :param tau: (float) The interpolation factor in polyak averaging for target networks
+  :param action_noise_scale: (float) The scale of the noise (std)
   :param seed: (int) The seed for the pseudo-random generators
   """
   def __init__(

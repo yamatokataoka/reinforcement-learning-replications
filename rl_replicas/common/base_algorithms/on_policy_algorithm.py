@@ -33,8 +33,8 @@ class OnPolicyAlgorithm(ABC):
   :param policy: (Policy) The policy
   :param value_function: (ValueFunction) The value function
   :param env: (gym.Env) The environment to learn from
-  :param gamma: (float) Discount factor
-  :param gae_lambda: (float) Factor for trade-off of bias vs variance for Generalized Advantage Estimator. Equivalent to classic advantage when set to 1.
+  :param gamma: (float) The discount factor for the cumulative return
+  :param gae_lambda: (float) The factor for trade-off of bias vs variance for Generalized Advantage Estimator
   :param seed: (int) The seed for the pseudo-random generators
   :param n_value_gradients (int): Number of gradient descent steps to take on value function per epoch.
   """
@@ -259,9 +259,7 @@ class OnPolicyAlgorithm(ABC):
     one_epoch_experience: OneEpochExperience
   ) -> None:
     """
-    Consume experience on the current epoch and update train algorithm.
-
-    Implemented by individual algorithms.
+    Train the algorithm with the experience
 
     :param one_epoch_experience: (OneEpochExperience) Collected experience on one epoch.
     """
@@ -274,8 +272,8 @@ class OnPolicyAlgorithm(ABC):
     """
     Get the action(s) from an observation which are sampled under the current policy.
 
-    :param observation: the input observation
-    :return: the model's action
+    :param observation: (np.ndarray) The input observation
+    :return: (np.ndarray) The action(s)
     """
     observation_tensor: torch.Tensor = torch.from_numpy(observation).float()
     action: torch.Tensor = self.policy.predict(observation_tensor)

@@ -13,8 +13,8 @@ def discount_cumulative_sum(vector: np.ndarray, discount: float) -> np.ndarray:
   e.g. [x0,
         x1,
         x2]
-  :param discount: (float) Discount factor
-  :return: discounted cumulative sums of an vector
+  :param discount: (float) The discount factor for the cumulative return
+  :return: (np.ndarray) discounted cumulative sums of an vector
   e.g. [x0 + discount * x1 + discount^2 * x2,
         x1 + discount * x2,
         x2]
@@ -23,8 +23,7 @@ def discount_cumulative_sum(vector: np.ndarray, discount: float) -> np.ndarray:
 
 def seed_random_generators(seed: int) -> None:
     """
-    Set the seed of the pseudo-random generators
-    (python, numpy, pytorch)
+    Set the seed of the pseudo-random generators (python, numpy, pytorch)
 
     :param seed: (int)
     """
@@ -42,10 +41,10 @@ def gae(
   Compute Generalized Advantage Estimation (GAE)
 
   :param rewards: (np.ndarray) Rewards for all states
-  :param gamma: (float) Discount factor
+  :param gamma: (float) The discount factor for the cumulative return
   :param values: (np.ndarray) Values for all states
   :param gae_lambda: (float) A smoothing parameter for reducing the variance
-  :return gaes: GAEs for all states
+  :return gaes: (np.ndarray) GAEs for all states
   """
   deltas: np.ndarray = rewards[:-1] + gamma * values[1:] - values[:-1]
   gaes: np.ndarray = discount_cumulative_sum(deltas, gamma * gae_lambda)
@@ -75,7 +74,7 @@ def polyak_average(
 
     :param params: (Iterable[torch.nn.Parameter]) The parameters to use to update the target params
     :param target_params: (Iterable[torch.nn.Parameter]) The parameters to update
-    :param tau: the soft update coefficient ("Polyak update", between 0 and 1)
+    :param tau: (float) the soft update coefficient ("Polyak update", between 0 and 1)
     """
     with torch.no_grad():
       for param, target_param in zip(params, target_params):

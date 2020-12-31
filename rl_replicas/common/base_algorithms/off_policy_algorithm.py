@@ -24,9 +24,9 @@ class OffPolicyAlgorithm(ABC):
   :param policy: (Policy) The policy
   :param q_function: (QFunction) The Q function
   :param env: (gym.Env) The environment to learn from
-  :param gamma: (float) Discount factor
-  :param tau: (float) Interpolation factor in polyak averaging for target networks.
-  :param action_noise_scale: (float) Stddev for Gaussian exploration noise added to policy at training time.
+  :param gamma: (float) The discount factor for the cumulative return
+  :param tau: (float) The interpolation factor in polyak averaging for target networks
+  :param action_noise_scale: (float) The scale of the action noise (std)
   :param seed: (int) The seed for the pseudo-random generators
   """
   def __init__(
@@ -246,11 +246,11 @@ class OffPolicyAlgorithm(ABC):
     minibatch_size: int
   ) -> None:
     """
-    Consume experience on the current epoch and update train algorithm.
+    Train the algorithm with the experience.
 
-    Implemented by individual algorithms.
-
-    :param minibatch: (Dict[str, torch.Tensor]) minibatch
+    :param replay_buffer: (ReplayBuffer) The reply buffer
+    :param train_steps: (int) The number of gradient descent updates
+    :param minibatch_size: (int) The minibatch size
     """
     raise NotImplementedError
 
@@ -261,8 +261,8 @@ class OffPolicyAlgorithm(ABC):
     """
     Get the action(s) from an observation which are sampled under the current policy.
 
-    :param observation: the input observation
-    :return: the action(s)
+    :param observation: (np.ndarray) The input observation
+    :return: (np.ndarray) The action(s)
     """
     observation_tensor: torch.Tensor = torch.from_numpy(observation).float()
     action: torch.Tensor = self.policy.predict(observation_tensor)
