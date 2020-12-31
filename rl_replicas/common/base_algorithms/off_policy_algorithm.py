@@ -48,6 +48,7 @@ class OffPolicyAlgorithm(ABC):
     if seed is not None:
       self.seed: int = seed
 
+    self.evaluation_env = gym.make(env.spec.id)
     self.action_limit: float = self.env.action_space.high[0]
     self.action_size: int = self.env.action_space.shape[0]
     self.target_policy = copy.deepcopy(self.policy)
@@ -74,6 +75,8 @@ class OffPolicyAlgorithm(ABC):
     random_start_steps: int = 10000,
     steps_before_update: int = 1000,
     train_steps: int = 50,
+    num_evaluation_episodes: int = 5,
+    evaluation_interval: int = 4000,
     output_dir: str = '.',
     tensorboard: bool = False,
     model_saving: bool = False
@@ -88,6 +91,8 @@ class OffPolicyAlgorithm(ABC):
     :param random_start_steps: (int) The number of steps for uniform-random action selection for exploration at the beginning.
     :param steps_before_update: (int) The number of steps to perform before policy is updated.
     :param train_steps: (int) The number of training steps on each epoch
+    :param num_evaluation_episodes: (int) The number of evaluation episodes
+    :param evaluation_interval: (int) The interval steps of evaluation
     :param output_dir: (str) The directory of output
     :param tensorboard: (bool) Whether or not to log for tensorboard
     :param model_saving: (bool) Whether or not to save trained model (Save and overwrite at each end of epoch)
@@ -141,6 +146,9 @@ class OffPolicyAlgorithm(ABC):
         logger.info('Min Episode Return:     {:<8.3g}'.format(np.min(episode_returns)))
 
         logger.info('Average Episode Length: {:<8.3g}'.format(np.mean(episode_lengths)))
+
+      if num_evaluation_episodes > 0 and self.current_total_steps % evaluation_interval == 0:
+        self.evaluate_policy(num_evaluation_episodes, self.evaluation_env)
 
       logger.info('Time:                   {:<8.3g}'.format(time.time()-start_time))
 
@@ -273,3 +281,47 @@ class OffPolicyAlgorithm(ABC):
     action_ndarray: np.ndarray = action.detach().numpy()
 
     return action_ndarray
+
+  def evaluate_policy(
+    self,
+    num_evaluation_episodes: int,
+    evaluation_env: gym.Env
+  ) -> Tuple[List[float], List[int]]:
+    episode_returns: List[float] = []
+    episode_lengths: List[int] = []
+
+    for _ in range(num_evaluation_episodes):
+      observation, done, episode_return, episode_length = evaluation_env.reset(), False, 0, 0
+
+      while not done:
+        action: np.ndarray = self.predict(observation)
+
+        observation: np.ndarray
+        reward: float
+        done: bool
+        observation, reward, done, _ = evaluation_env.step(action)
+
+        episode_return += reward
+        episode_length += 1
+
+      episode_returns.append(episode_return)
+      episode_lengths.append(episode_length)
+
+    if self.tensorboard:
+      self.writer.add_scalar(
+        'evaluation_env/episode_avarage_return',
+        np.mean(episode_returns),
+        self.current_total_steps
+      )
+      self.writer.add_scalar(
+        'evaluation_env/episode_avarage_length',
+        np.mean(episode_lengths),
+        self.current_total_steps
+      )
+
+    logger.info('Average Evaluation Episode Return: {:<8.3g}'.format(np.mean(episode_returns)))
+    logger.info('Evaluation Episode Return STD:     {:<8.3g}'.format(np.std(episode_returns)))
+    logger.info('Max Evaluation Episode Return:     {:<8.3g}'.format(np.max(episode_returns)))
+    logger.info('Min Evaluation Episode Return:     {:<8.3g}'.format(np.min(episode_returns)))
+
+    logger.info('Average Evaluation Episode Length: {:<8.3g}'.format(np.mean(episode_lengths)))
