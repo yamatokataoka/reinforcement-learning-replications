@@ -175,23 +175,24 @@ class OffPolicyAlgorithm(ABC):
     episode_returns: List[float] = []
     episode_lengths: List[int] = []
 
-    # Variables on the current episode
-    episode_length: int = 0
-    episode_return: float = 0
+    if not hasattr(self, 'observation'):
+      # Variables on the current episode
+      self.episode_length: int = 0
+      self.episode_return: float = 0
 
-    observation: np.ndarray = self.env.reset()
-    observation_tensor: torch.Tensor = torch.from_numpy(observation).float()
+      self.observation: np.ndarray = self.env.reset()
 
     for current_step in range(steps_per_epoch):
+      observation_tensor: torch.Tensor = torch.from_numpy(self.observation).float()
       observations_list.append(observation_tensor)
 
       action: np.ndarray
-      if self.current_total_steps > random_start_steps:
-        action = self.action_limit * self.predict(observation)
+      if self.current_total_steps < random_start_steps:
+        action = self.env.action_space.sample()
+      else:
+        action = self.action_limit * self.predict(self.observation)
         action += self.action_noise_scale * np.random.randn(self.action_size)
         action = np.clip(action, -self.action_limit, self.action_limit)
-      else:
-        action = self.env.action_space.sample()
 
       action_tensor: torch.Tensor = torch.from_numpy(action).float()
       actions_list.append(action_tensor)
@@ -204,37 +205,34 @@ class OffPolicyAlgorithm(ABC):
       next_observation_tensor: torch.Tensor = torch.from_numpy(next_observation).float()
       next_observations_list.append(next_observation_tensor)
 
-      observation = next_observation
-      observation_tensor = next_observation_tensor
+      self.observation = next_observation
 
       rewards.append(reward)
       dones.append(episode_done)
 
-      episode_length += 1
-      episode_return += reward
       self.current_total_steps += 1
-
-      epoch_ended: bool = current_step == steps_per_epoch-1
+      self.episode_length += 1
+      self.episode_return += reward
 
       if episode_done:
         self.current_total_episodes += 1
 
-        episode_returns.append(episode_return)
-        episode_lengths.append(episode_length)
+        episode_returns.append(self.episode_return)
+        episode_lengths.append(self.episode_length)
 
         if self.tensorboard:
           self.writer.add_scalar(
             'env/episode_true_return',
-            episode_return,
+            self.episode_return,
             self.current_total_steps
           )
           self.writer.add_scalar(
             'env/episode_length',
-            episode_length,
+            self.episode_length,
             self.current_total_steps
           )
 
-        observation, episode_length, episode_return = self.env.reset(), 0, 0
+        self.observation, self.episode_length, self.episode_return = self.env.reset(), 0, 0
 
     this_epoch_observations: torch.Tensor = torch.stack(observations_list)
     this_epoch_actions: torch.Tensor = torch.stack(actions_list)

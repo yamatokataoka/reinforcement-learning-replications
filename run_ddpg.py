@@ -48,10 +48,10 @@ model: DDPG = DDPG(policy, q_function, env)
 print(f'Experiment to {output_dir}')
 
 model.learn(
-  epochs = 50,
-  steps_per_epoch = 1000,
+  epochs = 2000,
+  steps_per_epoch = 50,
   replay_buffer_size = int(1e6),
-  minibatch_size = 64,
+  minibatch_size = 100,
   random_start_steps = 10000,
   steps_before_update = 1000,
   train_steps = 50,
