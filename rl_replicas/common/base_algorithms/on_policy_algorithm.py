@@ -259,9 +259,7 @@ class OnPolicyAlgorithm(ABC):
     one_epoch_experience: OneEpochExperience
   ) -> None:
     """
-    Consume experience on the current epoch and update train algorithm.
-
-    Implemented by individual algorithms.
+    Train the algorithm with the experience
 
     :param one_epoch_experience: (OneEpochExperience) Collected experience on one epoch.
     """
@@ -274,8 +272,8 @@ class OnPolicyAlgorithm(ABC):
     """
     Get the action(s) from an observation which are sampled under the current policy.
 
-    :param observation: the input observation
-    :return: the model's action
+    :param observation: (np.ndarray) The input observation
+    :return: (np.ndarray) The action(s)
     """
     observation_tensor: torch.Tensor = torch.from_numpy(observation).float()
     action: torch.Tensor = self.policy.predict(observation_tensor)

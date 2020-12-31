@@ -16,11 +16,9 @@ class VPG(OnPolicyAlgorithm):
   """
   Vanilla Policy Gradient (REINFORCE) with GAE for advantage estimation
 
-  VPG, also known as Reinforce, trains stochastic policy in an on-policy way.
-
   :param policy: (Policy) The policy
   :param value_function: (ValueFunction) The value function
-  :param env: (gym.Env or str) The environment to learn from
+  :param env: (gym.Env) The environment to learn from
   :param gamma: (float) The discount factor for the cumulative return
   :param gae_lambda: (float) The factor for trade-off of bias vs variance for Generalized Advantage Estimator
   :param seed: (int) The seed for the pseudo-random generators

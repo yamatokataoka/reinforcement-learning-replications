@@ -20,7 +20,7 @@ class DDPG(OffPolicyAlgorithm):
 
   :param policy: (Policy) The policy
   :param q_function: (QFunction) The Q function
-  :param env: (gym.Env or str) The environment to learn from
+  :param env: (gym.Env) The environment to learn from
   :param gamma: (float) The discount factor for the cumulative return
   :param tau: (float) The interpolation factor in polyak averaging for target networks
   :param action_noise_scale: (float) The scale of the noise (std)

@@ -19,7 +19,7 @@ class PPO(OnPolicyAlgorithm):
 
   :param policy: (Policy) The policy
   :param value_function: (ValueFunction) The value function
-  :param env: (gym.Env or str) The environment to learn from
+  :param env: (gym.Env) The environment to learn from
   :param clip_range: (float) The limit on the likelihood ratio between policies for clipping in the policy objective.
   :param max_kl_divergence: (float) The limit on the KL divergence between policies for early stopping.
   :param gamma: (float) The discount factor for the cumulative return

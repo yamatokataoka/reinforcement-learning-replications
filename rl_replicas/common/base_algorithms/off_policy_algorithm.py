@@ -246,7 +246,7 @@ class OffPolicyAlgorithm(ABC):
     minibatch_size: int
   ) -> None:
     """
-    Consume experience on the current epoch and train algorithm.
+    Train the algorithm with the experience.
 
     :param replay_buffer: (ReplayBuffer) The reply buffer
     :param train_steps: (int) The number of gradient descent updates
