@@ -119,7 +119,7 @@ class OnPolicyAlgorithm(ABC):
 
       logger.info('Epoch: {}'.format(current_epoch))
 
-      logger.info('Total env interactions: {:<8.3g}'.format(self.current_total_steps))
+      logger.info('Total steps:            {:<8.3g}'.format(self.current_total_steps))
       logger.info('Total episodes:         {:<8.3g}'.format(self.current_total_episodes))
 
       logger.info('Average Episode Return: {:<8.3g}'.format(np.mean(episode_returns)))

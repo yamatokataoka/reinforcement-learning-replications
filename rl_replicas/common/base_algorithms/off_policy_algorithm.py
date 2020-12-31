@@ -126,16 +126,15 @@ class OffPolicyAlgorithm(ABC):
 
       logger.info('Epoch: {}'.format(current_epoch))
 
-      logger.info('Total env interactions: {:<8.3g}'.format(self.current_total_steps))
+      logger.info('Total steps:            {:<8.3g}'.format(self.current_total_steps))
       logger.info('Total episodes:         {:<8.3g}'.format(self.current_total_episodes))
 
-      if len(episode_returns) > 0:
+      if len(episode_lengths) > 0:
         logger.info('Average Episode Return: {:<8.3g}'.format(np.mean(episode_returns)))
         logger.info('Episode Return STD:     {:<8.3g}'.format(np.std(episode_returns)))
         logger.info('Max Episode Return:     {:<8.3g}'.format(np.max(episode_returns)))
         logger.info('Min Episode Return:     {:<8.3g}'.format(np.min(episode_returns)))
 
-      if len(episode_lengths) > 0:
         logger.info('Average Episode Length: {:<8.3g}'.format(np.mean(episode_lengths)))
 
       logger.info('Time:                   {:<8.3g}'.format(time.time()-start_time))

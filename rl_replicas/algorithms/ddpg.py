@@ -130,6 +130,7 @@ class DDPG(OffPolicyAlgorithm):
 
     logger.info('Policy Loss:            {:<8.3g}'.format(np.mean(policy_losses)))
     logger.info('Q Function Loss:        {:<8.3g}'.format(np.mean(q_function_losses)))
+
     logger.info('Average Q Value:        {:<8.3g}'.format(np.mean(all_q_values)))
     logger.info('Max Q Value:            {:<8.3g}'.format(np.max(all_q_values)))
     logger.info('Min Q Value:            {:<8.3g}'.format(np.min(all_q_values)))
