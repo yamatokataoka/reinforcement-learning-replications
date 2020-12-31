@@ -234,17 +234,11 @@ class OffPolicyAlgorithm(ABC):
 
         self.observation, self.episode_length, self.episode_return = self.env.reset(), 0, 0
 
-    this_epoch_observations: torch.Tensor = torch.stack(observations_list)
-    this_epoch_actions: torch.Tensor = torch.stack(actions_list)
-    this_epoch_rewards: torch.Tensor = torch.Tensor(rewards)
-    this_epoch_next_observations: torch.Tensor = torch.stack(next_observations_list)
-    this_epoch_dones: torch.Tensor = torch.Tensor(dones)
-
-    replay_buffer.add_one_epoch_experience(this_epoch_observations,
-                                           this_epoch_actions,
-                                           this_epoch_rewards,
-                                           this_epoch_next_observations,
-                                           this_epoch_dones)
+    replay_buffer.add_one_epoch_experience(observations_list,
+                                           actions_list,
+                                           rewards,
+                                           next_observations_list,
+                                           dones)
 
     return episode_returns, episode_lengths
 
