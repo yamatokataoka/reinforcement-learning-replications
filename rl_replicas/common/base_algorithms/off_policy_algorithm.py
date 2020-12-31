@@ -48,6 +48,7 @@ class OffPolicyAlgorithm(ABC):
     if seed is not None:
       self.seed: int = seed
 
+    self.evaluation_env = gym.make(env.spec.id)
     self.action_limit: float = self.env.action_space.high[0]
     self.action_size: int = self.env.action_space.shape[0]
     self.target_policy = copy.deepcopy(self.policy)
@@ -74,6 +75,8 @@ class OffPolicyAlgorithm(ABC):
     random_start_steps: int = 10000,
     steps_before_update: int = 1000,
     train_steps: int = 50,
+    num_evaluation_episodes: int = 5,
+    evaluation_interval: int = 4000,
     output_dir: str = '.',
     tensorboard: bool = False,
     model_saving: bool = False
@@ -88,6 +91,8 @@ class OffPolicyAlgorithm(ABC):
     :param random_start_steps: (int) The number of steps for uniform-random action selection for exploration at the beginning.
     :param steps_before_update: (int) The number of steps to perform before policy is updated.
     :param train_steps: (int) The number of training steps on each epoch
+    :param num_evaluation_episodes: (int) The number of evaluation episodes
+    :param evaluation_interval: (int) The interval steps of evaluation
     :param output_dir: (str) The directory of output
     :param tensorboard: (bool) Whether or not to log for tensorboard
     :param model_saving: (bool) Whether or not to save trained model (Save and overwrite at each end of epoch)
@@ -142,6 +147,9 @@ class OffPolicyAlgorithm(ABC):
 
         logger.info('Average Episode Length: {:<8.3g}'.format(np.mean(episode_lengths)))
 
+      if num_evaluation_episodes > 0 and self.current_total_steps % evaluation_interval == 0:
+        self.evaluate_policy(num_evaluation_episodes, self.evaluation_env)
+
       logger.info('Time:                   {:<8.3g}'.format(time.time()-start_time))
 
       if self.current_total_steps >= steps_before_update:
@@ -167,23 +175,24 @@ class OffPolicyAlgorithm(ABC):
     episode_returns: List[float] = []
     episode_lengths: List[int] = []
 
-    # Variables on the current episode
-    episode_length: int = 0
-    episode_return: float = 0
+    if not hasattr(self, 'observation'):
+      # Variables on the current episode
+      self.episode_length: int = 0
+      self.episode_return: float = 0
 
-    observation: np.ndarray = self.env.reset()
-    observation_tensor: torch.Tensor = torch.from_numpy(observation).float()
+      self.observation: np.ndarray = self.env.reset()
 
     for current_step in range(steps_per_epoch):
+      observation_tensor: torch.Tensor = torch.from_numpy(self.observation).float()
       observations_list.append(observation_tensor)
 
       action: np.ndarray
-      if self.current_total_steps > random_start_steps:
-        action = self.action_limit * self.predict(observation)
+      if self.current_total_steps < random_start_steps:
+        action = self.env.action_space.sample()
+      else:
+        action = self.action_limit * self.predict(self.observation)
         action += self.action_noise_scale * np.random.randn(self.action_size)
         action = np.clip(action, -self.action_limit, self.action_limit)
-      else:
-        action = self.env.action_space.sample()
 
       action_tensor: torch.Tensor = torch.from_numpy(action).float()
       actions_list.append(action_tensor)
@@ -196,37 +205,34 @@ class OffPolicyAlgorithm(ABC):
       next_observation_tensor: torch.Tensor = torch.from_numpy(next_observation).float()
       next_observations_list.append(next_observation_tensor)
 
-      observation = next_observation
-      observation_tensor = next_observation_tensor
+      self.observation = next_observation
 
       rewards.append(reward)
       dones.append(episode_done)
 
-      episode_length += 1
-      episode_return += reward
       self.current_total_steps += 1
-
-      epoch_ended: bool = current_step == steps_per_epoch-1
+      self.episode_length += 1
+      self.episode_return += reward
 
       if episode_done:
         self.current_total_episodes += 1
 
-        episode_returns.append(episode_return)
-        episode_lengths.append(episode_length)
+        episode_returns.append(self.episode_return)
+        episode_lengths.append(self.episode_length)
 
         if self.tensorboard:
           self.writer.add_scalar(
             'env/episode_true_return',
-            episode_return,
+            self.episode_return,
             self.current_total_steps
           )
           self.writer.add_scalar(
             'env/episode_length',
-            episode_length,
+            self.episode_length,
             self.current_total_steps
           )
 
-        observation, episode_length, episode_return = self.env.reset(), 0, 0
+        self.observation, self.episode_length, self.episode_return = self.env.reset(), 0, 0
 
     this_epoch_observations: torch.Tensor = torch.stack(observations_list)
     this_epoch_actions: torch.Tensor = torch.stack(actions_list)
@@ -273,3 +279,47 @@ class OffPolicyAlgorithm(ABC):
     action_ndarray: np.ndarray = action.detach().numpy()
 
     return action_ndarray
+
+  def evaluate_policy(
+    self,
+    num_evaluation_episodes: int,
+    evaluation_env: gym.Env
+  ) -> Tuple[List[float], List[int]]:
+    episode_returns: List[float] = []
+    episode_lengths: List[int] = []
+
+    for _ in range(num_evaluation_episodes):
+      observation, done, episode_return, episode_length = evaluation_env.reset(), False, 0, 0
+
+      while not done:
+        action: np.ndarray = self.predict(observation)
+
+        observation: np.ndarray
+        reward: float
+        done: bool
+        observation, reward, done, _ = evaluation_env.step(action)
+
+        episode_return += reward
+        episode_length += 1
+
+      episode_returns.append(episode_return)
+      episode_lengths.append(episode_length)
+
+    if self.tensorboard:
+      self.writer.add_scalar(
+        'evaluation_env/episode_avarage_return',
+        np.mean(episode_returns),
+        self.current_total_steps
+      )
+      self.writer.add_scalar(
+        'evaluation_env/episode_avarage_length',
+        np.mean(episode_lengths),
+        self.current_total_steps
+      )
+
+    logger.info('Average Evaluation Episode Return: {:<8.3g}'.format(np.mean(episode_returns)))
+    logger.info('Evaluation Episode Return STD:     {:<8.3g}'.format(np.std(episode_returns)))
+    logger.info('Max Evaluation Episode Return:     {:<8.3g}'.format(np.max(episode_returns)))
+    logger.info('Min Evaluation Episode Return:     {:<8.3g}'.format(np.min(episode_returns)))
+
+    logger.info('Average Evaluation Episode Length: {:<8.3g}'.format(np.mean(episode_lengths)))
