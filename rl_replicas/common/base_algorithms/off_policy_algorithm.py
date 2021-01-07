@@ -68,8 +68,8 @@ class OffPolicyAlgorithm(ABC):
 
   def learn(
     self,
-    epochs: int = 8000,
-    steps_per_epoch: int = 200,
+    epochs: int = 2000,
+    steps_per_epoch: int = 50,
     replay_buffer_size: int = int(1e6),
     minibatch_size: int = 100,
     random_start_steps: int = 10000,
@@ -124,15 +124,7 @@ class OffPolicyAlgorithm(ABC):
         model_path: str = os.path.join(output_dir, 'model.pt')
 
         logger.info('Save model')
-        torch.save({
-            'epoch': current_epoch,
-            'total_steps': self.current_total_steps,
-            'policy_state_dict': self.policy.network.state_dict(),
-            'policy_optimizer_state_dict': self.policy.optimizer.state_dict(),
-            'q_function_state_dict': self.q_function.network.state_dict(),
-            'q_function_optimizer_state_dict': self.q_function.optimizer.state_dict(),
-          },
-          model_path)
+        self.save_model(current_epoch, model_path)
 
       logger.info('Epoch: {}'.format(current_epoch))
 
@@ -317,3 +309,26 @@ class OffPolicyAlgorithm(ABC):
     logger.info('Min Evaluation Episode Return:     {:<8.3g}'.format(np.min(episode_returns)))
 
     logger.info('Average Evaluation Episode Length: {:<8.3g}'.format(np.mean(episode_lengths)))
+
+  def save_model(
+    self,
+    current_epoch: int,
+    model_path: str
+  ) -> None:
+    """
+    Save model
+
+    :param current_epoch: (int) The current epoch
+    :param model_path: (int) The path to save the model
+    """
+    torch.save({
+        'epoch': current_epoch,
+        'total_steps': self.current_total_steps,
+        'policy_state_dict': self.policy.network.state_dict(),
+        'policy_optimizer_state_dict': self.policy.optimizer.state_dict(),
+        'target_policy_state_dict': self.target_policy.network.state_dict(),
+        'q_function_state_dict': self.q_function.network.state_dict(),
+        'q_function_optimizer_state_dict': self.q_function.optimizer.state_dict(),
+        'target_q_function_state_dict': self.target_q_function.network.state_dict()
+      },
+      model_path)
