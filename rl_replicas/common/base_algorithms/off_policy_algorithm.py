@@ -270,19 +270,20 @@ class OffPolicyAlgorithm(ABC):
     self,
     num_evaluation_episodes: int,
     evaluation_env: gym.Env
-  ) -> Tuple[List[float], List[int]]:
+  ):
     episode_returns: List[float] = []
     episode_lengths: List[int] = []
 
     for _ in range(num_evaluation_episodes):
-      observation, done, episode_return, episode_length = evaluation_env.reset(), False, 0, 0
+      observation: np.ndarray = evaluation_env.reset()
+      done: bool = False
+      episode_return: float = 0.0
+      episode_length: int = 0
 
       while not done:
         action: np.ndarray = self.predict(observation)
 
-        observation: np.ndarray
         reward: float
-        done: bool
         observation, reward, done, _ = evaluation_env.step(action)
 
         episode_return += reward
