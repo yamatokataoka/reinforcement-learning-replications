@@ -68,8 +68,8 @@ class OffPolicyAlgorithm(ABC):
 
   def learn(
     self,
-    epochs: int = 8000,
-    steps_per_epoch: int = 200,
+    epochs: int = 2000,
+    steps_per_epoch: int = 50,
     replay_buffer_size: int = int(1e6),
     minibatch_size: int = 100,
     random_start_steps: int = 10000,
