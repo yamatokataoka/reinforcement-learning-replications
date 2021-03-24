@@ -1,6 +1,7 @@
-from abc import ABC, abstractmethod
+import logging
 import os
 import time
+from abc import ABC, abstractmethod
 from typing import Any, Optional, List, Tuple
 from typing_extensions import TypedDict
 
@@ -10,13 +11,12 @@ import torch
 from torch.distributions.categorical import Categorical
 from torch.utils.tensorboard import SummaryWriter
 
-from rl_replicas import log
 from rl_replicas.common.policies import Policy
 from rl_replicas.common.utils import seed_random_generators
 from rl_replicas.common.value_function import ValueFunction
 from rl_replicas.common.utils import discount_cumulative_sum, seed_random_generators, gae
 
-logger = log.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 class OneEpochExperience(TypedDict):
   observations: torch.Tensor

@@ -1,7 +1,8 @@
-from abc import ABC, abstractmethod
 import copy
+import logging
 import os
 import time
+from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Tuple
 
 import gym
@@ -9,13 +10,12 @@ import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-from rl_replicas import log
 from rl_replicas.common.policies import Policy
 from rl_replicas.common.q_function import QFunction
 from rl_replicas.common.replay_buffer import ReplayBuffer
 from rl_replicas.common.utils import seed_random_generators
 
-logger = log.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 class OffPolicyAlgorithm(ABC):
   """

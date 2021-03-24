@@ -1,19 +1,19 @@
-from typing import Dict, List, Optional
 import copy
+import logging
+from typing import Dict, List, Optional
 
 import gym
 import numpy as np
 import torch
 from torch.nn import functional as F
 
-from rl_replicas import log
 from rl_replicas.common.base_algorithms import OffPolicyAlgorithm
 from rl_replicas.common.policies import Policy
 from rl_replicas.common.q_function import QFunction
 from rl_replicas.common.replay_buffer import ReplayBuffer
 from rl_replicas.common.utils import polyak_average
 
-logger = log.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 class TD3(OffPolicyAlgorithm):
   """
