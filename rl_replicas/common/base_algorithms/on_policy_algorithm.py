@@ -131,6 +131,18 @@ class OnPolicyAlgorithm(ABC):
 
       logger.info('Time:                   {:<8.3g}'.format(time.time()-start_time))
 
+      if self.tensorboard:
+        self.writer.add_scalar(
+          'training/average_episode_return',
+          np.mean(episode_returns),
+          self.current_total_steps
+        )
+        self.writer.add_scalar(
+          'training/average_episode_length',
+          np.mean(episode_lengths),
+          self.current_total_steps
+        )
+
       self.train(one_epoch_experience)
 
     if self.tensorboard:
@@ -225,18 +237,6 @@ class OnPolicyAlgorithm(ABC):
 
         episode_returns_list.append(episode_true_return)
         episode_lengths_list.append(episode_length)
-
-        if episode_done and self.tensorboard:
-          self.writer.add_scalar(
-            'env/episode_true_return',
-            episode_true_return,
-            self.current_total_steps
-          )
-          self.writer.add_scalar(
-            'env/episode_length',
-            episode_length,
-            self.current_total_steps
-          )
 
         if episode_done:
           self.current_total_episodes += 1
