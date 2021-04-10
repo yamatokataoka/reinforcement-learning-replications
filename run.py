@@ -1,5 +1,7 @@
 import datetime
+import logging
 import os
+import sys
 from typing import List
 
 import gym
@@ -12,6 +14,8 @@ from rl_replicas.common.policies import Policy, CategoricalPolicy
 from rl_replicas.common.value_function import ValueFunction
 from rl_replicas.common.optimizers import ConjugateGradientOptimizer
 from rl_replicas.common.networks import MLP
+
+logging.basicConfig(level=logging.INFO, stream=sys.stdout, format='')
 
 import argparse
 parser = argparse.ArgumentParser()

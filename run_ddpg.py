@@ -1,4 +1,6 @@
 import datetime
+import logging
+import sys
 from typing import List
 
 import gym
@@ -9,6 +11,8 @@ from rl_replicas.algorithms import DDPG
 from rl_replicas.common.policies import DeterministicPolicy
 from rl_replicas.common.q_function import QFunction
 from rl_replicas.common.networks import MLP
+
+logging.basicConfig(level=logging.INFO, stream=sys.stdout, format='')
 
 env_name = 'Pendulum-v0' # Pendulum-v0 or LunarLanderContinuous-v2
 output_dir = './test/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
