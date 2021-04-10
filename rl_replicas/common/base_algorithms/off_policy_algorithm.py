@@ -1,7 +1,8 @@
-from abc import ABC, abstractmethod
 import copy
+import logging
 import os
 import time
+from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Tuple
 
 import gym
@@ -9,13 +10,12 @@ import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-from rl_replicas import log
 from rl_replicas.common.policies import Policy
 from rl_replicas.common.q_function import QFunction
 from rl_replicas.common.replay_buffer import ReplayBuffer
 from rl_replicas.common.utils import seed_random_generators
 
-logger = log.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 class OffPolicyAlgorithm(ABC):
   """
@@ -139,6 +139,18 @@ class OffPolicyAlgorithm(ABC):
 
         logger.info('Average Episode Length: {:<8.3g}'.format(np.mean(episode_lengths)))
 
+        if self.tensorboard:
+          self.writer.add_scalar(
+            'training/average_episode_return',
+            np.mean(episode_returns),
+            self.current_total_steps
+          )
+          self.writer.add_scalar(
+            'training/average_episode_length',
+            np.mean(episode_lengths),
+            self.current_total_steps
+          )
+
       if num_evaluation_episodes > 0 and self.current_total_steps % evaluation_interval == 0:
         self.evaluate_policy(num_evaluation_episodes, self.evaluation_env)
 
@@ -212,18 +224,6 @@ class OffPolicyAlgorithm(ABC):
         episode_returns.append(self.episode_return)
         episode_lengths.append(self.episode_length)
 
-        if self.tensorboard:
-          self.writer.add_scalar(
-            'env/episode_true_return',
-            self.episode_return,
-            self.current_total_steps
-          )
-          self.writer.add_scalar(
-            'env/episode_length',
-            self.episode_length,
-            self.current_total_steps
-          )
-
         self.observation, self.episode_length, self.episode_return = self.env.reset(), 0, 0
 
     replay_buffer.add_one_epoch_experience(observations_list,
@@ -292,24 +292,24 @@ class OffPolicyAlgorithm(ABC):
       episode_returns.append(episode_return)
       episode_lengths.append(episode_length)
 
-    if self.tensorboard:
-      self.writer.add_scalar(
-        'evaluation_env/episode_avarage_return',
-        np.mean(episode_returns),
-        self.current_total_steps
-      )
-      self.writer.add_scalar(
-        'evaluation_env/episode_avarage_length',
-        np.mean(episode_lengths),
-        self.current_total_steps
-      )
-
     logger.info('Average Evaluation Episode Return: {:<8.3g}'.format(np.mean(episode_returns)))
     logger.info('Evaluation Episode Return STD:     {:<8.3g}'.format(np.std(episode_returns)))
     logger.info('Max Evaluation Episode Return:     {:<8.3g}'.format(np.max(episode_returns)))
     logger.info('Min Evaluation Episode Return:     {:<8.3g}'.format(np.min(episode_returns)))
 
     logger.info('Average Evaluation Episode Length: {:<8.3g}'.format(np.mean(episode_lengths)))
+
+    if self.tensorboard:
+      self.writer.add_scalar(
+        'evaluation/average_episode_return',
+        np.mean(episode_returns),
+        self.current_total_steps
+      )
+      self.writer.add_scalar(
+        'evaluation/average_episode_length',
+        np.mean(episode_lengths),
+        self.current_total_steps
+      )
 
   def save_model(
     self,

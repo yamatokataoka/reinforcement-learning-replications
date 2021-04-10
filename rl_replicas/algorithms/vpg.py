@@ -1,16 +1,16 @@
+import logging
 from typing import Optional
 
+import gym
 import torch
 from torch.nn import functional as F
 from torch.distributions.categorical import Categorical
-import gym
 
 from rl_replicas.common.base_algorithms.on_policy_algorithm import OnPolicyAlgorithm, OneEpochExperience
 from rl_replicas.common.policies import Policy
 from rl_replicas.common.value_function import ValueFunction
-from rl_replicas import log
 
-logger = log.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 class VPG(OnPolicyAlgorithm):
   """

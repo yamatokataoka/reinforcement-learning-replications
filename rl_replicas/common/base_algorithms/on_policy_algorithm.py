@@ -1,6 +1,7 @@
-from abc import ABC, abstractmethod
+import logging
 import os
 import time
+from abc import ABC, abstractmethod
 from typing import Any, Optional, List, Tuple
 from typing_extensions import TypedDict
 
@@ -10,13 +11,12 @@ import torch
 from torch.distributions.categorical import Categorical
 from torch.utils.tensorboard import SummaryWriter
 
-from rl_replicas import log
 from rl_replicas.common.policies import Policy
 from rl_replicas.common.utils import seed_random_generators
 from rl_replicas.common.value_function import ValueFunction
 from rl_replicas.common.utils import discount_cumulative_sum, seed_random_generators, gae
 
-logger = log.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 class OneEpochExperience(TypedDict):
   observations: torch.Tensor
@@ -131,6 +131,18 @@ class OnPolicyAlgorithm(ABC):
 
       logger.info('Time:                   {:<8.3g}'.format(time.time()-start_time))
 
+      if self.tensorboard:
+        self.writer.add_scalar(
+          'training/average_episode_return',
+          np.mean(episode_returns),
+          self.current_total_steps
+        )
+        self.writer.add_scalar(
+          'training/average_episode_length',
+          np.mean(episode_lengths),
+          self.current_total_steps
+        )
+
       self.train(one_epoch_experience)
 
     if self.tensorboard:
@@ -225,18 +237,6 @@ class OnPolicyAlgorithm(ABC):
 
         episode_returns_list.append(episode_true_return)
         episode_lengths_list.append(episode_length)
-
-        if episode_done and self.tensorboard:
-          self.writer.add_scalar(
-            'env/episode_true_return',
-            episode_true_return,
-            self.current_total_steps
-          )
-          self.writer.add_scalar(
-            'env/episode_length',
-            episode_length,
-            self.current_total_steps
-          )
 
         if episode_done:
           self.current_total_episodes += 1

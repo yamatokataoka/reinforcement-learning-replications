@@ -1,13 +1,13 @@
+import logging
 from typing import Callable, Iterable, List, Tuple
 
 import torch
 from torch.optim import Optimizer
 import numpy as np
 
-from rl_replicas import log
 from rl_replicas.common.utils import unflatten_tensors
 
-logger = log.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 class ConjugateGradientOptimizer(Optimizer):
   """
