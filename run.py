@@ -5,12 +5,13 @@ import sys
 from typing import List
 
 import gym
+from gym.spaces import Box, Discrete
 import torch
 import torch.nn as nn
 
 from rl_replicas.algorithms import VPG, TRPO, PPO
 from rl_replicas.common.base_algorithms import OnPolicyAlgorithm
-from rl_replicas.common.policies import Policy, CategoricalPolicy
+from rl_replicas.common.policies import Policy, CategoricalPolicy, GaussianPolicy
 from rl_replicas.common.value_function import ValueFunction
 from rl_replicas.common.optimizers import ConjugateGradientOptimizer
 from rl_replicas.common.networks import MLP
@@ -52,26 +53,52 @@ output_dir: str = os.path.join(
   datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 )
 
-policy_network: nn.Module = MLP(
-  sizes = [env.observation_space.shape[0]]+policy_network_architecture+[env.action_space.n]
-)
+if isinstance(env.action_space, Box):
+  policy_network: nn.Module = MLP(
+    sizes = [env.observation_space.shape[0]]+policy_network_architecture+[env.action_space.shape[0]]
+  )
+elif isinstance(env.action_space, Discrete):
+  policy_network: nn.Module = MLP(
+    sizes = [env.observation_space.shape[0]]+policy_network_architecture+[env.action_space.n]
+  )
 
 policy: Policy
 if algorithm_name == 'vpg':
-  policy = CategoricalPolicy(
-    network = policy_network,
-    optimizer = torch.optim.Adam(policy_network.parameters(), lr=policy_learning_rate)
-  )
+  if isinstance(env.action_space, Box):
+    policy = GaussianPolicy(
+      network = policy_network,
+      optimizer = torch.optim.Adam(policy_network.parameters(), lr=policy_learning_rate),
+      log_std = nn.Parameter(-0.5 * torch.ones(env.action_space.shape[0]))
+    )
+  elif isinstance(env.action_space, Discrete):
+    policy = CategoricalPolicy(
+      network = policy_network,
+      optimizer = torch.optim.Adam(policy_network.parameters(), lr=policy_learning_rate)
+    )
 elif algorithm_name == 'trpo':
-  policy = CategoricalPolicy(
-    network = policy_network,
-    optimizer = ConjugateGradientOptimizer(params=policy_network.parameters())
-  )
+  if isinstance(env.action_space, Box):
+    policy = GaussianPolicy(
+      network = policy_network,
+      optimizer = ConjugateGradientOptimizer(params=policy_network.parameters()),
+      log_std = nn.Parameter(-0.5 * torch.ones(env.action_space.shape[0]))
+    )
+  elif isinstance(env.action_space, Discrete):
+    policy = CategoricalPolicy(
+      network = policy_network,
+      optimizer = ConjugateGradientOptimizer(params=policy_network.parameters())
+    )
 elif algorithm_name == 'ppo':
-  policy = CategoricalPolicy(
-    network = policy_network,
-    optimizer = torch.optim.Adam(policy_network.parameters(), lr=policy_learning_rate)
-  )
+  if isinstance(env.action_space, Box):
+    policy = GaussianPolicy(
+      network = policy_network,
+      optimizer = torch.optim.Adam(policy_network.parameters(), lr=policy_learning_rate),
+      log_std = nn.Parameter(-0.5 * torch.ones(env.action_space.shape[0]))
+    )
+  elif isinstance(env.action_space, Discrete):
+    policy = CategoricalPolicy(
+      network = policy_network,
+      optimizer = torch.optim.Adam(policy_network.parameters(), lr=policy_learning_rate)
+    )
 else:
   print('Invalid algorithm name: {}'.format(algorithm_name))
 
