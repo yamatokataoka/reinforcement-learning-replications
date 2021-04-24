@@ -5,7 +5,7 @@ from typing import Optional
 import gym
 import torch
 from torch.nn import functional as F
-from torch.distributions.categorical import Categorical
+from torch.distributions import Distribution
 
 from rl_replicas.common.base_algorithms.on_policy_algorithm import OnPolicyAlgorithm, OneEpochExperience
 from rl_replicas.common.policies import Policy
@@ -69,7 +69,7 @@ class PPO(OnPolicyAlgorithm):
 
     # for logging
     with torch.no_grad():
-      policy_dist: Categorical = self.policy(observations)
+      policy_dist: Distribution = self.policy(observations)
       policy_loss_before: torch.Tensor = self.compute_policy_loss(
                                            observations,
                                            actions,
@@ -149,11 +149,11 @@ class PPO(OnPolicyAlgorithm):
     actions: torch.Tensor,
     advantages: torch.Tensor
   ) -> torch.Tensor:
-    policy_dist: Categorical = self.policy(observations)
+    policy_dist: Distribution = self.policy(observations)
     log_probs: torch.Tensor = policy_dist.log_prob(actions)
 
     with torch.no_grad():
-      old_policy_dist: Categorical = self.old_policy(observations)
+      old_policy_dist: Distribution = self.old_policy(observations)
       old_log_probs: torch.Tensor = old_policy_dist.log_prob(actions)
 
     # Calculate surrogate
@@ -180,10 +180,10 @@ class PPO(OnPolicyAlgorithm):
     actions: torch.Tensor
   ) -> torch.Tensor:
     with torch.no_grad():
-      policy_dist: Categorical = self.policy(observations)
+      policy_dist: Distribution = self.policy(observations)
       log_probs: torch.Tensor = policy_dist.log_prob(actions)
 
-      old_policy_dist: Categorical = self.old_policy(observations)
+      old_policy_dist: Distribution = self.old_policy(observations)
       old_log_probs: torch.Tensor = old_policy_dist.log_prob(actions)
 
     approximate_kl_divergence: torch.Tensor = old_log_probs - log_probs

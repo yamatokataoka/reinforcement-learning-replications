@@ -1,12 +1,12 @@
 import torch
 import torch.nn as nn
-from torch.distributions.categorical import Categorical
+from torch.distributions import Categorical
 
 from rl_replicas.common.policies import StochasticPolicy
 
 class CategoricalPolicy(StochasticPolicy):
   """
-  The abstract base class for stochastic policies.
+  The categorical policy
 
   :param network: (nn.Module) The network.
   :param optimizer: (torch.optim.Optimizer) The optimizer.

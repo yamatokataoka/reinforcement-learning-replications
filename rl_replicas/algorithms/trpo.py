@@ -6,7 +6,7 @@ import gym
 import numpy as np
 import torch
 from torch.nn import functional as F
-from torch.distributions.categorical import Categorical
+from torch.distributions import Distribution
 
 from rl_replicas.common.base_algorithms.on_policy_algorithm import OnPolicyAlgorithm, OneEpochExperience
 from rl_replicas.common.policies import Policy
@@ -60,11 +60,11 @@ class TRPO(OnPolicyAlgorithm):
     advantages = (advantages - torch.mean(advantages)) / torch.std(advantages)
 
     def compute_surrogate_loss() -> torch.Tensor:
-      policy_dist: Categorical = self.policy(observations)
+      policy_dist: Distribution = self.policy(observations)
       log_probs: torch.Tensor = policy_dist.log_prob(actions)
 
       with torch.no_grad():
-        old_policy_dist: Categorical = self.old_policy(observations)
+        old_policy_dist: Distribution = self.old_policy(observations)
         old_log_probs: torch.Tensor = old_policy_dist.log_prob(actions)
 
       likelihood_ratio: torch.Tensor = torch.exp(log_probs - old_log_probs)
@@ -73,10 +73,10 @@ class TRPO(OnPolicyAlgorithm):
       return surrogate_loss
 
     def compute_kl_constraint() -> torch.Tensor:
-      policy_dist: Categorical = self.policy(observations)
+      policy_dist: Distribution = self.policy(observations)
 
       with torch.no_grad():
-        old_policy_dist: Categorical = self.old_policy(observations)
+        old_policy_dist: Distribution = self.old_policy(observations)
 
       kl_constraint: torch.Tensor = torch.distributions.kl.kl_divergence(old_policy_dist, policy_dist)
 
@@ -87,7 +87,7 @@ class TRPO(OnPolicyAlgorithm):
     # for logging
     policy_loss_before: torch.Tensor = policy_loss.detach()
     with torch.no_grad():
-      policy_dist: Categorical = self.policy(observations)
+      policy_dist: Distribution = self.policy(observations)
     log_probs: torch.Tensor = policy_dist.log_prob(actions)
     entropies: torch.Tensor = policy_dist.entropy()
 
