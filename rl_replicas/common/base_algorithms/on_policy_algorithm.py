@@ -8,7 +8,7 @@ from typing_extensions import TypedDict
 import gym
 import numpy as np
 import torch
-from torch.distributions.categorical import Categorical
+from torch.distributions import Distribution
 from torch.utils.tensorboard import SummaryWriter
 
 from rl_replicas.common.policies import Policy
@@ -181,7 +181,7 @@ class OnPolicyAlgorithm(ABC):
       observations_list.append(observation_tensor)
 
       with torch.no_grad():
-        policy_dist: Categorical = self.policy(observation_tensor)
+        policy_dist: Distribution = self.policy(observation_tensor)
         value: torch.Tensor = self.value_function(observation_tensor)
 
       values.append(value.detach().item())
