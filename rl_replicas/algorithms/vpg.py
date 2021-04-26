@@ -4,7 +4,7 @@ from typing import Optional
 import gym
 import torch
 from torch.nn import functional as F
-from torch.distributions.categorical import Categorical
+from torch.distributions import Distribution
 
 from rl_replicas.common.base_algorithms.on_policy_algorithm import OnPolicyAlgorithm, OneEpochExperience
 from rl_replicas.common.policies import Policy
@@ -55,7 +55,7 @@ class VPG(OnPolicyAlgorithm):
     # Normalize advantage
     advantages = (advantages - torch.mean(advantages)) / torch.std(advantages)
 
-    policy_dist: Categorical = self.policy(observations)
+    policy_dist: Distribution = self.policy(observations)
     log_probs: torch.Tensor = policy_dist.log_prob(actions)
 
     policy_loss: torch.Tensor = -torch.mean(log_probs * advantages)
