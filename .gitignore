@@ -1,8 +1,8 @@
 # python
-.ipynb_checkpoints
-
 __pycache__/
 *.py[cod]
+
+.ipynb_checkpoints
 
 .mypy_cache
 
@@ -11,3 +11,6 @@ __pycache__/
 
 # local
 local.ipynb
+
+# Mac
+.DS_Store
