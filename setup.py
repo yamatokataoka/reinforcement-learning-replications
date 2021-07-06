@@ -22,7 +22,8 @@ setup(
   long_description_content_type='text/markdown',
   author='Yamato Kataoka',
   url='https://github.com/yamatokataoka/reinforcement-learning-replications',
-  packages=find_packages(),
+  packages=find_packages('src'),
+  package_dir={'':'src'},
   license='MIT',
   keywords='reinforcement-learning',
   install_requires=[
