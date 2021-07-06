@@ -112,7 +112,7 @@ class ConjugateGradientOptimizer(Optimizer):
     :param state: (dict) State dictionary.
     """
     if 'hvp_damping_coefficient' not in state['state']:
-      logger.warn('Resuming ConjugateGradientOptimizer with lost state.')
+      logger.warning('Resuming ConjugateGradientOptimizer with lost state.')
     # Set the fields manually so that the setter gets called.
     self.state = state['state']
     self.param_groups = state['param_groups']
@@ -219,15 +219,15 @@ class ConjugateGradientOptimizer(Optimizer):
         or torch.isnan(constraint)
         or new_loss >= loss_before
         or constraint >= self.max_constraint):
-      logger.warn('Line search condition violated. Rejecting the step!')
+      logger.warning('Line search condition violated. Rejecting the step!')
       if torch.isnan(new_loss):
-        logger.warn('Violated because loss is NaN')
+        logger.warning('Violated because loss is NaN')
       if torch.isnan(constraint):
-        logger.warn('Violated because constraint is NaN')
+        logger.warning('Violated because constraint is NaN')
       if new_loss >= loss_before:
-        logger.warn('Violated because loss not improving')
+        logger.warning('Violated because loss not improving')
       if constraint >= self.max_constraint:
-        logger.warn('Violated because constraint is violated')
+        logger.warning('Violated because constraint is violated')
 
       for previous_param, param in zip(previous_params, params):
         param.data = previous_param.data
