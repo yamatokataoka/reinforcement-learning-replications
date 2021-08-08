@@ -14,7 +14,7 @@ All experiments were run for 3 random seeds each. Graphs show the each experimen
 
 |               CartPole-v0              |                LunarLander-v2                |
 |:--------------------------------------:|:--------------------------------------------:|
-| ![CartPole-v0](./docs/CartPole-v0.gif) | ![LunarLander-v2](./docs/LunarLander-v2.gif) |
+| ![CartPole-v0](https://raw.githubusercontent.com/yamatokataoka/reinforcement-learning-replications/master/docs/CartPole-v0.gif) | ![LunarLander-v2](https://raw.githubusercontent.com/yamatokataoka/reinforcement-learning-replications/master/docs/LunarLander-v2.gif) |
 
 ### Vanilla Policy Gradient (REINFORCE)
 
@@ -82,10 +82,10 @@ model.learn(
 
 Sample result and trained model stored at `./runs/vpg/CartPole-v0`.
 
-![CartPole-v0 with VPG](./docs/vpg/CartPole-v0_3seeds.png)
+![CartPole-v0 with VPG](https://raw.githubusercontent.com/yamatokataoka/reinforcement-learning-replications/master/docs/vpg/CartPole-v0_3seeds.png)
 
 #### LunarLander-v2
 
 Sample result and trained model stored at `./runs/vpg/LunarLander-v2`.
 
-![CartPole-v0 with VPG](./docs/vpg/LunarLander-v2_3seeds.png)
+![CartPole-v0 with VPG](https://raw.githubusercontent.com/yamatokataoka/reinforcement-learning-replications/master/docs/vpg/LunarLander-v2_3seeds.png)
