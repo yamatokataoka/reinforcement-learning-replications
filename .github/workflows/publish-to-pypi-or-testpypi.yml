@@ -32,8 +32,8 @@ jobs:
         if: github.event_name == 'push'
         run: |
           RL_REPLICAS_VERSION=$(cat VERSION)
-          GIT_SHORT_SHA=$(git rev-parse --short "$GITHUB_SHA")
-          echo "${RL_REPLICAS_VERSION}${GIT_SHORT_SHA}" > VERSION
+          DATETIME=`date +"%Y%m%d%H%M%S%3N"`
+          echo "${RL_REPLICAS_VERSION}${DATETIME}" > VERSION
 
       - name: Build a binary wheel and a source tarball
         run: python -m build --sdist --wheel --outdir dist/ .
