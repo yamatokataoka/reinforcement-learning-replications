@@ -4,12 +4,12 @@ from typing import Optional
 
 import gym
 import torch
-from torch.nn import functional as F
 from torch.distributions import Distribution
+from torch.nn import functional as F
 
 from rl_replicas.common.base_algorithms.on_policy_algorithm import (
-    OnPolicyAlgorithm,
     OneEpochExperience,
+    OnPolicyAlgorithm,
 )
 from rl_replicas.common.policies import Policy
 from rl_replicas.common.value_function import ValueFunction

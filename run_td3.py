@@ -8,9 +8,9 @@ import torch
 import torch.nn as nn
 
 from rl_replicas.algorithms import TD3
+from rl_replicas.common.networks import MLP
 from rl_replicas.common.policies import DeterministicPolicy
 from rl_replicas.common.q_function import QFunction
-from rl_replicas.common.networks import MLP
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, format="")
 

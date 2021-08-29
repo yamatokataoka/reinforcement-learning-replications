@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from torch.distributions import Normal, Independent
+from torch.distributions import Independent, Normal
 
 from rl_replicas.common.policies import StochasticPolicy
 

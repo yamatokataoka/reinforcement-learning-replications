@@ -1,9 +1,9 @@
 import logging
 from typing import Callable, Iterable, List, Tuple
 
+import numpy as np
 import torch
 from torch.optim import Optimizer
-import numpy as np
 
 from rl_replicas.common.utils import unflatten_tensors
 

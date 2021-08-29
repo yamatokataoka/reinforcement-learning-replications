@@ -2,23 +2,22 @@ import logging
 import os
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Optional, List, Tuple
-from typing_extensions import TypedDict
+from typing import Any, List, Optional, Tuple
 
 import gym
 import numpy as np
 import torch
 from torch.distributions import Distribution
 from torch.utils.tensorboard import SummaryWriter
+from typing_extensions import TypedDict
 
 from rl_replicas.common.policies import Policy
-from rl_replicas.common.utils import seed_random_generators
-from rl_replicas.common.value_function import ValueFunction
 from rl_replicas.common.utils import (
     discount_cumulative_sum,
-    seed_random_generators,
     gae,
+    seed_random_generators,
 )
+from rl_replicas.common.value_function import ValueFunction
 
 logger = logging.getLogger(__name__)
 

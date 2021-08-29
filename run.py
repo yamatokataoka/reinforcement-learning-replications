@@ -1,3 +1,4 @@
+import argparse
 import datetime
 import logging
 import os
@@ -5,18 +6,16 @@ import sys
 from typing import List
 
 import gym
-from gym.spaces import Box, Discrete
 import torch
 import torch.nn as nn
+from gym.spaces import Box, Discrete
 
-from rl_replicas.algorithms import VPG, TRPO, PPO
+from rl_replicas.algorithms import PPO, TRPO, VPG
 from rl_replicas.common.base_algorithms import OnPolicyAlgorithm
-from rl_replicas.common.policies import Policy, CategoricalPolicy, GaussianPolicy
-from rl_replicas.common.value_function import ValueFunction
-from rl_replicas.common.optimizers import ConjugateGradientOptimizer
 from rl_replicas.common.networks import MLP
-
-import argparse
+from rl_replicas.common.optimizers import ConjugateGradientOptimizer
+from rl_replicas.common.policies import CategoricalPolicy, GaussianPolicy, Policy
+from rl_replicas.common.value_function import ValueFunction
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--algorithm", type=str, default="vpg")
