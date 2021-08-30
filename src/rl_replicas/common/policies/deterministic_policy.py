@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torch.distributions import Distribution
 
-from rl_replicas.common.policies import Policy
+from rl_replicas.common.policies.policy import Policy
 
 
 class DeterministicPolicy(Policy):

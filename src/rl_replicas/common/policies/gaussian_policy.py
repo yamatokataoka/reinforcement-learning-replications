@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch.distributions import Independent, Normal
 
-from rl_replicas.common.policies import StochasticPolicy
+from rl_replicas.common.policies.stochastic_policy import StochasticPolicy
 
 
 class GaussianPolicy(StochasticPolicy):
