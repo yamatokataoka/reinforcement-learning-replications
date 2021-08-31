@@ -3,7 +3,6 @@ import logging
 from typing import Optional
 
 import gym
-import numpy as np
 import torch
 from torch.distributions import Distribution
 from torch.nn import functional as F

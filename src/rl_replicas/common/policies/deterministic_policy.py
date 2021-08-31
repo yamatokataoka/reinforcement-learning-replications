@@ -1,8 +1,5 @@
-from abc import abstractmethod
-
 import torch
 import torch.nn as nn
-from torch.distributions import Distribution
 
 from rl_replicas.common.policies.policy import Policy
 

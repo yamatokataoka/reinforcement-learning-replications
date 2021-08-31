@@ -33,8 +33,6 @@ class GaussianPolicy(StochasticPolicy):
         mean: torch.Tensor = self.network(observation)
         std = torch.exp(self.log_std)
         # Use Independent for changing the shape of the result of log_prob()
-        distribution: Independent = Independent(
-            torch.distributions.Normal(loc=mean, scale=std), 1
-        )
+        distribution: Independent = Independent(Normal(loc=mean, scale=std), 1)
 
         return distribution

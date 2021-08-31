@@ -3,7 +3,7 @@ import logging
 import os
 import time
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import gym
 import numpy as np
@@ -87,10 +87,12 @@ class OffPolicyAlgorithm(ABC):
         Learn the model
 
         :param epochs: (int) The number of epochs to run and train.
-        :param steps_per_epoch: (int) The number of steps to run per epoch; in other words, batch size is steps_per_epoch.
+        :param steps_per_epoch: (int) The number of steps to run per epoch; in other words, batch size is
+            steps_per_epoch.
         :param replay_size: (int) The size of the replay buffer
         ;param minibatch_size: (int) The minibatch size for SGD.
-        :param random_start_steps: (int) The number of steps for uniform-random action selection for exploration at the beginning.
+        :param random_start_steps: (int) The number of steps for uniform-random action selection for exploration
+            at the beginning.
         :param steps_before_update: (int) The number of steps to perform before policy is updated.
         :param train_steps: (int) The number of training steps on each epoch
         :param num_evaluation_episodes: (int) The number of evaluation episodes

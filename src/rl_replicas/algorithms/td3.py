@@ -29,7 +29,8 @@ class TD3(OffPolicyAlgorithm):
     :param action_noise_scale: (float) The scale of the noise (std) for the policy to explore better
     :param target_noise_scale: (float) The scale of the smoothing noise (std) for the target policy to exploit harder
     :param target_noise_clip: (float) The limit for absolute value of the target policy smoothing noise
-    :param policy_delay: (int) The policy will only be updated once every policy_delay times for each update of the Q-networks.
+    :param policy_delay: (int) The policy will only be updated once every policy_delay times for each update of
+        the Q-networks.
     :param seed: (int) The seed for the pseudo-random generators
     """
 

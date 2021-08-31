@@ -1,5 +1,5 @@
 import random
-from typing import Iterable, List, Tuple
+from typing import Iterable, List
 
 import numpy as np
 import scipy.signal

@@ -23,7 +23,8 @@ class ConjugateGradientOptimizer(Optimizer):
     :param n_conjugate_gradients: (int) The number of conjugate gradient iterations used to calculate H^-1 g
     :param max_backtracks: (int) Max number of iterations for backtrack linesearch.
     :param backtrack_ratio: (float) backtrack ratio for backtracking line search.
-    :param hvp_damping_coefficient: (float) Artifact for numerical stability, should be smallish. Adjusts Hessian-vector product calculation: H -> H + hvp_damping_coefficient*I.
+    :param hvp_damping_coefficient: (float) Artifact for numerical stability, should be smallish.
+        Adjusts Hessian-vector product calculation: H -> H + hvp_damping_coefficient*I.
     """
 
     def __init__(

@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 
 import torch
 import torch.nn as nn
-from torch.distributions import Distribution
 
 
 class Policy(nn.Module, ABC):
