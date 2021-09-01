@@ -66,14 +66,15 @@ consoleHandler = logging.StreamHandler(sys.stdout)
 consoleHandler.setFormatter(logging.Formatter(""))
 rootLogger.addHandler(consoleHandler)
 
+policy_network: nn.Module
 if isinstance(env.action_space, Box):
-    policy_network: nn.Module = MLP(
+    policy_network = MLP(
         sizes=[env.observation_space.shape[0]]
         + policy_network_architecture
         + [env.action_space.shape[0]]
     )
 elif isinstance(env.action_space, Discrete):
-    policy_network: nn.Module = MLP(
+    policy_network = MLP(
         sizes=[env.observation_space.shape[0]]
         + policy_network_architecture
         + [env.action_space.n]
