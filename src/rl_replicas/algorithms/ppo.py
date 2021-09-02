@@ -4,199 +4,213 @@ from typing import Optional
 
 import gym
 import torch
-from torch.nn import functional as F
 from torch.distributions import Distribution
+from torch.nn import functional as F
 
-from rl_replicas.common.base_algorithms.on_policy_algorithm import OnPolicyAlgorithm, OneEpochExperience
+from rl_replicas.common.base_algorithms.on_policy_algorithm import (
+    OneEpochExperience,
+    OnPolicyAlgorithm,
+)
 from rl_replicas.common.policies import Policy
 from rl_replicas.common.value_function import ValueFunction
 
 logger = logging.getLogger(__name__)
 
+
 class PPO(OnPolicyAlgorithm):
-  """
-  Proximal Policy Optimization (by clipping) with early stopping based on approximate KL divergence
+    """
+    Proximal Policy Optimization (by clipping) with early stopping based on approximate KL divergence
 
-  :param policy: (Policy) The policy
-  :param value_function: (ValueFunction) The value function
-  :param env: (gym.Env) The environment to learn from
-  :param clip_range: (float) The limit on the likelihood ratio between policies for clipping in the policy objective.
-  :param max_kl_divergence: (float) The limit on the KL divergence between policies for early stopping.
-  :param gamma: (float) The discount factor for the cumulative return
-  :param gae_lambda: (float) The factor for trade-off of bias vs variance for Generalized Advantage Estimator
-  :param seed: (int) The seed for the pseudo-random generators
-  :param n_value_gradients (int): Number of gradient descent steps to take on value function per epoch.
-  """
-  def __init__(
-    self,
-    policy: Policy,
-    value_function: ValueFunction,
-    env: gym.Env,
-    clip_range: float = 0.2,
-    max_kl_divergence: float = 0.01,
-    gamma: float = 0.99,
-    gae_lambda: float = 0.97,
-    seed: Optional[int] = None,
-    n_policy_gradients: int = 80,
-    n_value_gradients: int = 80,
-  ) -> None:
-    super().__init__(
-      policy=policy,
-      value_function=value_function,
-      env=env,
-      gamma=gamma,
-      gae_lambda=gae_lambda,
-      seed=seed,
-      n_value_gradients=n_value_gradients
-    )
+    :param policy: (Policy) The policy
+    :param value_function: (ValueFunction) The value function
+    :param env: (gym.Env) The environment to learn from
+    :param clip_range: (float) The limit on the likelihood ratio between policies for clipping in the policy objective.
+    :param max_kl_divergence: (float) The limit on the KL divergence between policies for early stopping.
+    :param gamma: (float) The discount factor for the cumulative return
+    :param gae_lambda: (float) The factor for trade-off of bias vs variance for Generalized Advantage Estimator
+    :param seed: (int) The seed for the pseudo-random generators
+    :param n_value_gradients (int): Number of gradient descent steps to take on value function per epoch.
+    """
 
-    self.clip_range = clip_range
-    self.n_policy_gradients = n_policy_gradients
-    self.max_kl_divergence = max_kl_divergence
+    def __init__(
+        self,
+        policy: Policy,
+        value_function: ValueFunction,
+        env: gym.Env,
+        clip_range: float = 0.2,
+        max_kl_divergence: float = 0.01,
+        gamma: float = 0.99,
+        gae_lambda: float = 0.97,
+        seed: Optional[int] = None,
+        n_policy_gradients: int = 80,
+        n_value_gradients: int = 80,
+    ) -> None:
+        super().__init__(
+            policy=policy,
+            value_function=value_function,
+            env=env,
+            gamma=gamma,
+            gae_lambda=gae_lambda,
+            seed=seed,
+            n_value_gradients=n_value_gradients,
+        )
 
-    self.old_policy: Policy = copy.deepcopy(self.policy)
+        self.clip_range = clip_range
+        self.n_policy_gradients = n_policy_gradients
+        self.max_kl_divergence = max_kl_divergence
 
-  def train(
-    self,
-    one_epoch_experience: OneEpochExperience
-  ) -> None:
-    observations: torch.Tensor = one_epoch_experience['observations']
-    actions: torch.Tensor = one_epoch_experience['actions']
-    advantages: torch.Tensor = one_epoch_experience['advantages']
+        self.old_policy: Policy = copy.deepcopy(self.policy)
 
-    # Normalize advantage
-    advantages = (advantages - torch.mean(advantages)) / torch.std(advantages)
+    def train(
+        self,
+        one_epoch_experience: OneEpochExperience,
+    ) -> None:
+        observations: torch.Tensor = one_epoch_experience["observations"]
+        actions: torch.Tensor = one_epoch_experience["actions"]
+        advantages: torch.Tensor = one_epoch_experience["advantages"]
 
-    # for logging
-    with torch.no_grad():
-      policy_dist: Distribution = self.policy(observations)
-      policy_loss_before: torch.Tensor = self.compute_policy_loss(
-                                           observations,
-                                           actions,
-                                           advantages
-                                          ).detach()
-    log_probs: torch.Tensor = policy_dist.log_prob(actions)
-    entropies: torch.Tensor = policy_dist.entropy()
+        # Normalize advantage
+        advantages = (advantages - torch.mean(advantages)) / torch.std(advantages)
 
-    # Train policy
-    for i in range(self.n_policy_gradients):
-      policy_loss: torch.Tensor = self.compute_policy_loss(observations, actions, advantages)
-      approximate_kl_divergence: torch.Tensor = self.compute_approximate_kl_divergence(
-                                                  observations,
-                                                  actions
-                                                ).detach()
-      if approximate_kl_divergence > 1.5 * self.max_kl_divergence:
-        logger.info('Early stopping at update {} due to reaching max KL divergence.'.format(i))
-        break
+        # for logging
+        with torch.no_grad():
+            policy_dist: Distribution = self.policy(observations)
+            policy_loss_before: torch.Tensor = self.compute_policy_loss(
+                observations, actions, advantages
+            ).detach()
+            log_probs: torch.Tensor = policy_dist.log_prob(actions)
+            entropies: torch.Tensor = policy_dist.entropy()
 
-      self.policy.optimizer.zero_grad()
-      policy_loss.backward()
-      self.policy.optimizer.step()
+        # Train policy
+        for i in range(self.n_policy_gradients):
+            policy_loss: torch.Tensor = self.compute_policy_loss(
+                observations, actions, advantages
+            )
+            approximate_kl_divergence: torch.Tensor = (
+                self.compute_approximate_kl_divergence(observations, actions).detach()
+            )
+            if approximate_kl_divergence > 1.5 * self.max_kl_divergence:
+                logger.info(
+                    "Early stopping at update {} due to reaching max KL divergence.".format(
+                        i
+                    )
+                )
+                break
 
-    self.old_policy.load_state_dict(self.policy.state_dict())
+            self.policy.optimizer.zero_grad()
+            policy_loss.backward()
+            self.policy.optimizer.step()
 
-    discounted_returns: torch.Tensor = one_epoch_experience['discounted_returns']
+        self.old_policy.load_state_dict(self.policy.state_dict())
 
-    # for logging
-    with torch.no_grad():
-      value_loss_before: torch.Tensor = self.compute_value_loss(observations, discounted_returns)
+        discounted_returns: torch.Tensor = one_epoch_experience["discounted_returns"]
 
-    # Train value function
-    for _ in range(self.n_value_gradients):
-      value_loss: torch.Tensor = self.compute_value_loss(observations, discounted_returns)
-      self.value_function.optimizer.zero_grad()
-      value_loss.backward()
-      self.value_function.optimizer.step()
+        # for logging
+        with torch.no_grad():
+            value_loss_before: torch.Tensor = self.compute_value_loss(
+                observations, discounted_returns
+            )
 
-    logger.info('Policy Loss:            {:<8.3g}'.format(policy_loss_before))
-    logger.info('Avarage Entropy:        {:<8.3g}'.format(torch.mean(entropies)))
-    logger.info('Log Prob STD:           {:<8.3g}'.format(torch.std(log_probs)))
-    logger.info('KL divergence:          {:<8.3g}'.format(approximate_kl_divergence))
+        # Train value function
+        for _ in range(self.n_value_gradients):
+            value_loss: torch.Tensor = self.compute_value_loss(
+                observations, discounted_returns
+            )
+            self.value_function.optimizer.zero_grad()
+            value_loss.backward()
+            self.value_function.optimizer.step()
 
-    logger.info('Value Function Loss:    {:<8.3g}'.format(value_loss_before))
+        logger.info("Policy Loss:            {:<8.3g}".format(policy_loss_before))
+        logger.info("Avarage Entropy:        {:<8.3g}".format(torch.mean(entropies)))
+        logger.info("Log Prob STD:           {:<8.3g}".format(torch.std(log_probs)))
+        logger.info(
+            "KL divergence:          {:<8.3g}".format(approximate_kl_divergence)
+        )
 
-    if self.tensorboard:
-      self.writer.add_scalar(
-        'policy/loss',
-        policy_loss_before,
-        self.current_total_steps
-      )
-      self.writer.add_scalar(
-        'policy/avarage_entropy',
-        torch.mean(entropies),
-        self.current_total_steps
-      )
-      self.writer.add_scalar(
-        'policy/log_prob_std',
-        torch.std(log_probs),
-        self.current_total_steps
-      )
-      self.writer.add_scalar(
-        'policy/approximate_kl_divergence',
-        approximate_kl_divergence,
-        self.current_total_steps
-      )
+        logger.info("Value Function Loss:    {:<8.3g}".format(value_loss_before))
 
-      self.writer.add_scalar(
-        'value/loss',
-        value_loss_before,
-        self.current_total_steps
-      )
+        if self.tensorboard:
+            self.writer.add_scalar(
+                "policy/loss",
+                policy_loss_before,
+                self.current_total_steps,
+            )
+            self.writer.add_scalar(
+                "policy/avarage_entropy",
+                torch.mean(entropies),
+                self.current_total_steps,
+            )
+            self.writer.add_scalar(
+                "policy/log_prob_std",
+                torch.std(log_probs),
+                self.current_total_steps,
+            )
+            self.writer.add_scalar(
+                "policy/approximate_kl_divergence",
+                approximate_kl_divergence,
+                self.current_total_steps,
+            )
 
-  def compute_policy_loss(
-    self,
-    observations: torch.Tensor,
-    actions: torch.Tensor,
-    advantages: torch.Tensor
-  ) -> torch.Tensor:
-    policy_dist: Distribution = self.policy(observations)
-    log_probs: torch.Tensor = policy_dist.log_prob(actions)
+            self.writer.add_scalar(
+                "value/loss",
+                value_loss_before,
+                self.current_total_steps,
+            )
 
-    with torch.no_grad():
-      old_policy_dist: Distribution = self.old_policy(observations)
-      old_log_probs: torch.Tensor = old_policy_dist.log_prob(actions)
+    def compute_policy_loss(
+        self,
+        observations: torch.Tensor,
+        actions: torch.Tensor,
+        advantages: torch.Tensor,
+    ) -> torch.Tensor:
+        policy_dist: Distribution = self.policy(observations)
+        log_probs: torch.Tensor = policy_dist.log_prob(actions)
 
-    # Calculate surrogate
-    likelihood_ratio: torch.Tensor = torch.exp(log_probs - old_log_probs)
-    surrogate: torch.Tensor = likelihood_ratio * advantages
+        with torch.no_grad():
+            old_policy_dist: Distribution = self.old_policy(observations)
+            old_log_probs: torch.Tensor = old_policy_dist.log_prob(actions)
 
-    # Clipping the constraint
-    likelihood_ratio_clip: torch.Tensor = torch.clamp(
-                                            likelihood_ratio,
-                                            min=1 - self.clip_range,
-                                            max=1 + self.clip_range
-                                          )
+        # Calculate surrogate
+        likelihood_ratio: torch.Tensor = torch.exp(log_probs - old_log_probs)
+        surrogate: torch.Tensor = likelihood_ratio * advantages
 
-    # Calculate surrotate clip
-    surrogate_clip: torch.Tensor = likelihood_ratio_clip * advantages
+        # Clipping the constraint
+        likelihood_ratio_clip: torch.Tensor = torch.clamp(
+            likelihood_ratio,
+            min=1 - self.clip_range,
+            max=1 + self.clip_range,
+        )
 
-    policy_loss: torch.Tensor = -torch.min(surrogate, surrogate_clip).mean()
+        # Calculate surrotate clip
+        surrogate_clip: torch.Tensor = likelihood_ratio_clip * advantages
 
-    return policy_loss
+        policy_loss: torch.Tensor = -torch.min(surrogate, surrogate_clip).mean()
 
-  def compute_approximate_kl_divergence(
-    self,
-    observations: torch.Tensor,
-    actions: torch.Tensor
-  ) -> torch.Tensor:
-    with torch.no_grad():
-      policy_dist: Distribution = self.policy(observations)
-      log_probs: torch.Tensor = policy_dist.log_prob(actions)
+        return policy_loss
 
-      old_policy_dist: Distribution = self.old_policy(observations)
-      old_log_probs: torch.Tensor = old_policy_dist.log_prob(actions)
+    def compute_approximate_kl_divergence(
+        self,
+        observations: torch.Tensor,
+        actions: torch.Tensor,
+    ) -> torch.Tensor:
+        with torch.no_grad():
+            policy_dist: Distribution = self.policy(observations)
+            log_probs: torch.Tensor = policy_dist.log_prob(actions)
 
-    approximate_kl_divergence: torch.Tensor = old_log_probs - log_probs
+            old_policy_dist: Distribution = self.old_policy(observations)
+            old_log_probs: torch.Tensor = old_policy_dist.log_prob(actions)
 
-    return torch.mean(approximate_kl_divergence)
+        approximate_kl_divergence: torch.Tensor = old_log_probs - log_probs
 
-  def compute_value_loss(
-    self,
-    observations: torch.Tensor,
-    discounted_returns: torch.Tensor
-  ) -> torch.Tensor:
-    values: torch.Tensor = self.value_function(observations)
-    squeezed_values: torch.Tensor = torch.squeeze(values, -1)
-    value_loss: torch.Tensor = F.mse_loss(squeezed_values, discounted_returns)
+        return torch.mean(approximate_kl_divergence)
 
-    return value_loss
+    def compute_value_loss(
+        self,
+        observations: torch.Tensor,
+        discounted_returns: torch.Tensor,
+    ) -> torch.Tensor:
+        values: torch.Tensor = self.value_function(observations)
+        squeezed_values: torch.Tensor = torch.squeeze(values, -1)
+        value_loss: torch.Tensor = F.mse_loss(squeezed_values, discounted_returns)
+
+        return value_loss
