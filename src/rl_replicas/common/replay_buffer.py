@@ -29,7 +29,7 @@ class ReplayBuffer:
         rewards: List[float],
         next_observations: List[torch.Tensor],
         dones: List[bool],
-    ):
+    ) -> None:
         self.observations.extend(observations)
         self.actions.extend(actions)
         self.rewards.extend(rewards)
@@ -50,7 +50,7 @@ class ReplayBuffer:
 
                 self.current_size -= 1
 
-    def sample_minibatch(self, minibatch_size: int = 32):
+    def sample_minibatch(self, minibatch_size: int = 32) -> Dict[str, torch.Tensor]:
         indices = random.sample(range(0, self.current_size), minibatch_size)
 
         sampled_observations: torch.Tensor = torch.stack(

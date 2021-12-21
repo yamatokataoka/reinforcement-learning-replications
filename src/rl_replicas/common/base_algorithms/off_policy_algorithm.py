@@ -290,7 +290,7 @@ class OffPolicyAlgorithm(ABC):
         self,
         num_evaluation_episodes: int,
         evaluation_env: gym.Env,
-    ):
+    ) -> None:
         episode_returns: List[float] = []
         episode_lengths: List[int] = []
 

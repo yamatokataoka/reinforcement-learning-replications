@@ -4,10 +4,22 @@ from typing import Callable, Iterable, List, Tuple
 import numpy as np
 import torch
 from torch.optim import Optimizer
+from typing_extensions import TypedDict
 
 from rl_replicas.common.utils import unflatten_tensors
 
 logger = logging.getLogger(__name__)
+
+State = TypedDict(
+    "State",
+    {
+        "max_constraint": float,
+        "n_conjugate_gradients": int,
+        "max_backtracks": int,
+        "backtrack_ratio": float,
+        "hvp_damping_coefficient": float,
+    },
+)
 
 
 class ConjugateGradientOptimizer(Optimizer):
@@ -45,9 +57,7 @@ class ConjugateGradientOptimizer(Optimizer):
         self.backtrack_ratio = backtrack_ratio
         self.hvp_damping_coefficient = hvp_damping_coefficient
 
-    def step(  # type: ignore[override]
-        self, loss_function: Callable, kl_divergence_function: Callable
-    ):
+    def step(self, loss_function: Callable, kl_divergence_function: Callable) -> None:
         """
         Performs a single optimization step.
 
@@ -102,10 +112,10 @@ class ConjugateGradientOptimizer(Optimizer):
             params, descent_step, loss_function, kl_divergence_function
         )
 
-    @property  # type: ignore[override]
-    def state(self):
+    @property
+    def state(self) -> State:
         """
-        dict: The hyper-parameters of the optimizer.
+        State: The hyper-parameters of the optimizer.
         """
         return {
             "max_constraint": self.max_constraint,
@@ -116,14 +126,14 @@ class ConjugateGradientOptimizer(Optimizer):
         }
 
     @state.setter
-    def state(self, state):  # type: ignore[override]
+    def state(self, state: State) -> None:
         self.max_constraint = state.get("max_constraint", 0.01)
         self.n_conjugate_gradients = state.get("n_conjugate_gradients", 10)
         self.max_backtracks = state.get("max_backtracks", 15)
         self.backtrack_ratio = state.get("backtrack_ratio", 0.8)
         self.hvp_damping_coefficient = state.get("hvp_damping_coefficient", 1e-5)
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         Restore the optimizer state.
 
@@ -144,7 +154,7 @@ class ConjugateGradientOptimizer(Optimizer):
             hessian_target_vector, params, create_graph=True
         )
 
-        def _eval(vector):
+        def _eval(vector: torch.Tensor) -> torch.Tensor:
             """
             The evaluation function.
 
@@ -178,7 +188,7 @@ class ConjugateGradientOptimizer(Optimizer):
         hessian_vector_product_function: Callable,
         b: torch.Tensor,
         residual_tol: float = 1e-10,
-    ):
+    ) -> torch.Tensor:
         """
         Use Conjugate Gradient iteration to solve Ax = b. Demmel p 312.
 
@@ -214,7 +224,7 @@ class ConjugateGradientOptimizer(Optimizer):
         descent_step: float,
         loss_function: Callable,
         constraint_function: Callable,
-    ):
+    ) -> None:
         previous_params: List[torch.Tensor] = [p.clone() for p in params]
         ratio_list: np.ndarray = self.backtrack_ratio ** np.arange(self.max_backtracks)
         loss_before: torch.Tensor = loss_function()
