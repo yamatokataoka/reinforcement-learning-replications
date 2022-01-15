@@ -8,6 +8,7 @@ from typing import List, Optional, Tuple
 import gym
 import numpy as np
 import torch
+from torch import Tensor
 from torch.utils.tensorboard import SummaryWriter
 
 from rl_replicas.common.policies import Policy
@@ -189,9 +190,9 @@ class OffPolicyAlgorithm(ABC):
     def collect_one_epoch_experience(
         self, replay_buffer: ReplayBuffer, steps_per_epoch: int, random_start_steps: int
     ) -> Tuple[List[float], List[int]]:
-        observations_list: List[torch.Tensor] = []
-        actions_list: List[torch.Tensor] = []
-        next_observations_list: List[torch.Tensor] = []
+        observations_list: List[Tensor] = []
+        actions_list: List[Tensor] = []
+        next_observations_list: List[Tensor] = []
 
         rewards: List[float] = []
         dones: List[bool] = []
@@ -207,9 +208,7 @@ class OffPolicyAlgorithm(ABC):
             self.observation: np.ndarray = self.env.reset()
 
         for current_step in range(steps_per_epoch):
-            observation_tensor: torch.Tensor = torch.from_numpy(
-                self.observation
-            ).float()
+            observation_tensor: Tensor = torch.from_numpy(self.observation).float()
             observations_list.append(observation_tensor)
 
             action: np.ndarray
@@ -220,7 +219,7 @@ class OffPolicyAlgorithm(ABC):
                 action += self.action_noise_scale * np.random.randn(self.action_size)
                 action = np.clip(action, -self.action_limit, self.action_limit)
 
-            action_tensor: torch.Tensor = torch.from_numpy(action).float()
+            action_tensor: Tensor = torch.from_numpy(action).float()
             actions_list.append(action_tensor)
 
             next_observation: np.ndarray
@@ -228,9 +227,7 @@ class OffPolicyAlgorithm(ABC):
             episode_done: bool
             next_observation, reward, episode_done, _ = self.env.step(action)
 
-            next_observation_tensor: torch.Tensor = torch.from_numpy(
-                next_observation
-            ).float()
+            next_observation_tensor: Tensor = torch.from_numpy(next_observation).float()
             next_observations_list.append(next_observation_tensor)
 
             self.observation = next_observation
@@ -280,8 +277,8 @@ class OffPolicyAlgorithm(ABC):
         :param observation: (np.ndarray) The input observation
         :return: (np.ndarray) The action(s)
         """
-        observation_tensor: torch.Tensor = torch.from_numpy(observation).float()
-        action: torch.Tensor = self.policy.predict(observation_tensor)
+        observation_tensor: Tensor = torch.from_numpy(observation).float()
+        action: Tensor = self.policy.predict(observation_tensor)
         action_ndarray: np.ndarray = action.detach().numpy()
 
         return action_ndarray
@@ -290,7 +287,7 @@ class OffPolicyAlgorithm(ABC):
         self,
         num_evaluation_episodes: int,
         evaluation_env: gym.Env,
-    ):
+    ) -> None:
         episode_returns: List[float] = []
         episode_lengths: List[int] = []
 

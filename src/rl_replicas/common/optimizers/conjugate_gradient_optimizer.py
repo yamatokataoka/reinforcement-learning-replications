@@ -3,11 +3,24 @@ from typing import Callable, Iterable, List, Tuple
 
 import numpy as np
 import torch
+from torch import Tensor
 from torch.optim import Optimizer
+from typing_extensions import TypedDict
 
 from rl_replicas.common.utils import unflatten_tensors
 
 logger = logging.getLogger(__name__)
+
+State = TypedDict(
+    "State",
+    {
+        "max_constraint": float,
+        "n_conjugate_gradients": int,
+        "max_backtracks": int,
+        "backtrack_ratio": float,
+        "hvp_damping_coefficient": float,
+    },
+)
 
 
 class ConjugateGradientOptimizer(Optimizer):
@@ -29,7 +42,7 @@ class ConjugateGradientOptimizer(Optimizer):
 
     def __init__(
         self,
-        params: Iterable[torch.Tensor],
+        params: Iterable[Tensor],
         max_constraint: float = 0.01,
         n_conjugate_gradients: int = 10,
         max_backtracks: int = 15,
@@ -45,9 +58,7 @@ class ConjugateGradientOptimizer(Optimizer):
         self.backtrack_ratio = backtrack_ratio
         self.hvp_damping_coefficient = hvp_damping_coefficient
 
-    def step(  # type: ignore[override]
-        self, loss_function: Callable, kl_divergence_function: Callable
-    ):
+    def step(self, loss_function: Callable, kl_divergence_function: Callable) -> None:
         """
         Performs a single optimization step.
 
@@ -55,14 +66,14 @@ class ConjugateGradientOptimizer(Optimizer):
         :param kl_divergence_function: (Callable) Function to compute the kl divergence.
         """
         # Collect trainable parameters and gradients
-        params: List[torch.Tensor] = []
-        grads: List[torch.Tensor] = []
+        params: List[Tensor] = []
+        grads: List[Tensor] = []
         for group in self.param_groups:
             for p in group["params"]:
                 if p.grad is not None:
                     params.append(p)
                     grads.append(p.grad.reshape(-1))
-        flat_loss_grads: torch.Tensor = torch.cat(grads)
+        flat_loss_grads: Tensor = torch.cat(grads)
 
         # Build Hessian-vector-product function
         hessian_vector_product_function = self._build_hessian_vector_product(
@@ -102,10 +113,10 @@ class ConjugateGradientOptimizer(Optimizer):
             params, descent_step, loss_function, kl_divergence_function
         )
 
-    @property  # type: ignore[override]
-    def state(self):
+    @property
+    def state(self) -> State:
         """
-        dict: The hyper-parameters of the optimizer.
+        State: The hyper-parameters of the optimizer.
         """
         return {
             "max_constraint": self.max_constraint,
@@ -116,14 +127,14 @@ class ConjugateGradientOptimizer(Optimizer):
         }
 
     @state.setter
-    def state(self, state):  # type: ignore[override]
+    def state(self, state: State) -> None:
         self.max_constraint = state.get("max_constraint", 0.01)
         self.n_conjugate_gradients = state.get("n_conjugate_gradients", 10)
         self.max_backtracks = state.get("max_backtracks", 15)
         self.backtrack_ratio = state.get("backtrack_ratio", 0.8)
         self.hvp_damping_coefficient = state.get("hvp_damping_coefficient", 1e-5)
 
-    def __setstate__(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         """
         Restore the optimizer state.
 
@@ -136,39 +147,39 @@ class ConjugateGradientOptimizer(Optimizer):
         self.param_groups = state["param_groups"]
 
     def _build_hessian_vector_product(
-        self, hessian_target_vector_function: Callable, params: List[torch.Tensor]
+        self, hessian_target_vector_function: Callable, params: List[Tensor]
     ) -> Callable:
         param_shapes: List[torch.Size] = [p.shape or torch.Size([1]) for p in params]
         hessian_target_vector = hessian_target_vector_function()
-        hessian_target_vector_grads: Tuple[torch.Tensor, ...] = torch.autograd.grad(
+        hessian_target_vector_grads: Tuple[Tensor, ...] = torch.autograd.grad(
             hessian_target_vector, params, create_graph=True
         )
 
-        def _eval(vector):
+        def _eval(vector: Tensor) -> Tensor:
             """
             The evaluation function.
 
-            :param vector (torch.Tensor): The vector to be multiplied with Hessian.
-            :return: (torch.Tensor) The product of Hessian of function f and v.
+            :param vector (Tensor): The vector to be multiplied with Hessian.
+            :return: (Tensor) The product of Hessian of function f and v.
             """
-            unflatten_vector: torch.Tensor = unflatten_tensors(vector, param_shapes)
+            unflatten_vector: Tensor = unflatten_tensors(vector, param_shapes)
 
             assert len(hessian_target_vector_grads) == len(unflatten_vector)
-            grad_vector_product_list: List[torch.Tensor] = []
+            grad_vector_product_list: List[Tensor] = []
             for g, x in zip(hessian_target_vector_grads, unflatten_vector):
                 single_grad_vector_product = torch.sum(g * x)
                 grad_vector_product_list.append(single_grad_vector_product)
 
             grad_vector_product = torch.sum(torch.stack(grad_vector_product_list))
 
-            hvp: List[torch.Tensor] = list(
+            hvp: List[Tensor] = list(
                 torch.autograd.grad(grad_vector_product, params, retain_graph=True)
             )
             for i, (hx, p) in enumerate(zip(hvp, params)):
                 if hx is None:
                     hvp[i] = torch.zeros_like(p)
 
-            flat_output: torch.Tensor = torch.cat([h.reshape(-1) for h in hvp])
+            flat_output: Tensor = torch.cat([h.reshape(-1) for h in hvp])
             return flat_output + self.hvp_damping_coefficient * vector
 
         return _eval
@@ -176,17 +187,17 @@ class ConjugateGradientOptimizer(Optimizer):
     def _conjugate_gradient(
         self,
         hessian_vector_product_function: Callable,
-        b: torch.Tensor,
+        b: Tensor,
         residual_tol: float = 1e-10,
-    ):
+    ) -> Tensor:
         """
         Use Conjugate Gradient iteration to solve Ax = b. Demmel p 312.
 
         :param hessian_vector_product_function: (Callable) A function to compute Hessian vector product.
-        :param b: (torch.Tensor) Right hand side of the equation to solve.
+        :param b: (Tensor) Right hand side of the equation to solve.
         :param residual_tol: (float) Tolerence for convergence.
 
-        :return: (torch.Tensor) Solution x* for equation Ax = b.
+        :return: (Tensor) Solution x* for equation Ax = b.
         """
         x = torch.zeros_like(b)
 
@@ -210,19 +221,17 @@ class ConjugateGradientOptimizer(Optimizer):
 
     def _backtracking_line_search(
         self,
-        params: List[torch.Tensor],
+        params: List[Tensor],
         descent_step: float,
         loss_function: Callable,
         constraint_function: Callable,
-    ):
-        previous_params: List[torch.Tensor] = [p.clone() for p in params]
+    ) -> None:
+        previous_params: List[Tensor] = [p.clone() for p in params]
         ratio_list: np.ndarray = self.backtrack_ratio ** np.arange(self.max_backtracks)
-        loss_before: torch.Tensor = loss_function()
+        loss_before: Tensor = loss_function()
 
         param_shapes: List[torch.Size] = [p.shape or torch.Size([1]) for p in params]
-        descent_step_list: List[torch.Tensor] = unflatten_tensors(
-            descent_step, param_shapes
-        )
+        descent_step_list: List[Tensor] = unflatten_tensors(descent_step, param_shapes)
         assert len(descent_step_list) == len(params)
 
         for ratio in ratio_list:

@@ -4,6 +4,7 @@ from typing import Dict, List, Optional
 import gym
 import numpy as np
 import torch
+from torch import Tensor
 from torch.nn import functional as F
 
 from rl_replicas.common.base_algorithms import OffPolicyAlgorithm
@@ -59,43 +60,43 @@ class DDPG(OffPolicyAlgorithm):
         all_q_values: List[float] = []
 
         for _ in range(train_steps):
-            minibatch: Dict[str, torch.Tensor] = replay_buffer.sample_minibatch(
+            minibatch: Dict[str, Tensor] = replay_buffer.sample_minibatch(
                 minibatch_size
             )
 
-        observations: torch.Tensor = minibatch["observations"]
-        actions: torch.Tensor = minibatch["actions"]
-        rewards: torch.Tensor = minibatch["rewards"]
-        next_observations: torch.Tensor = minibatch["next_observations"]
-        dones: torch.Tensor = minibatch["dones"]
+        observations: Tensor = minibatch["observations"]
+        actions: Tensor = minibatch["actions"]
+        rewards: Tensor = minibatch["rewards"]
+        next_observations: Tensor = minibatch["next_observations"]
+        dones: Tensor = minibatch["dones"]
 
-        q_values: torch.Tensor = self.q_function(observations, actions)
+        q_values: Tensor = self.q_function(observations, actions)
         all_q_values.extend(q_values.tolist())
 
         with torch.no_grad():
-            next_actions: torch.Tensor = self.target_policy(next_observations)
-            target_q_values: torch.Tensor = self.target_q_function(
+            next_actions: Tensor = self.target_policy(next_observations)
+            target_q_values: Tensor = self.target_q_function(
                 next_observations, next_actions
             )
 
-            targets: torch.Tensor = rewards + self.gamma * (1 - dones) * target_q_values
+            targets: Tensor = rewards + self.gamma * (1 - dones) * target_q_values
 
-        q_function_loss: torch.Tensor = F.mse_loss(q_values, targets)
+        q_function_loss: Tensor = F.mse_loss(q_values, targets)
         q_function_losses.append(q_function_loss.item())
 
         self.q_function.optimizer.zero_grad()
         q_function_loss.backward()
         self.q_function.optimizer.step()
 
-        policy_actions: torch.Tensor = self.policy(observations)
+        policy_actions: Tensor = self.policy(observations)
 
         # Freeze Q-network so you don't waste computational effort
         for param in self.q_function.network.parameters():
             param.requires_grad = False
 
-        policy_q_values: torch.Tensor = self.q_function(observations, policy_actions)
+        policy_q_values: Tensor = self.q_function(observations, policy_actions)
 
-        policy_loss: torch.Tensor = -torch.mean(policy_q_values)
+        policy_loss: Tensor = -torch.mean(policy_q_values)
         policy_losses.append(policy_loss.item())
 
         self.policy.optimizer.zero_grad()

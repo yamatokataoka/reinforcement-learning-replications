@@ -3,6 +3,7 @@ from operator import itemgetter
 from typing import Dict, List
 
 import torch
+from torch import Tensor
 
 
 class ReplayBuffer:
@@ -16,20 +17,20 @@ class ReplayBuffer:
         self.buffer_size = buffer_size
 
         self.current_size: int = 0
-        self.observations: List[torch.Tensor] = []
-        self.actions: List[torch.Tensor] = []
+        self.observations: List[Tensor] = []
+        self.actions: List[Tensor] = []
         self.rewards: List[float] = []
-        self.next_observations: List[torch.Tensor] = []
+        self.next_observations: List[Tensor] = []
         self.dones: List[bool] = []
 
     def add_one_epoch_experience(
         self,
-        observations: List[torch.Tensor],
-        actions: List[torch.Tensor],
+        observations: List[Tensor],
+        actions: List[Tensor],
         rewards: List[float],
-        next_observations: List[torch.Tensor],
+        next_observations: List[Tensor],
         dones: List[bool],
-    ):
+    ) -> None:
         self.observations.extend(observations)
         self.actions.extend(actions)
         self.rewards.extend(rewards)
@@ -50,20 +51,20 @@ class ReplayBuffer:
 
                 self.current_size -= 1
 
-    def sample_minibatch(self, minibatch_size: int = 32):
+    def sample_minibatch(self, minibatch_size: int = 32) -> Dict[str, Tensor]:
         indices = random.sample(range(0, self.current_size), minibatch_size)
 
-        sampled_observations: torch.Tensor = torch.stack(
+        sampled_observations: Tensor = torch.stack(
             itemgetter(*indices)(self.observations)
         )
-        sampled_actions: torch.Tensor = torch.stack(itemgetter(*indices)(self.actions))
-        sampled_rewards: torch.Tensor = torch.Tensor(itemgetter(*indices)(self.rewards))
-        sampled_next_observations: torch.Tensor = torch.stack(
+        sampled_actions: Tensor = torch.stack(itemgetter(*indices)(self.actions))
+        sampled_rewards: Tensor = Tensor(itemgetter(*indices)(self.rewards))
+        sampled_next_observations: Tensor = torch.stack(
             itemgetter(*indices)(self.next_observations)
         )
-        sampled_dones: torch.Tensor = torch.Tensor(itemgetter(*indices)(self.dones))
+        sampled_dones: Tensor = Tensor(itemgetter(*indices)(self.dones))
 
-        minibatch: Dict[str, torch.Tensor] = {
+        minibatch: Dict[str, Tensor] = {
             "observations": sampled_observations,
             "actions": sampled_actions,
             "rewards": sampled_rewards,

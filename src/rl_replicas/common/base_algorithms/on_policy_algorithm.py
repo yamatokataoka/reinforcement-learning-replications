@@ -7,6 +7,7 @@ from typing import List, Optional
 import gym
 import numpy as np
 import torch
+from torch import Tensor
 from torch.distributions import Distribution
 from torch.utils.tensorboard import SummaryWriter
 from typing_extensions import TypedDict
@@ -23,10 +24,10 @@ logger = logging.getLogger(__name__)
 
 
 class OneEpochExperience(TypedDict):
-    observations: torch.Tensor
-    actions: torch.Tensor
-    advantages: torch.Tensor
-    discounted_returns: torch.Tensor
+    observations: Tensor
+    actions: Tensor
+    advantages: Tensor
+    discounted_returns: Tensor
     episode_returns: List[float]
     episode_lengths: List[int]
 
@@ -177,16 +178,16 @@ class OnPolicyAlgorithm(ABC):
 
     def collect_one_epoch_experience(self, steps_per_epoch: int) -> OneEpochExperience:
         one_epoch_experience: OneEpochExperience = {
-            "observations": torch.Tensor(),
-            "actions": torch.Tensor(),
-            "advantages": torch.Tensor(),
-            "discounted_returns": torch.Tensor(),
+            "observations": Tensor(),
+            "actions": Tensor(),
+            "advantages": Tensor(),
+            "discounted_returns": Tensor(),
             "episode_returns": [],
             "episode_lengths": [],
         }
 
-        observations_list: List[torch.Tensor] = []
-        actions_list: List[torch.Tensor] = []
+        observations_list: List[Tensor] = []
+        actions_list: List[Tensor] = []
 
         advantages_ndarray: np.ndarray = np.zeros(steps_per_epoch, dtype=np.float32)
         discounted_returns_ndarray: np.ndarray = np.zeros(
@@ -204,17 +205,17 @@ class OnPolicyAlgorithm(ABC):
         observation: np.ndarray = self.env.reset()
 
         for current_step in range(steps_per_epoch):
-            observation_tensor: torch.Tensor = torch.from_numpy(observation).float()
+            observation_tensor: Tensor = torch.from_numpy(observation).float()
 
             observations_list.append(observation_tensor)
 
             with torch.no_grad():
                 policy_dist: Distribution = self.policy(observation_tensor)
-                value: torch.Tensor = self.value_function(observation_tensor)
+                value: Tensor = self.value_function(observation_tensor)
 
             values.append(value.detach().item())
 
-            action: torch.Tensor = policy_dist.sample()
+            action: Tensor = policy_dist.sample()
 
             actions_list.append(action)
 
@@ -244,9 +245,7 @@ class OnPolicyAlgorithm(ABC):
                     observation_tensor = torch.from_numpy(observation).float()
 
                     with torch.no_grad():
-                        last_value: torch.Tensor = self.value_function(
-                            observation_tensor
-                        )
+                        last_value: Tensor = self.value_function(observation_tensor)
 
                     last_value_float = last_value.detach().item()
                 else:
@@ -311,8 +310,8 @@ class OnPolicyAlgorithm(ABC):
         :param observation: (np.ndarray) The input observation
         :return: (np.ndarray) The action(s)
         """
-        observation_tensor: torch.Tensor = torch.from_numpy(observation).float()
-        action: torch.Tensor = self.policy.predict(observation_tensor)
+        observation_tensor: Tensor = torch.from_numpy(observation).float()
+        action: Tensor = self.policy.predict(observation_tensor)
         action_ndarray: np.ndarray = action.detach().numpy()
 
         return action_ndarray
