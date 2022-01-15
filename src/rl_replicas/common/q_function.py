@@ -1,5 +1,6 @@
 import torch
 from torch import Tensor, nn
+from torch.optim import Optimizer
 
 
 class QFunction(nn.Module):
@@ -7,10 +8,10 @@ class QFunction(nn.Module):
     The Q Function
 
     :param network: (nn.Module) The network.
-    :param optimizer: (torch.optim.Optimizer) The optimizer.
+    :param optimizer: (Optimizer) The optimizer.
     """
 
-    def __init__(self, network: nn.Module, optimizer: torch.optim.Optimizer) -> None:
+    def __init__(self, network: nn.Module, optimizer: Optimizer) -> None:
         super().__init__()
 
         self.network = network

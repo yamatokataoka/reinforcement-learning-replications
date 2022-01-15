@@ -5,7 +5,7 @@ from typing import Optional
 import gym
 import torch
 from torch import Tensor
-from torch.distributions import Distribution
+from torch.distributions import Distribution, kl
 from torch.nn import functional as F
 
 from rl_replicas.common.base_algorithms.on_policy_algorithm import (
@@ -83,9 +83,7 @@ class TRPO(OnPolicyAlgorithm):
             with torch.no_grad():
                 old_policy_dist: Distribution = self.old_policy(observations)
 
-            kl_constraint: Tensor = torch.distributions.kl.kl_divergence(
-                old_policy_dist, policy_dist
-            )
+            kl_constraint: Tensor = kl.kl_divergence(old_policy_dist, policy_dist)
 
             return torch.mean(kl_constraint)
 

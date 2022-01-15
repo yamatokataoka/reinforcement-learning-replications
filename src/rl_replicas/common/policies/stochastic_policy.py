@@ -3,6 +3,7 @@ from abc import abstractmethod
 import torch
 from torch import Tensor, nn
 from torch.distributions import Distribution
+from torch.optim import Optimizer
 
 from rl_replicas.common.policies.policy import Policy
 
@@ -12,10 +13,10 @@ class StochasticPolicy(Policy):
     The abstract base class for stochastic policies.
 
     :param network: (nn.Module) The network.
-    :param optimizer: (torch.optim.Optimizer) The optimizer.
+    :param optimizer: (Optimizer) The optimizer.
     """
 
-    def __init__(self, network: nn.Module, optimizer: torch.optim.Optimizer):
+    def __init__(self, network: nn.Module, optimizer: Optimizer):
         super().__init__(network, optimizer)
 
     @abstractmethod

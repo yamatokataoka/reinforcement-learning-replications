@@ -1,5 +1,6 @@
 import torch
 from torch import Tensor, nn
+from torch.optim import Optimizer
 
 from rl_replicas.common.policies.policy import Policy
 
@@ -9,10 +10,10 @@ class DeterministicPolicy(Policy):
     The deterministic policy
 
     :param network: (nn.Module) The network.
-    :param optimizer: (torch.optim.Optimizer) The optimizer.
+    :param optimizer: (Optimizer) The optimizer.
     """
 
-    def __init__(self, network: nn.Module, optimizer: torch.optim.Optimizer):
+    def __init__(self, network: nn.Module, optimizer: Optimizer):
         super().__init__(network, optimizer)
 
     def forward(self, observation: Tensor) -> Tensor:

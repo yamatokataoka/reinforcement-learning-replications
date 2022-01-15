@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-import torch
 from torch import Tensor, nn
+from torch.optim import Optimizer
 
 
 class Policy(nn.Module, ABC):
@@ -9,10 +9,10 @@ class Policy(nn.Module, ABC):
     The base policy class
 
     :param network: (nn.Module) The network.
-    :param optimizer: (torch.optim.Optimizer) The optimizer.
+    :param optimizer: (Optimizer) The optimizer.
     """
 
-    def __init__(self, network: nn.Module, optimizer: torch.optim.Optimizer):
+    def __init__(self, network: nn.Module, optimizer: Optimizer):
         super().__init__()
 
         self.network = network

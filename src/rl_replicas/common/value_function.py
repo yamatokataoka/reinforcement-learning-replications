@@ -1,16 +1,16 @@
-import torch
 from torch import Tensor, nn
+from torch.optim import Optimizer
 
 
 class ValueFunction(nn.Module):
     """
     The Value Function
 
-    :param optimizer: (torch.optim.Optimizer) The optimizer.
+    :param optimizer: (Optimizer) The optimizer.
     :param network: (nn.Module) The network.
     """
 
-    def __init__(self, network: nn.Module, optimizer: torch.optim.Optimizer) -> None:
+    def __init__(self, network: nn.Module, optimizer: Optimizer) -> None:
         super().__init__()
 
         self.network = network

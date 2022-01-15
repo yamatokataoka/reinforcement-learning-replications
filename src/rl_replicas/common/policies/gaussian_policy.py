@@ -1,6 +1,7 @@
 import torch
 from torch import Tensor, nn
 from torch.distributions import Independent, Normal
+from torch.optim import Optimizer
 
 from rl_replicas.common.policies.stochastic_policy import StochasticPolicy
 
@@ -10,14 +11,14 @@ class GaussianPolicy(StochasticPolicy):
     The Gaussian policy
 
     :param network: (nn.Module) The network.
-    :param optimizer: (torch.optim.Optimizer) The optimizer.
+    :param optimizer: (Optimizer) The optimizer.
     :param log_std: (Tensor) The standard deviation of the distribution.
     """
 
     def __init__(
         self,
         network: nn.Module,
-        optimizer: torch.optim.Optimizer,
+        optimizer: Optimizer,
         log_std: nn.Parameter,
     ):
         super().__init__(network, optimizer)
