@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn
+from torch import Tensor, nn
 
 
 class QFunction(nn.Module):
@@ -16,16 +16,16 @@ class QFunction(nn.Module):
         self.network = network
         self.optimizer = optimizer
 
-    def forward(self, observation: torch.Tensor, action: torch.Tensor) -> torch.Tensor:
+    def forward(self, observation: Tensor, action: Tensor) -> Tensor:
         """
         Forward pass in the Q-function
 
-        :param observation: (torch.Tensor) The observation of the environment
-        :param action: (torch.Tensor) The action of the environment
-        :return squeezeed_q_value: (torch.Tensor) The Q-value(s)
+        :param observation: (Tensor) The observation of the environment
+        :param action: (Tensor) The action of the environment
+        :return squeezeed_q_value: (Tensor) The Q-value(s)
         """
-        input: torch.Tensor = torch.cat([observation, action], -1)
-        q_value: torch.Tensor = self.network(input)
-        squeezeed_q_value: torch.Tensor = torch.squeeze(q_value, -1)
+        input: Tensor = torch.cat([observation, action], -1)
+        q_value: Tensor = self.network(input)
+        squeezeed_q_value: Tensor = torch.squeeze(q_value, -1)
 
         return squeezeed_q_value

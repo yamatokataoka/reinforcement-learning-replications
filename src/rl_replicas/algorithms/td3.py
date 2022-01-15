@@ -5,6 +5,7 @@ from typing import Dict, List, Optional
 import gym
 import numpy as np
 import torch
+from torch import Tensor
 from torch.nn import functional as F
 
 from rl_replicas.common.base_algorithms import OffPolicyAlgorithm
@@ -80,24 +81,24 @@ class TD3(OffPolicyAlgorithm):
         all_q_values_2: List[float] = []
 
         for train_step in range(train_steps):
-            minibatch: Dict[str, torch.Tensor] = replay_buffer.sample_minibatch(
+            minibatch: Dict[str, Tensor] = replay_buffer.sample_minibatch(
                 minibatch_size
             )
 
-            observations: torch.Tensor = minibatch["observations"]
-            actions: torch.Tensor = minibatch["actions"]
-            rewards: torch.Tensor = minibatch["rewards"]
-            next_observations: torch.Tensor = minibatch["next_observations"]
-            dones: torch.Tensor = minibatch["dones"]
+            observations: Tensor = minibatch["observations"]
+            actions: Tensor = minibatch["actions"]
+            rewards: Tensor = minibatch["rewards"]
+            next_observations: Tensor = minibatch["next_observations"]
+            dones: Tensor = minibatch["dones"]
 
-            q_values_1: torch.Tensor = self.q_function_1(observations, actions)
-            q_values_2: torch.Tensor = self.q_function_2(observations, actions)
+            q_values_1: Tensor = self.q_function_1(observations, actions)
+            q_values_2: Tensor = self.q_function_2(observations, actions)
             all_q_values_1.extend(q_values_1.tolist())
             all_q_values_2.extend(q_values_2.tolist())
 
             with torch.no_grad():
-                next_actions: torch.Tensor = self.target_policy(next_observations)
-                epsilon: torch.Tensor = self.target_noise_scale * torch.randn_like(
+                next_actions: Tensor = self.target_policy(next_observations)
+                epsilon: Tensor = self.target_noise_scale * torch.randn_like(
                     next_actions
                 )
                 epsilon = torch.clamp(
@@ -108,22 +109,20 @@ class TD3(OffPolicyAlgorithm):
                     next_actions, -self.action_limit, self.action_limit
                 )
 
-                target_q_values_1: torch.Tensor = self.target_q_function_1(
+                target_q_values_1: Tensor = self.target_q_function_1(
                     next_observations, next_actions
                 )
-                target_q_values_2: torch.Tensor = self.target_q_function_2(
+                target_q_values_2: Tensor = self.target_q_function_2(
                     next_observations, next_actions
                 )
-                target_q_values: torch.Tensor = torch.min(
+                target_q_values: Tensor = torch.min(
                     target_q_values_1, target_q_values_2
                 )
 
-                targets: torch.Tensor = (
-                    rewards + self.gamma * (1 - dones) * target_q_values
-                )
+                targets: Tensor = rewards + self.gamma * (1 - dones) * target_q_values
 
-            q_function_1_loss: torch.Tensor = F.mse_loss(q_values_1, targets)
-            q_function_2_loss: torch.Tensor = F.mse_loss(q_values_2, targets)
+            q_function_1_loss: Tensor = F.mse_loss(q_values_1, targets)
+            q_function_2_loss: Tensor = F.mse_loss(q_values_2, targets)
             q_function_1_losses.append(q_function_1_loss.item())
             q_function_2_losses.append(q_function_2_loss.item())
 
@@ -142,12 +141,12 @@ class TD3(OffPolicyAlgorithm):
                 for param in self.q_function_2.network.parameters():
                     param.requires_grad = False
 
-                policy_actions: torch.Tensor = self.policy(observations)
-                policy_q_values: torch.Tensor = self.q_function_1(
+                policy_actions: Tensor = self.policy(observations)
+                policy_q_values: Tensor = self.q_function_1(
                     observations, policy_actions
                 )
 
-                policy_loss: torch.Tensor = -torch.mean(policy_q_values)
+                policy_loss: Tensor = -torch.mean(policy_q_values)
                 policy_losses.append(policy_loss.item())
 
                 self.policy.optimizer.zero_grad()

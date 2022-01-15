@@ -4,6 +4,7 @@ from typing import Optional
 
 import gym
 import torch
+from torch import Tensor
 from torch.distributions import Distribution
 from torch.nn import functional as F
 
@@ -56,46 +57,46 @@ class TRPO(OnPolicyAlgorithm):
         self,
         one_epoch_experience: OneEpochExperience,
     ) -> None:
-        observations: torch.Tensor = one_epoch_experience["observations"]
-        actions: torch.Tensor = one_epoch_experience["actions"]
-        advantages: torch.Tensor = one_epoch_experience["advantages"]
+        observations: Tensor = one_epoch_experience["observations"]
+        actions: Tensor = one_epoch_experience["actions"]
+        advantages: Tensor = one_epoch_experience["advantages"]
 
         # Normalize advantage
         advantages = (advantages - torch.mean(advantages)) / torch.std(advantages)
 
-        def compute_surrogate_loss() -> torch.Tensor:
+        def compute_surrogate_loss() -> Tensor:
             policy_dist: Distribution = self.policy(observations)
-            log_probs: torch.Tensor = policy_dist.log_prob(actions)
+            log_probs: Tensor = policy_dist.log_prob(actions)
 
             with torch.no_grad():
                 old_policy_dist: Distribution = self.old_policy(observations)
-                old_log_probs: torch.Tensor = old_policy_dist.log_prob(actions)
+                old_log_probs: Tensor = old_policy_dist.log_prob(actions)
 
-            likelihood_ratio: torch.Tensor = torch.exp(log_probs - old_log_probs)
-            surrogate_loss: torch.Tensor = -torch.mean(likelihood_ratio * advantages)
+            likelihood_ratio: Tensor = torch.exp(log_probs - old_log_probs)
+            surrogate_loss: Tensor = -torch.mean(likelihood_ratio * advantages)
 
             return surrogate_loss
 
-        def compute_kl_constraint() -> torch.Tensor:
+        def compute_kl_constraint() -> Tensor:
             policy_dist: Distribution = self.policy(observations)
 
             with torch.no_grad():
                 old_policy_dist: Distribution = self.old_policy(observations)
 
-            kl_constraint: torch.Tensor = torch.distributions.kl.kl_divergence(
+            kl_constraint: Tensor = torch.distributions.kl.kl_divergence(
                 old_policy_dist, policy_dist
             )
 
             return torch.mean(kl_constraint)
 
-        policy_loss: torch.Tensor = compute_surrogate_loss()
+        policy_loss: Tensor = compute_surrogate_loss()
 
         # for logging
-        policy_loss_before: torch.Tensor = policy_loss.detach()
+        policy_loss_before: Tensor = policy_loss.detach()
         with torch.no_grad():
             policy_dist: Distribution = self.policy(observations)
-        log_probs: torch.Tensor = policy_dist.log_prob(actions)
-        entropies: torch.Tensor = policy_dist.entropy()
+        log_probs: Tensor = policy_dist.log_prob(actions)
+        entropies: Tensor = policy_dist.entropy()
 
         # Train policy
         self.policy.optimizer.zero_grad()
@@ -104,17 +105,17 @@ class TRPO(OnPolicyAlgorithm):
 
         self.old_policy.load_state_dict(self.policy.state_dict())
 
-        discounted_returns: torch.Tensor = one_epoch_experience["discounted_returns"]
+        discounted_returns: Tensor = one_epoch_experience["discounted_returns"]
 
         # for logging
         with torch.no_grad():
-            value_loss_before: torch.Tensor = self.compute_value_loss(
+            value_loss_before: Tensor = self.compute_value_loss(
                 observations, discounted_returns
             )
 
         # Train value function
         for _ in range(self.n_value_gradients):
-            value_loss: torch.Tensor = self.compute_value_loss(
+            value_loss: Tensor = self.compute_value_loss(
                 observations, discounted_returns
             )
             self.value_function.optimizer.zero_grad()
@@ -145,10 +146,10 @@ class TRPO(OnPolicyAlgorithm):
             )
 
     def compute_value_loss(
-        self, observations: torch.Tensor, discounted_returns: torch.Tensor
-    ) -> torch.Tensor:
-        values: torch.Tensor = self.value_function(observations)
-        squeezed_values: torch.Tensor = torch.squeeze(values, -1)
-        value_loss: torch.Tensor = F.mse_loss(squeezed_values, discounted_returns)
+        self, observations: Tensor, discounted_returns: Tensor
+    ) -> Tensor:
+        values: Tensor = self.value_function(observations)
+        squeezed_values: Tensor = torch.squeeze(values, -1)
+        value_loss: Tensor = F.mse_loss(squeezed_values, discounted_returns)
 
         return value_loss

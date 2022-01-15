@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 import torch
-import torch.nn as nn
+from torch import Tensor, nn
 
 
 class Policy(nn.Module, ABC):
@@ -19,11 +19,11 @@ class Policy(nn.Module, ABC):
         self.optimizer = optimizer
 
     @abstractmethod
-    def predict(self, observation: torch.Tensor) -> torch.Tensor:
+    def predict(self, observation: Tensor) -> Tensor:
         """
         Selects the action(s) based on the observation of the environment.
 
-        :param observation: (torch.Tensor) The observation(s) of the environment
-        :return: (torch.Tensor) the action(s)
+        :param observation: (Tensor) The observation(s) of the environment
+        :return: (Tensor) the action(s)
         """
         raise NotImplementedError

@@ -3,6 +3,7 @@ from typing import Optional
 
 import gym
 import torch
+from torch import Tensor
 from torch.distributions import Distribution
 from torch.nn import functional as F
 
@@ -50,38 +51,38 @@ class VPG(OnPolicyAlgorithm):
         )
 
     def train(self, one_epoch_experience: OneEpochExperience) -> None:
-        observations: torch.Tensor = one_epoch_experience["observations"]
-        actions: torch.Tensor = one_epoch_experience["actions"]
-        advantages: torch.Tensor = one_epoch_experience["advantages"]
+        observations: Tensor = one_epoch_experience["observations"]
+        actions: Tensor = one_epoch_experience["actions"]
+        advantages: Tensor = one_epoch_experience["advantages"]
 
         # Normalize advantage
         advantages = (advantages - torch.mean(advantages)) / torch.std(advantages)
 
         policy_dist: Distribution = self.policy(observations)
-        log_probs: torch.Tensor = policy_dist.log_prob(actions)
+        log_probs: Tensor = policy_dist.log_prob(actions)
 
-        policy_loss: torch.Tensor = -torch.mean(log_probs * advantages)
+        policy_loss: Tensor = -torch.mean(log_probs * advantages)
 
         # for logging
-        policy_loss_before: torch.Tensor = policy_loss.detach()
-        entropies: torch.Tensor = policy_dist.entropy().detach()
+        policy_loss_before: Tensor = policy_loss.detach()
+        entropies: Tensor = policy_dist.entropy().detach()
 
         # Train policy
         self.policy.optimizer.zero_grad()
         policy_loss.backward()
         self.policy.optimizer.step()
 
-        discounted_returns: torch.Tensor = one_epoch_experience["discounted_returns"]
+        discounted_returns: Tensor = one_epoch_experience["discounted_returns"]
 
         # for logging
         with torch.no_grad():
-            value_loss_before: torch.Tensor = self.compute_value_loss(
+            value_loss_before: Tensor = self.compute_value_loss(
                 observations, discounted_returns
             )
 
         # Train value function
         for _ in range(self.n_value_gradients):
-            value_loss: torch.Tensor = self.compute_value_loss(
+            value_loss: Tensor = self.compute_value_loss(
                 observations, discounted_returns
             )
             self.value_function.optimizer.zero_grad()
@@ -112,10 +113,10 @@ class VPG(OnPolicyAlgorithm):
             )
 
     def compute_value_loss(
-        self, observations: torch.Tensor, discounted_returns: torch.Tensor
-    ) -> torch.Tensor:
-        values: torch.Tensor = self.value_function(observations)
-        squeezed_values: torch.Tensor = torch.squeeze(values, -1)
-        value_loss: torch.Tensor = F.mse_loss(squeezed_values, discounted_returns)
+        self, observations: Tensor, discounted_returns: Tensor
+    ) -> Tensor:
+        values: Tensor = self.value_function(observations)
+        squeezed_values: Tensor = torch.squeeze(values, -1)
+        value_loss: Tensor = F.mse_loss(squeezed_values, discounted_returns)
 
         return value_loss

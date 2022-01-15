@@ -1,7 +1,6 @@
 from typing import List, Type
 
-import torch
-import torch.nn as nn
+from torch import Tensor, nn
 
 
 class MLP(nn.Module):
@@ -31,12 +30,12 @@ class MLP(nn.Module):
 
         self.network: nn.Module = nn.Sequential(*layers)
 
-    def forward(self, input: torch.Tensor) -> torch.Tensor:
+    def forward(self, input: Tensor) -> Tensor:
         """
         Forward pass in the MLP
 
-        :param input: (torch.Tensor) The input value
-        :return output: (torch.Tensor) The output value
+        :param input: (Tensor) The input value
+        :return output: (Tensor) The output value
         """
-        output: torch.Tensor = self.network(input)
+        output: Tensor = self.network(input)
         return output

@@ -4,6 +4,7 @@ from typing import Iterable, List
 import numpy as np
 import scipy.signal
 import torch
+from torch import Tensor
 
 
 def discount_cumulative_sum(vector: np.ndarray, discount: float) -> np.ndarray:
@@ -54,7 +55,7 @@ def gae(
 
 def unflatten_tensors(
     flattened: np.ndarray, tensor_shapes: List[torch.Size]
-) -> List[torch.Tensor]:
+) -> List[Tensor]:
     """
     Unflatten a flattened tensors into a list of tensors.
 
