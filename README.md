@@ -1,10 +1,12 @@
 # Reinforcement Learning Replications
 Reinforcement Learning Replications is a set of Pytorch implementations of reinforcement learning algorithms.
 
+
 ## Features
 
 - Use Python standard logging library
 - Support TensorBoard
+
 
 ## Benchmarks
 
@@ -88,3 +90,18 @@ Sample result and trained model stored at `./runs/vpg/CartPole-v0`.
 Sample result and trained model stored at `./runs/vpg/LunarLander-v2`.
 
 ![CartPole-v0 with VPG](https://raw.githubusercontent.com/yamatokataoka/reinforcement-learning-replications/master/docs/vpg/LunarLander-v2_3seeds.png)
+
+
+## Contributing
+
+All contributions are welcome.
+
+### Release Flow
+
+1. A release branch with a version
+1. A pull request from the release branch to the main branch (`master`)
+
+Once the pull request is ready,
+
+1. Merge the pull request
+1. Create a release with the version. Once the release is published, packages will be uploaded.
