@@ -234,7 +234,7 @@ class OnPolicyAlgorithm(ABC):
 
             if episode_done or epoch_ended:
                 if epoch_ended and not (episode_done):
-                    logger.warning(
+                    logger.debug(
                         "The trajectory cut off at {} steps on the current episode".format(
                             episode_length
                         )

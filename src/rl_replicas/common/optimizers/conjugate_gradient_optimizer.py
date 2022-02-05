@@ -254,15 +254,15 @@ class ConjugateGradientOptimizer(Optimizer):
             or new_loss >= loss_before
             or constraint >= self.max_constraint
         ):
-            logger.warning("Line search condition violated. Rejecting the step!")
+            logger.warning("Line search condition violated. Rejecting the step.")
             if torch.isnan(new_loss):
-                logger.warning("Violated because loss is NaN")
+                logger.debug("Violated because loss is NaN")
             if torch.isnan(constraint):
-                logger.warning("Violated because constraint is NaN")
+                logger.debug("Violated because constraint is NaN")
             if new_loss >= loss_before:
-                logger.warning("Violated because loss not improving")
+                logger.debug("Violated because loss not improving")
             if constraint >= self.max_constraint:
-                logger.warning("Violated because constraint is violated")
+                logger.debug("Violated because constraint is violated")
 
             for previous_param, param in zip(previous_params, params):
                 param.data = previous_param.data
