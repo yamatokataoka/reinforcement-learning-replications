@@ -113,17 +113,7 @@ class OnPolicyAlgorithm(ABC):
                 model_path: str = os.path.join(output_dir, "model.pt")
 
                 logger.info("Save model")
-                torch.save(
-                    {
-                        "epoch": current_epoch,
-                        "total_steps": self.current_total_steps,
-                        "policy_state_dict": self.policy.network.state_dict(),
-                        "policy_optimizer_state_dict": self.policy.optimizer.state_dict(),
-                        "value_fn_state_dict": self.value_function.network.state_dict(),
-                        "value_fn_optimizer_state_dict": self.value_function.optimizer.state_dict(),
-                    },
-                    model_path,
-                )
+                self.save_model(current_epoch, model_path)
 
             episode_returns: List[float] = one_epoch_experience["episode_returns"]
             episode_lengths: List[int] = one_epoch_experience["episode_lengths"]
@@ -315,3 +305,22 @@ class OnPolicyAlgorithm(ABC):
         action_ndarray: np.ndarray = action.detach().numpy()
 
         return action_ndarray
+
+    def save_model(self, epoch: int, model_path: str) -> None:
+        """
+        Save model
+
+        :param epoch: (int) The current number of epochs.
+        :param model_path: (int) The path to save the model.
+        """
+        torch.save(
+            {
+                "epoch": epoch,
+                "total_steps": self.current_total_steps,
+                "policy_state_dict": self.policy.network.state_dict(),
+                "policy_optimizer_state_dict": self.policy.optimizer.state_dict(),
+                "value_function_state_dict": self.value_function.network.state_dict(),
+                "value_function_optimizer_state_dict": self.value_function.optimizer.state_dict(),
+            },
+            model_path,
+        )
