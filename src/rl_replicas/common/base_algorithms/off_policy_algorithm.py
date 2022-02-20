@@ -352,8 +352,8 @@ class OffPolicyAlgorithm(ABC):
         """
         Save model
 
-        :param current_epoch: (int) The current epoch
-        :param model_path: (int) The path to save the model
+        :param current_epoch: (int) The current epoch.
+        :param model_path: (int) The path to save the model.
         """
         torch.save(
             {
