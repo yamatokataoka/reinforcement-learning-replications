@@ -310,7 +310,7 @@ class OnPolicyAlgorithm(ABC):
         """
         Save model
 
-        :param epoch: (int) The current number of epochs.
+        :param epoch: (int) The current epoch.
         :param model_path: (int) The path to save the model.
         """
         torch.save(
