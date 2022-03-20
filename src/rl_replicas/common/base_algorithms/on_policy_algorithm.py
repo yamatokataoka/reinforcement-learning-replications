@@ -13,21 +13,17 @@ from torch.utils.tensorboard import SummaryWriter
 from typing_extensions import TypedDict
 
 from rl_replicas.common.policies import Policy
-from rl_replicas.common.utils import (
-    discount_cumulative_sum,
-    gae,
-    seed_random_generators,
-)
+from rl_replicas.common.utils import seed_random_generators
 from rl_replicas.common.value_function import ValueFunction
 
 logger = logging.getLogger(__name__)
 
 
 class OneEpochExperience(TypedDict):
-    observations: Tensor
-    actions: Tensor
-    advantages: Tensor
-    discounted_returns: Tensor
+    observations: List[List[np.ndarray]]
+    actions: List[List[np.ndarray]]
+    rewards: List[List[float]]
+    observations_with_last_observations: List[List[np.ndarray]]
     episode_returns: List[float]
     episode_lengths: List[int]
 
@@ -168,58 +164,46 @@ class OnPolicyAlgorithm(ABC):
 
     def collect_one_epoch_experience(self, steps_per_epoch: int) -> OneEpochExperience:
         one_epoch_experience: OneEpochExperience = {
-            "observations": Tensor(),
-            "actions": Tensor(),
-            "advantages": Tensor(),
-            "discounted_returns": Tensor(),
+            "observations": [],
+            "actions": [],
+            "rewards": [],
+            "observations_with_last_observations": [],
             "episode_returns": [],
             "episode_lengths": [],
         }
 
-        observations_list: List[Tensor] = []
-        actions_list: List[Tensor] = []
-
-        advantages_ndarray: np.ndarray = np.zeros(steps_per_epoch, dtype=np.float32)
-        discounted_returns_ndarray: np.ndarray = np.zeros(
-            steps_per_epoch, dtype=np.float32
-        )
-
-        episode_returns_list: List[float] = []
-        episode_lengths_list: List[int] = []
-
-        # Variables on the current episode
-        rewards: List[float] = []
-        values: List[float] = []
+        # Variables on an episode
+        episode_observations: List[np.ndarray] = []
+        episode_actions: List[np.ndarray] = []
+        episode_rewards: List[float] = []
+        episode_observations_with_last_observations: List[float] = []
+        episode_return: float = 0.0
         episode_length: int = 0
 
         observation: np.ndarray = self.env.reset()
 
         for current_step in range(steps_per_epoch):
-            observation_tensor: Tensor = torch.from_numpy(observation).float()
+            episode_observations.append(observation)
+            episode_observations_with_last_observations.append(observation)
 
-            observations_list.append(observation_tensor)
+            observation_tensor: Tensor = torch.from_numpy(observation).float()
 
             with torch.no_grad():
                 policy_dist: Distribution = self.policy(observation_tensor)
-                value: Tensor = self.value_function(observation_tensor)
-
-            values.append(value.detach().item())
 
             action: Tensor = policy_dist.sample()
-
-            actions_list.append(action)
-
             action_ndarray = action.detach().numpy()
+            episode_actions.append(action_ndarray)
+
             reward: float
             episode_done: bool
             observation, reward, episode_done, _ = self.env.step(action_ndarray)
 
-            rewards.append(reward)
+            episode_return += reward
+            episode_rewards.append(reward)
 
             episode_length += 1
-
             self.current_total_steps += 1
-
             epoch_ended: bool = current_step == steps_per_epoch - 1
 
             if episode_done or epoch_ended:
@@ -230,7 +214,6 @@ class OnPolicyAlgorithm(ABC):
                         )
                     )
 
-                last_value_float: float
                 if epoch_ended:
                     observation_tensor = torch.from_numpy(observation).float()
 
@@ -240,47 +223,31 @@ class OnPolicyAlgorithm(ABC):
                     last_value_float = last_value.detach().item()
                 else:
                     last_value_float = 0.0
-                values.append(last_value_float)
-                rewards.append(last_value_float)
+                episode_rewards.append(last_value_float)
 
-                episode_slice = slice(
-                    current_step - episode_length + 1, current_step + 1
+                episode_observations_with_last_observations.append(observation)
+
+                one_epoch_experience["observations"].append(episode_observations)
+                one_epoch_experience["actions"].append(episode_actions)
+                one_epoch_experience["rewards"].append(episode_rewards)
+                one_epoch_experience["observations_with_last_observations"].append(
+                    episode_observations_with_last_observations
                 )
 
-                # Calculate advantage over an episode
-                values_ndarray: np.ndarray = np.asarray(values)
-                rewards_ndarray: np.ndarray = np.asarray(rewards)
-                episode_advantage: np.ndarray = gae(
-                    rewards_ndarray, self.gamma, values_ndarray, self.gae_lambda
-                )
-
-                advantages_ndarray[episode_slice] = episode_advantage
-
-                # Calculate rewards-to-go over an episode, to be targets for the value function
-                episode_discounted_return: np.ndarray = discount_cumulative_sum(
-                    rewards, self.gamma
-                )[:-1]
-                discounted_returns_ndarray[episode_slice] = episode_discounted_return
-
-                episode_true_return: float = np.sum(rewards).item()
-
-                episode_returns_list.append(episode_true_return)
-                episode_lengths_list.append(episode_length)
+                one_epoch_experience["episode_returns"].append(episode_return)
+                one_epoch_experience["episode_lengths"].append(episode_length)
 
                 if episode_done:
                     self.current_total_episodes += 1
 
-                observation, episode_length = self.env.reset(), 0
-                rewards, values = [], []
-
-        one_epoch_experience["observations"] = torch.stack(observations_list)
-        one_epoch_experience["actions"] = torch.stack(actions_list)
-        one_epoch_experience["advantages"] = torch.from_numpy(advantages_ndarray)
-        one_epoch_experience["discounted_returns"] = torch.from_numpy(
-            discounted_returns_ndarray
-        )
-        one_epoch_experience["episode_returns"] = episode_returns_list
-        one_epoch_experience["episode_lengths"] = episode_lengths_list
+                observation = self.env.reset()
+                episode_return, episode_length = 0.0, 0
+                (
+                    episode_observations,
+                    episode_actions,
+                    episode_rewards,
+                    episode_observations_with_last_observations,
+                ) = ([], [], [], [])
 
         return one_epoch_experience
 
