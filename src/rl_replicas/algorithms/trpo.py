@@ -1,8 +1,9 @@
 import copy
 import logging
-from typing import Optional
+from typing import List, Optional
 
 import gym
+import numpy as np
 import torch
 from torch import Tensor
 from torch.distributions import Distribution, kl
@@ -13,6 +14,7 @@ from rl_replicas.common.base_algorithms.on_policy_algorithm import (
     OnPolicyAlgorithm,
 )
 from rl_replicas.common.policies import Policy
+from rl_replicas.common.utils import discount_cumulative_sum, gae
 from rl_replicas.common.value_function import ValueFunction
 
 logger = logging.getLogger(__name__)
@@ -57,9 +59,54 @@ class TRPO(OnPolicyAlgorithm):
         self,
         one_epoch_experience: OneEpochExperience,
     ) -> None:
-        observations: Tensor = one_epoch_experience["observations"]
-        actions: Tensor = one_epoch_experience["actions"]
-        advantages: Tensor = one_epoch_experience["advantages"]
+        observations_list: List[List[np.ndarray]] = one_epoch_experience["observations"]
+        actions_list: List[List[np.ndarray]] = one_epoch_experience["actions"]
+        rewards_list: List[List[float]] = one_epoch_experience["rewards"]
+        observations_with_last_observations_list: List[
+            np.ndarray
+        ] = one_epoch_experience["observations_with_last_observations"]
+
+        # Calculate rewards-to-go over each episode, to be targets for the value function
+        discounted_returns: Tensor = torch.from_numpy(
+            np.concatenate(
+                [
+                    discount_cumulative_sum(one_episode_rewards, self.gamma)[:-1]
+                    for one_episode_rewards in rewards_list
+                ]
+            )
+        ).float()
+
+        # Calculate advantages
+        observations = torch.from_numpy(np.concatenate(observations_list)).float()
+        actions = torch.from_numpy(np.concatenate(actions_list)).float()
+
+        values_tensor_list: List[Tensor] = []
+        with torch.no_grad():
+            for (
+                observations_with_last_observation
+            ) in observations_with_last_observations_list:
+                observations_with_last_observation = torch.from_numpy(
+                    np.stack(observations_with_last_observation)
+                ).float()
+                values_tensor_list.append(
+                    self.value_function(observations_with_last_observation).flatten()
+                )
+
+        advantages: Tensor = torch.from_numpy(
+            np.concatenate(
+                [
+                    gae(
+                        one_episode_rewards,
+                        self.gamma,
+                        one_episode_values.numpy(),
+                        self.gae_lambda,
+                    )
+                    for one_episode_rewards, one_episode_values in zip(
+                        rewards_list, values_tensor_list
+                    )
+                ]
+            )
+        ).float()
 
         # Normalize advantage
         advantages = (advantages - torch.mean(advantages)) / torch.std(advantages)
@@ -102,8 +149,6 @@ class TRPO(OnPolicyAlgorithm):
         self.policy.optimizer.step(compute_surrogate_loss, compute_kl_constraint)
 
         self.old_policy.load_state_dict(self.policy.state_dict())
-
-        discounted_returns: Tensor = one_epoch_experience["discounted_returns"]
 
         # for logging
         with torch.no_grad():
