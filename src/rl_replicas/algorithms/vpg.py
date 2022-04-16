@@ -74,7 +74,9 @@ class VPG(OnPolicyAlgorithm):
                 )
 
         bootstrapped_rewards_list: List[List[float]] = []
-        for episode_rewards, episode_done, values_tensor in zip(rewards_list, dones, values_tensor_list):
+        for episode_rewards, episode_done, values_tensor in zip(
+            rewards_list, dones, values_tensor_list
+        ):
             last_value_float: float = 0
             if not episode_done:
                 last_value_float = values_tensor[-1].detach().item()
@@ -91,7 +93,9 @@ class VPG(OnPolicyAlgorithm):
         ).float()
 
         # Calculate advantages
-        observations: Tensor = torch.from_numpy(np.concatenate(observations_list)).float()
+        observations: Tensor = torch.from_numpy(
+            np.concatenate(observations_list)
+        ).float()
         actions: Tensor = torch.from_numpy(np.concatenate(actions_list)).float()
 
         advantages: Tensor = torch.from_numpy(
