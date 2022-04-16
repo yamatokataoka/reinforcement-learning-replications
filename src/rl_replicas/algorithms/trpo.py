@@ -65,20 +65,7 @@ class TRPO(OnPolicyAlgorithm):
         observations_with_last_observations_list: List[
             np.ndarray
         ] = one_epoch_experience["observations_with_last_observations"]
-
-        # Calculate rewards-to-go over each episode, to be targets for the value function
-        discounted_returns: Tensor = torch.from_numpy(
-            np.concatenate(
-                [
-                    discount_cumulative_sum(one_episode_rewards, self.gamma)[:-1]
-                    for one_episode_rewards in rewards_list
-                ]
-            )
-        ).float()
-
-        # Calculate advantages
-        observations = torch.from_numpy(np.concatenate(observations_list)).float()
-        actions = torch.from_numpy(np.concatenate(actions_list)).float()
+        dones: List[bool] = one_epoch_experience["dones"]
 
         values_tensor_list: List[Tensor] = []
         with torch.no_grad():
@@ -92,6 +79,29 @@ class TRPO(OnPolicyAlgorithm):
                     self.value_function(observations_with_last_observation).flatten()
                 )
 
+        bootstrapped_rewards_list: List[List[float]] = []
+        for episode_rewards, episode_done, values_tensor in zip(
+            rewards_list, dones, values_tensor_list
+        ):
+            last_value_float: float = 0
+            if not episode_done:
+                last_value_float = values_tensor[-1].detach().item()
+            bootstrapped_rewards_list.append(episode_rewards + [last_value_float])
+
+        # Calculate rewards-to-go over each episode, to be targets for the value function
+        discounted_returns: Tensor = torch.from_numpy(
+            np.concatenate(
+                [
+                    discount_cumulative_sum(one_episode_rewards, self.gamma)[:-1]
+                    for one_episode_rewards in bootstrapped_rewards_list
+                ]
+            )
+        ).float()
+
+        # Calculate advantages
+        observations = torch.from_numpy(np.concatenate(observations_list)).float()
+        actions = torch.from_numpy(np.concatenate(actions_list)).float()
+
         advantages: Tensor = torch.from_numpy(
             np.concatenate(
                 [
@@ -102,7 +112,7 @@ class TRPO(OnPolicyAlgorithm):
                         self.gae_lambda,
                     )
                     for one_episode_rewards, one_episode_values in zip(
-                        rewards_list, values_tensor_list
+                        bootstrapped_rewards_list, values_tensor_list
                     )
                 ]
             )
