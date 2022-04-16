@@ -24,6 +24,7 @@ class OneEpochExperience(TypedDict):
     actions: List[List[np.ndarray]]
     rewards: List[List[float]]
     observations_with_last_observations: List[List[np.ndarray]]
+    dones: List[bool]
     episode_returns: List[float]
     episode_lengths: List[int]
 
@@ -168,6 +169,7 @@ class OnPolicyAlgorithm(ABC):
             "actions": [],
             "rewards": [],
             "observations_with_last_observations": [],
+            "dones": [],
             "episode_returns": [],
             "episode_lengths": [],
         }
@@ -207,23 +209,12 @@ class OnPolicyAlgorithm(ABC):
             epoch_ended: bool = current_step == steps_per_epoch - 1
 
             if episode_done or epoch_ended:
-                if epoch_ended and not (episode_done):
+                if epoch_ended and not episode_done:
                     logger.debug(
                         "The trajectory cut off at {} steps on the current episode".format(
                             episode_length
                         )
                     )
-
-                if epoch_ended:
-                    observation_tensor = torch.from_numpy(observation).float()
-
-                    with torch.no_grad():
-                        last_value: Tensor = self.value_function(observation_tensor)
-
-                    last_value_float = last_value.detach().item()
-                else:
-                    last_value_float = 0.0
-                episode_rewards.append(last_value_float)
 
                 episode_observations_with_last_observations.append(observation)
 
@@ -233,6 +224,7 @@ class OnPolicyAlgorithm(ABC):
                 one_epoch_experience["observations_with_last_observations"].append(
                     episode_observations_with_last_observations
                 )
+                one_epoch_experience["dones"].append(episode_done)
 
                 one_epoch_experience["episode_returns"].append(episode_return)
                 one_epoch_experience["episode_lengths"].append(episode_length)
