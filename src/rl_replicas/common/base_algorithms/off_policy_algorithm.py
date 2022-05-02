@@ -3,7 +3,7 @@ import logging
 import os
 import time
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 import gym
 import numpy as np
@@ -128,10 +128,19 @@ class OffPolicyAlgorithm(ABC):
         self.replay_buffer: ReplayBuffer = ReplayBuffer(replay_buffer_size)
 
         for current_epoch in range(epochs):
-            episode_returns: List[float]
-            episode_lengths: List[int]
-            episode_returns, episode_lengths = self.collect_one_epoch_experience(
-                self.replay_buffer, steps_per_epoch, random_start_steps
+            one_epoch_experience: OneEpochExperience = (
+                self.collect_one_epoch_experience(steps_per_epoch, random_start_steps)
+            )
+
+            episode_returns: List[float] = one_epoch_experience["episode_returns"]
+            episode_lengths: List[int] = one_epoch_experience["episode_lengths"]
+
+            self.replay_buffer.add_one_epoch_experience(
+                one_epoch_experience["observations"],
+                one_epoch_experience["actions"],
+                one_epoch_experience["rewards"],
+                one_epoch_experience["next_observations"],
+                one_epoch_experience["dones"],
             )
 
             if model_saving:
@@ -199,8 +208,8 @@ class OffPolicyAlgorithm(ABC):
             self.writer.close()
 
     def collect_one_epoch_experience(
-        self, replay_buffer: ReplayBuffer, steps_per_epoch: int, random_start_steps: int
-    ) -> Tuple[List[float], List[int]]:
+        self, steps_per_epoch: int, random_start_steps: int
+    ) -> OneEpochExperience:
         one_epoch_experience: OneEpochExperience = {
             "observations": [],
             "actions": [],
@@ -262,18 +271,7 @@ class OffPolicyAlgorithm(ABC):
                     0,
                 )
 
-        replay_buffer.add_one_epoch_experience(
-            one_epoch_experience["observations"],
-            one_epoch_experience["actions"],
-            one_epoch_experience["rewards"],
-            one_epoch_experience["next_observations"],
-            one_epoch_experience["dones"],
-        )
-
-        return (
-            one_epoch_experience["episode_returns"],
-            one_epoch_experience["episode_lengths"],
-        )
+        return one_epoch_experience
 
     @abstractmethod
     def train(
