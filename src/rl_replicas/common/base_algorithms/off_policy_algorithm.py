@@ -10,6 +10,7 @@ import numpy as np
 import torch
 from torch import Tensor
 from torch.utils.tensorboard import SummaryWriter
+from typing_extensions import TypedDict
 
 from rl_replicas.common.policies import Policy
 from rl_replicas.common.q_function import QFunction
@@ -17,6 +18,16 @@ from rl_replicas.common.replay_buffer import ReplayBuffer
 from rl_replicas.common.utils import seed_random_generators
 
 logger = logging.getLogger(__name__)
+
+
+class OneEpochExperience(TypedDict):
+    observations: List[Tensor]
+    actions: List[Tensor]
+    rewards: List[float]
+    next_observations: List[Tensor]
+    dones: List[bool]
+    episode_returns: List[float]
+    episode_lengths: List[int]
 
 
 class OffPolicyAlgorithm(ABC):
@@ -190,15 +201,15 @@ class OffPolicyAlgorithm(ABC):
     def collect_one_epoch_experience(
         self, replay_buffer: ReplayBuffer, steps_per_epoch: int, random_start_steps: int
     ) -> Tuple[List[float], List[int]]:
-        observations_list: List[Tensor] = []
-        actions_list: List[Tensor] = []
-        next_observations_list: List[Tensor] = []
-
-        rewards: List[float] = []
-        dones: List[bool] = []
-
-        episode_returns: List[float] = []
-        episode_lengths: List[int] = []
+        one_epoch_experience: OneEpochExperience = {
+            "observations": [],
+            "actions": [],
+            "rewards": [],
+            "next_observations": [],
+            "dones": [],
+            "episode_returns": [],
+            "episode_lengths": [],
+        }
 
         if not hasattr(self, "observation"):
             # Variables on the current episode
@@ -209,7 +220,7 @@ class OffPolicyAlgorithm(ABC):
 
         for current_step in range(steps_per_epoch):
             observation_tensor: Tensor = torch.from_numpy(self.observation).float()
-            observations_list.append(observation_tensor)
+            one_epoch_experience["observations"].append(observation_tensor)
 
             action: np.ndarray
             if self.current_total_steps < random_start_steps:
@@ -220,7 +231,7 @@ class OffPolicyAlgorithm(ABC):
                 action = np.clip(action, -self.action_limit, self.action_limit)
 
             action_tensor: Tensor = torch.from_numpy(action).float()
-            actions_list.append(action_tensor)
+            one_epoch_experience["actions"].append(action_tensor)
 
             next_observation: np.ndarray
             reward: float
@@ -228,12 +239,12 @@ class OffPolicyAlgorithm(ABC):
             next_observation, reward, episode_done, _ = self.env.step(action)
 
             next_observation_tensor: Tensor = torch.from_numpy(next_observation).float()
-            next_observations_list.append(next_observation_tensor)
+            one_epoch_experience["next_observations"].append(next_observation_tensor)
 
             self.observation = next_observation
 
-            rewards.append(reward)
-            dones.append(episode_done)
+            one_epoch_experience["rewards"].append(reward)
+            one_epoch_experience["dones"].append(episode_done)
 
             self.current_total_steps += 1
             self.episode_length += 1
@@ -242,8 +253,8 @@ class OffPolicyAlgorithm(ABC):
             if episode_done:
                 self.current_total_episodes += 1
 
-                episode_returns.append(self.episode_return)
-                episode_lengths.append(self.episode_length)
+                one_epoch_experience["episode_returns"].append(self.episode_return)
+                one_epoch_experience["episode_lengths"].append(self.episode_length)
 
                 self.observation, self.episode_length, self.episode_return = (
                     self.env.reset(),
@@ -252,10 +263,17 @@ class OffPolicyAlgorithm(ABC):
                 )
 
         replay_buffer.add_one_epoch_experience(
-            observations_list, actions_list, rewards, next_observations_list, dones
+            one_epoch_experience["observations"],
+            one_epoch_experience["actions"],
+            one_epoch_experience["rewards"],
+            one_epoch_experience["next_observations"],
+            one_epoch_experience["dones"],
         )
 
-        return episode_returns, episode_lengths
+        return (
+            one_epoch_experience["episode_returns"],
+            one_epoch_experience["episode_lengths"],
+        )
 
     @abstractmethod
     def train(
