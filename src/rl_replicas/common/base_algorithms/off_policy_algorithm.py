@@ -262,11 +262,8 @@ class OffPolicyAlgorithm(ABC):
                 one_epoch_experience["episode_returns"].append(self.episode_return)
                 one_epoch_experience["episode_lengths"].append(self.episode_length)
 
-                self.observation, self.episode_length, self.episode_return = (
-                    self.env.reset(),
-                    0,
-                    0,
-                )
+                self.observation = self.env.reset()
+                self.episode_length, self.episode_return = 0, 0
 
         return one_epoch_experience
 
