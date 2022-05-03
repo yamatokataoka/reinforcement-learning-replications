@@ -64,59 +64,59 @@ class DDPG(OffPolicyAlgorithm):
                 minibatch_size
             )
 
-        observations: Tensor = torch.from_numpy(minibatch["observations"])
-        actions: Tensor = torch.from_numpy(minibatch["actions"])
-        rewards: Tensor = torch.from_numpy(minibatch["rewards"]).float()
-        next_observations: Tensor = torch.from_numpy(minibatch["next_observations"])
-        dones: Tensor = torch.from_numpy(minibatch["dones"]).int()
+            observations: Tensor = torch.from_numpy(minibatch["observations"])
+            actions: Tensor = torch.from_numpy(minibatch["actions"])
+            rewards: Tensor = torch.from_numpy(minibatch["rewards"]).float()
+            next_observations: Tensor = torch.from_numpy(minibatch["next_observations"])
+            dones: Tensor = torch.from_numpy(minibatch["dones"]).int()
 
-        q_values: Tensor = self.q_function(observations, actions)
-        all_q_values.extend(q_values.tolist())
+            q_values: Tensor = self.q_function(observations, actions)
+            all_q_values.extend(q_values.tolist())
 
-        with torch.no_grad():
-            next_actions: Tensor = self.target_policy(next_observations)
-            target_q_values: Tensor = self.target_q_function(
-                next_observations, next_actions
+            with torch.no_grad():
+                next_actions: Tensor = self.target_policy(next_observations)
+                target_q_values: Tensor = self.target_q_function(
+                    next_observations, next_actions
+                )
+
+                targets: Tensor = rewards + self.gamma * (1 - dones) * target_q_values
+
+            q_function_loss: Tensor = F.mse_loss(q_values, targets)
+            q_function_losses.append(q_function_loss.item())
+
+            self.q_function.optimizer.zero_grad()
+            q_function_loss.backward()
+            self.q_function.optimizer.step()
+
+            policy_actions: Tensor = self.policy(observations)
+
+            # Freeze Q-network so you don't waste computational effort
+            for param in self.q_function.network.parameters():
+                param.requires_grad = False
+
+            policy_q_values: Tensor = self.q_function(observations, policy_actions)
+
+            policy_loss: Tensor = -torch.mean(policy_q_values)
+            policy_losses.append(policy_loss.item())
+
+            self.policy.optimizer.zero_grad()
+            policy_loss.backward()
+            self.policy.optimizer.step()
+
+            # Unfreeze Q-network
+            for param in self.q_function.network.parameters():
+                param.requires_grad = True
+
+            polyak_average(
+                self.policy.network.parameters(),
+                self.target_policy.network.parameters(),
+                self.tau,
             )
-
-            targets: Tensor = rewards + self.gamma * (1 - dones) * target_q_values
-
-        q_function_loss: Tensor = F.mse_loss(q_values, targets)
-        q_function_losses.append(q_function_loss.item())
-
-        self.q_function.optimizer.zero_grad()
-        q_function_loss.backward()
-        self.q_function.optimizer.step()
-
-        policy_actions: Tensor = self.policy(observations)
-
-        # Freeze Q-network so you don't waste computational effort
-        for param in self.q_function.network.parameters():
-            param.requires_grad = False
-
-        policy_q_values: Tensor = self.q_function(observations, policy_actions)
-
-        policy_loss: Tensor = -torch.mean(policy_q_values)
-        policy_losses.append(policy_loss.item())
-
-        self.policy.optimizer.zero_grad()
-        policy_loss.backward()
-        self.policy.optimizer.step()
-
-        # Unfreeze Q-network
-        for param in self.q_function.network.parameters():
-            param.requires_grad = True
-
-        polyak_average(
-            self.policy.network.parameters(),
-            self.target_policy.network.parameters(),
-            self.tau,
-        )
-        polyak_average(
-            self.q_function.network.parameters(),
-            self.target_q_function.network.parameters(),
-            self.tau,
-        )
+            polyak_average(
+                self.q_function.network.parameters(),
+                self.target_q_function.network.parameters(),
+                self.tau,
+            )
 
         if self.tensorboard:
             self.writer.add_scalar(
