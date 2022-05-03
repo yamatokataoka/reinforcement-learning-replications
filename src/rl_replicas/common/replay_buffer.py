@@ -2,8 +2,7 @@ import random
 from operator import itemgetter
 from typing import Dict, List
 
-import torch
-from torch import Tensor
+import numpy as np
 
 
 class ReplayBuffer:
@@ -17,18 +16,18 @@ class ReplayBuffer:
         self.buffer_size = buffer_size
 
         self.current_size: int = 0
-        self.observations: List[Tensor] = []
-        self.actions: List[Tensor] = []
+        self.observations: List[np.ndarray] = []
+        self.actions: List[np.ndarray] = []
         self.rewards: List[float] = []
-        self.next_observations: List[Tensor] = []
+        self.next_observations: List[np.ndarray] = []
         self.dones: List[bool] = []
 
     def add_one_epoch_experience(
         self,
-        observations: List[Tensor],
-        actions: List[Tensor],
+        observations: List[np.ndarray],
+        actions: List[np.ndarray],
         rewards: List[float],
-        next_observations: List[Tensor],
+        next_observations: List[np.ndarray],
         dones: List[bool],
     ) -> None:
         self.observations.extend(observations)
@@ -51,20 +50,20 @@ class ReplayBuffer:
 
                 self.current_size -= 1
 
-    def sample_minibatch(self, minibatch_size: int = 32) -> Dict[str, Tensor]:
+    def sample_minibatch(self, minibatch_size: int = 32) -> Dict[str, np.ndarray]:
         indices = random.sample(range(0, self.current_size), minibatch_size)
 
-        sampled_observations: Tensor = torch.stack(
+        sampled_observations: np.ndarray = np.vstack(
             itemgetter(*indices)(self.observations)
         )
-        sampled_actions: Tensor = torch.stack(itemgetter(*indices)(self.actions))
-        sampled_rewards: Tensor = Tensor(itemgetter(*indices)(self.rewards))
-        sampled_next_observations: Tensor = torch.stack(
+        sampled_actions: np.ndarray = np.vstack(itemgetter(*indices)(self.actions))
+        sampled_rewards: np.ndarray = np.asarray(itemgetter(*indices)(self.rewards))
+        sampled_next_observations: np.ndarray = np.vstack(
             itemgetter(*indices)(self.next_observations)
         )
-        sampled_dones: Tensor = Tensor(itemgetter(*indices)(self.dones))
+        sampled_dones: np.ndarray = np.asarray(itemgetter(*indices)(self.dones))
 
-        minibatch: Dict[str, Tensor] = {
+        minibatch: Dict[str, np.ndarray] = {
             "observations": sampled_observations,
             "actions": sampled_actions,
             "rewards": sampled_rewards,

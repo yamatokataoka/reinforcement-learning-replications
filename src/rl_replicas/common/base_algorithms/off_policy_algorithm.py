@@ -21,10 +21,10 @@ logger = logging.getLogger(__name__)
 
 
 class OneEpochExperience(TypedDict):
-    observations: List[Tensor]
-    actions: List[Tensor]
+    observations: List[np.ndarray]
+    actions: List[np.ndarray]
     rewards: List[float]
-    next_observations: List[Tensor]
+    next_observations: List[np.ndarray]
     dones: List[bool]
     episode_returns: List[float]
     episode_lengths: List[int]
@@ -228,8 +228,7 @@ class OffPolicyAlgorithm(ABC):
             self.observation: np.ndarray = self.env.reset()
 
         for current_step in range(steps_per_epoch):
-            observation_tensor: Tensor = torch.from_numpy(self.observation).float()
-            one_epoch_experience["observations"].append(observation_tensor)
+            one_epoch_experience["observations"].append(self.observation)
 
             action: np.ndarray
             if self.current_total_steps < random_start_steps:
@@ -239,16 +238,14 @@ class OffPolicyAlgorithm(ABC):
                 action += self.action_noise_scale * np.random.randn(self.action_size)
                 action = np.clip(action, -self.action_limit, self.action_limit)
 
-            action_tensor: Tensor = torch.from_numpy(action).float()
-            one_epoch_experience["actions"].append(action_tensor)
+            one_epoch_experience["actions"].append(action)
 
             next_observation: np.ndarray
             reward: float
             episode_done: bool
             next_observation, reward, episode_done, _ = self.env.step(action)
 
-            next_observation_tensor: Tensor = torch.from_numpy(next_observation).float()
-            one_epoch_experience["next_observations"].append(next_observation_tensor)
+            one_epoch_experience["next_observations"].append(next_observation)
 
             self.observation = next_observation
 

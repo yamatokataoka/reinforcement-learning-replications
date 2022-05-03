@@ -81,15 +81,15 @@ class TD3(OffPolicyAlgorithm):
         all_q_values_2: List[float] = []
 
         for train_step in range(train_steps):
-            minibatch: Dict[str, Tensor] = replay_buffer.sample_minibatch(
+            minibatch: Dict[str, np.ndarray] = replay_buffer.sample_minibatch(
                 minibatch_size
             )
 
-            observations: Tensor = minibatch["observations"]
-            actions: Tensor = minibatch["actions"]
-            rewards: Tensor = minibatch["rewards"]
-            next_observations: Tensor = minibatch["next_observations"]
-            dones: Tensor = minibatch["dones"]
+            observations: Tensor = torch.from_numpy(minibatch["observations"])
+            actions: Tensor = torch.from_numpy(minibatch["actions"])
+            rewards: Tensor = torch.from_numpy(minibatch["rewards"]).float()
+            next_observations: Tensor = torch.from_numpy(minibatch["next_observations"])
+            dones: Tensor = torch.from_numpy(minibatch["dones"]).int()
 
             q_values_1: Tensor = self.q_function_1(observations, actions)
             q_values_2: Tensor = self.q_function_2(observations, actions)
