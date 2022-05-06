@@ -63,8 +63,6 @@ class OffPolicyAlgorithm(ABC):
             self.seed: int = seed
 
         self.evaluation_env = gym.make(env.spec.id)
-        self.action_limit: float = self.env.action_space.high[0]
-        self.action_size: int = self.env.action_space.shape[0]
         self.target_policy = copy.deepcopy(self.policy)
         self.target_q_function = copy.deepcopy(self.q_function)
         if seed is not None:
@@ -234,9 +232,9 @@ class OffPolicyAlgorithm(ABC):
             if self.current_total_steps < random_start_steps:
                 action = self.env.action_space.sample()
             else:
-                action = self.action_limit * self.predict(self.observation)
-                action += self.action_noise_scale * np.random.randn(self.action_size)
-                action = np.clip(action, -self.action_limit, self.action_limit)
+                action = self.select_action_with_noise(
+                    self.observation, self.action_noise_scale
+                )
 
             one_epoch_experience["actions"].append(action)
 
@@ -292,6 +290,25 @@ class OffPolicyAlgorithm(ABC):
         action_ndarray: np.ndarray = action.detach().numpy()
 
         return action_ndarray
+
+    def select_action_with_noise(
+        self, observation: np.ndarray, action_noise_scale: float
+    ) -> np.ndarray:
+        """
+        Select the action(s) with an observation(s) and add noise.
+
+        :param observation: (np.ndarray) The input observation
+        :param action_noise_scale: (float) The scale of the action noise (std)
+        :return: (np.ndarray) The action(s)
+        """
+        action_limit: float = self.env.action_space.high[0]
+        action_size: int = self.env.action_space.shape[0]
+
+        action = action_limit * self.predict(observation)
+        action += action_noise_scale * np.random.randn(action_size)
+        action = np.clip(action, -action_limit, action_limit)
+
+        return action
 
     def evaluate_policy(
         self,

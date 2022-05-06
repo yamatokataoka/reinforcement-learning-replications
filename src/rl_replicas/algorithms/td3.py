@@ -105,9 +105,8 @@ class TD3(OffPolicyAlgorithm):
                     epsilon, -self.target_noise_clip, self.target_noise_clip
                 )
                 next_actions = next_actions + epsilon
-                next_actions = torch.clamp(
-                    next_actions, -self.action_limit, self.action_limit
-                )
+                action_limit: float = self.env.action_space.high[0]
+                next_actions = torch.clamp(next_actions, -action_limit, action_limit)
 
                 target_q_values_1: Tensor = self.target_q_function_1(
                     next_observations, next_actions
