@@ -81,15 +81,15 @@ class TD3(OffPolicyAlgorithm):
         all_q_values_2: List[float] = []
 
         for train_step in range(train_steps):
-            minibatch: Dict[str, Tensor] = replay_buffer.sample_minibatch(
+            minibatch: Dict[str, np.ndarray] = replay_buffer.sample_minibatch(
                 minibatch_size
             )
 
-            observations: Tensor = minibatch["observations"]
-            actions: Tensor = minibatch["actions"]
-            rewards: Tensor = minibatch["rewards"]
-            next_observations: Tensor = minibatch["next_observations"]
-            dones: Tensor = minibatch["dones"]
+            observations: Tensor = torch.from_numpy(minibatch["observations"])
+            actions: Tensor = torch.from_numpy(minibatch["actions"])
+            rewards: Tensor = torch.from_numpy(minibatch["rewards"]).float()
+            next_observations: Tensor = torch.from_numpy(minibatch["next_observations"])
+            dones: Tensor = torch.from_numpy(minibatch["dones"]).int()
 
             q_values_1: Tensor = self.q_function_1(observations, actions)
             q_values_2: Tensor = self.q_function_2(observations, actions)
@@ -105,9 +105,8 @@ class TD3(OffPolicyAlgorithm):
                     epsilon, -self.target_noise_clip, self.target_noise_clip
                 )
                 next_actions = next_actions + epsilon
-                next_actions = torch.clamp(
-                    next_actions, -self.action_limit, self.action_limit
-                )
+                action_limit: float = self.env.action_space.high[0]
+                next_actions = torch.clamp(next_actions, -action_limit, action_limit)
 
                 target_q_values_1: Tensor = self.target_q_function_1(
                     next_observations, next_actions
@@ -180,23 +179,23 @@ class TD3(OffPolicyAlgorithm):
                         "policy/loss", policy_loss, self.current_total_steps
                     )
 
-            if self.tensorboard:
-                self.writer.add_scalar(
-                    "q-function_1/loss", q_function_1_loss, self.current_total_steps
-                )
-                self.writer.add_scalar(
-                    "q-function_2/loss", q_function_2_loss, self.current_total_steps
-                )
-                self.writer.add_scalar(
-                    "q-function_1/avarage_q-value",
-                    torch.mean(q_values_1),
-                    self.current_total_steps,
-                )
-                self.writer.add_scalar(
-                    "q-function_2/avarage_q-value",
-                    torch.mean(q_values_2),
-                    self.current_total_steps,
-                )
+        if self.tensorboard:
+            self.writer.add_scalar(
+                "q-function_1/loss", q_function_1_loss, self.current_total_steps
+            )
+            self.writer.add_scalar(
+                "q-function_2/loss", q_function_2_loss, self.current_total_steps
+            )
+            self.writer.add_scalar(
+                "q-function_1/avarage_q-value",
+                torch.mean(q_values_1),
+                self.current_total_steps,
+            )
+            self.writer.add_scalar(
+                "q-function_2/avarage_q-value",
+                torch.mean(q_values_2),
+                self.current_total_steps,
+            )
 
         logger.info("Policy Loss:            {:<8.3g}".format(np.mean(policy_losses)))
         logger.info(

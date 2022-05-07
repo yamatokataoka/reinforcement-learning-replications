@@ -3,13 +3,14 @@ import logging
 import os
 import time
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 import gym
 import numpy as np
 import torch
 from torch import Tensor
 from torch.utils.tensorboard import SummaryWriter
+from typing_extensions import TypedDict
 
 from rl_replicas.common.policies import Policy
 from rl_replicas.common.q_function import QFunction
@@ -17,6 +18,16 @@ from rl_replicas.common.replay_buffer import ReplayBuffer
 from rl_replicas.common.utils import seed_random_generators
 
 logger = logging.getLogger(__name__)
+
+
+class OneEpochExperience(TypedDict):
+    observations: List[np.ndarray]
+    actions: List[np.ndarray]
+    rewards: List[float]
+    next_observations: List[np.ndarray]
+    dones: List[bool]
+    episode_returns: List[float]
+    episode_lengths: List[int]
 
 
 class OffPolicyAlgorithm(ABC):
@@ -52,8 +63,6 @@ class OffPolicyAlgorithm(ABC):
             self.seed: int = seed
 
         self.evaluation_env = gym.make(env.spec.id)
-        self.action_limit: float = self.env.action_space.high[0]
-        self.action_size: int = self.env.action_space.shape[0]
         self.target_policy = copy.deepcopy(self.policy)
         self.target_q_function = copy.deepcopy(self.q_function)
         if seed is not None:
@@ -117,10 +126,19 @@ class OffPolicyAlgorithm(ABC):
         self.replay_buffer: ReplayBuffer = ReplayBuffer(replay_buffer_size)
 
         for current_epoch in range(epochs):
-            episode_returns: List[float]
-            episode_lengths: List[int]
-            episode_returns, episode_lengths = self.collect_one_epoch_experience(
-                self.replay_buffer, steps_per_epoch, random_start_steps
+            one_epoch_experience: OneEpochExperience = (
+                self.collect_one_epoch_experience(steps_per_epoch, random_start_steps)
+            )
+
+            episode_returns: List[float] = one_epoch_experience["episode_returns"]
+            episode_lengths: List[int] = one_epoch_experience["episode_lengths"]
+
+            self.replay_buffer.add_one_epoch_experience(
+                one_epoch_experience["observations"],
+                one_epoch_experience["actions"],
+                one_epoch_experience["rewards"],
+                one_epoch_experience["next_observations"],
+                one_epoch_experience["dones"],
             )
 
             if model_saving:
@@ -188,17 +206,17 @@ class OffPolicyAlgorithm(ABC):
             self.writer.close()
 
     def collect_one_epoch_experience(
-        self, replay_buffer: ReplayBuffer, steps_per_epoch: int, random_start_steps: int
-    ) -> Tuple[List[float], List[int]]:
-        observations_list: List[Tensor] = []
-        actions_list: List[Tensor] = []
-        next_observations_list: List[Tensor] = []
-
-        rewards: List[float] = []
-        dones: List[bool] = []
-
-        episode_returns: List[float] = []
-        episode_lengths: List[int] = []
+        self, steps_per_epoch: int, random_start_steps: int
+    ) -> OneEpochExperience:
+        one_epoch_experience: OneEpochExperience = {
+            "observations": [],
+            "actions": [],
+            "rewards": [],
+            "next_observations": [],
+            "dones": [],
+            "episode_returns": [],
+            "episode_lengths": [],
+        }
 
         if not hasattr(self, "observation"):
             # Variables on the current episode
@@ -208,32 +226,29 @@ class OffPolicyAlgorithm(ABC):
             self.observation: np.ndarray = self.env.reset()
 
         for current_step in range(steps_per_epoch):
-            observation_tensor: Tensor = torch.from_numpy(self.observation).float()
-            observations_list.append(observation_tensor)
+            one_epoch_experience["observations"].append(self.observation)
 
             action: np.ndarray
             if self.current_total_steps < random_start_steps:
                 action = self.env.action_space.sample()
             else:
-                action = self.action_limit * self.predict(self.observation)
-                action += self.action_noise_scale * np.random.randn(self.action_size)
-                action = np.clip(action, -self.action_limit, self.action_limit)
+                action = self.select_action_with_noise(
+                    self.observation, self.action_noise_scale
+                )
 
-            action_tensor: Tensor = torch.from_numpy(action).float()
-            actions_list.append(action_tensor)
+            one_epoch_experience["actions"].append(action)
 
             next_observation: np.ndarray
             reward: float
             episode_done: bool
             next_observation, reward, episode_done, _ = self.env.step(action)
 
-            next_observation_tensor: Tensor = torch.from_numpy(next_observation).float()
-            next_observations_list.append(next_observation_tensor)
+            one_epoch_experience["next_observations"].append(next_observation)
 
             self.observation = next_observation
 
-            rewards.append(reward)
-            dones.append(episode_done)
+            one_epoch_experience["rewards"].append(reward)
+            one_epoch_experience["dones"].append(episode_done)
 
             self.current_total_steps += 1
             self.episode_length += 1
@@ -242,20 +257,13 @@ class OffPolicyAlgorithm(ABC):
             if episode_done:
                 self.current_total_episodes += 1
 
-                episode_returns.append(self.episode_return)
-                episode_lengths.append(self.episode_length)
+                one_epoch_experience["episode_returns"].append(self.episode_return)
+                one_epoch_experience["episode_lengths"].append(self.episode_length)
 
-                self.observation, self.episode_length, self.episode_return = (
-                    self.env.reset(),
-                    0,
-                    0,
-                )
+                self.observation = self.env.reset()
+                self.episode_length, self.episode_return = 0, 0
 
-        replay_buffer.add_one_epoch_experience(
-            observations_list, actions_list, rewards, next_observations_list, dones
-        )
-
-        return episode_returns, episode_lengths
+        return one_epoch_experience
 
     @abstractmethod
     def train(
@@ -282,6 +290,25 @@ class OffPolicyAlgorithm(ABC):
         action_ndarray: np.ndarray = action.detach().numpy()
 
         return action_ndarray
+
+    def select_action_with_noise(
+        self, observation: np.ndarray, action_noise_scale: float
+    ) -> np.ndarray:
+        """
+        Select the action(s) with an observation(s) and add noise.
+
+        :param observation: (np.ndarray) The input observation
+        :param action_noise_scale: (float) The scale of the action noise (std)
+        :return: (np.ndarray) The action(s)
+        """
+        action_limit: float = self.env.action_space.high[0]
+        action_size: int = self.env.action_space.shape[0]
+
+        action = action_limit * self.predict(observation)
+        action += action_noise_scale * np.random.randn(action_size)
+        action = np.clip(action, -action_limit, action_limit)
+
+        return action
 
     def evaluate_policy(
         self,
