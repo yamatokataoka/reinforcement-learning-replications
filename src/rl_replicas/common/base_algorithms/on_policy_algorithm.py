@@ -8,7 +8,6 @@ import gym
 import numpy as np
 import torch
 from torch import Tensor
-from torch.distributions import Distribution
 from torch.utils.tensorboard import SummaryWriter
 from typing_extensions import TypedDict
 
