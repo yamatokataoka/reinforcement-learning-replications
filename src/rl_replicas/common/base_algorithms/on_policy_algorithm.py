@@ -188,18 +188,12 @@ class OnPolicyAlgorithm(ABC):
             episode_observations.append(observation)
             episode_observations_with_last_observations.append(observation)
 
-            observation_tensor: Tensor = torch.from_numpy(observation).float()
-
-            with torch.no_grad():
-                policy_dist: Distribution = self.policy(observation_tensor)
-
-            action: Tensor = policy_dist.sample()
-            action_ndarray = action.detach().numpy()
-            episode_actions.append(action_ndarray)
+            action: np.ndarray = self.predict(observation)
+            episode_actions.append(action)
 
             reward: float
             episode_done: bool
-            observation, reward, episode_done, _ = self.env.step(action_ndarray)
+            observation, reward, episode_done, _ = self.env.step(action)
 
             episode_return += reward
             episode_rewards.append(reward)
