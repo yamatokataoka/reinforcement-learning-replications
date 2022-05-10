@@ -11,9 +11,9 @@ from torch import Tensor
 from torch.utils.tensorboard import SummaryWriter
 from typing_extensions import TypedDict
 
-from rl_replicas.common.policies import Policy
-from rl_replicas.common.utils import seed_random_generators
-from rl_replicas.common.value_function import ValueFunction
+from rl_replicas.policies import Policy
+from rl_replicas.utils import seed_random_generators
+from rl_replicas.value_function import ValueFunction
 
 logger = logging.getLogger(__name__)
 

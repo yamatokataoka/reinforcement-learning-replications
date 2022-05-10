@@ -5,9 +5,9 @@ import torch
 import torch.nn as nn
 
 from rl_replicas.algorithms import DDPG
-from rl_replicas.common.networks import MLP
-from rl_replicas.common.policies import DeterministicPolicy
-from rl_replicas.common.q_function import QFunction
+from rl_replicas.networks import MLP
+from rl_replicas.policies import DeterministicPolicy
+from rl_replicas.q_function import QFunction
 
 
 class TestDDPG:
@@ -47,6 +47,11 @@ class TestDDPG:
             env,
             seed=0,
         )
+
+        # num_epochs: int = 30
+        # for epoch in num_epochs:
+        #     episodes: Episodes = sampler.sample()
+        #     model.train()
 
         model.learn(
             epochs=30,

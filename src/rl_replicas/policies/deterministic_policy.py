@@ -2,7 +2,7 @@ import torch
 from torch import Tensor, nn
 from torch.optim import Optimizer
 
-from rl_replicas.common.policies.policy import Policy
+from rl_replicas.policies.policy import Policy
 
 
 class DeterministicPolicy(Policy):

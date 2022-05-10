@@ -8,11 +8,11 @@ import torch
 from torch import Tensor
 from torch.nn import functional as F
 
-from rl_replicas.common.base_algorithms import OffPolicyAlgorithm
-from rl_replicas.common.policies import Policy
-from rl_replicas.common.q_function import QFunction
-from rl_replicas.common.replay_buffer import ReplayBuffer
-from rl_replicas.common.utils import polyak_average
+from rl_replicas.base_algorithms import OffPolicyAlgorithm
+from rl_replicas.policies import Policy
+from rl_replicas.q_function import QFunction
+from rl_replicas.replay_buffer import ReplayBuffer
+from rl_replicas.utils import polyak_average
 
 logger = logging.getLogger(__name__)
 

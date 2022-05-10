@@ -12,10 +12,10 @@ from torch import Tensor
 from torch.utils.tensorboard import SummaryWriter
 from typing_extensions import TypedDict
 
-from rl_replicas.common.policies import Policy
-from rl_replicas.common.q_function import QFunction
-from rl_replicas.common.replay_buffer import ReplayBuffer
-from rl_replicas.common.utils import seed_random_generators
+from rl_replicas.policies import Policy
+from rl_replicas.q_function import QFunction
+from rl_replicas.replay_buffer import ReplayBuffer
+from rl_replicas.utils import seed_random_generators
 
 logger = logging.getLogger(__name__)
 
