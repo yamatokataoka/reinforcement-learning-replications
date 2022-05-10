@@ -5,9 +5,9 @@ import torch
 import torch.nn as nn
 
 from rl_replicas.algorithms import TD3
-from rl_replicas.common.networks import MLP
-from rl_replicas.common.policies import DeterministicPolicy
-from rl_replicas.common.q_function import QFunction
+from rl_replicas.networks import MLP
+from rl_replicas.policies import DeterministicPolicy
+from rl_replicas.q_function import QFunction
 
 
 class TestTD3:

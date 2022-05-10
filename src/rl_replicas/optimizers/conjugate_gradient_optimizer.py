@@ -7,7 +7,7 @@ from torch import Tensor
 from torch.optim import Optimizer
 from typing_extensions import TypedDict
 
-from rl_replicas.common.utils import unflatten_tensors
+from rl_replicas.utils import unflatten_tensors
 
 logger = logging.getLogger(__name__)
 

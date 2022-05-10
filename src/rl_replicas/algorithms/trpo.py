@@ -9,13 +9,13 @@ from torch import Tensor
 from torch.distributions import Distribution, kl
 from torch.nn import functional as F
 
-from rl_replicas.common.base_algorithms.on_policy_algorithm import (
+from rl_replicas.base_algorithms.on_policy_algorithm import (
     OneEpochExperience,
     OnPolicyAlgorithm,
 )
-from rl_replicas.common.policies import Policy
-from rl_replicas.common.utils import discount_cumulative_sum, gae
-from rl_replicas.common.value_function import ValueFunction
+from rl_replicas.policies import Policy
+from rl_replicas.utils import discount_cumulative_sum, gae
+from rl_replicas.value_function import ValueFunction
 
 logger = logging.getLogger(__name__)
 

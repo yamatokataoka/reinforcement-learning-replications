@@ -3,7 +3,7 @@ from torch import Tensor, nn
 from torch.distributions import Independent, Normal
 from torch.optim import Optimizer
 
-from rl_replicas.common.policies.stochastic_policy import StochasticPolicy
+from rl_replicas.policies.stochastic_policy import StochasticPolicy
 
 
 class GaussianPolicy(StochasticPolicy):

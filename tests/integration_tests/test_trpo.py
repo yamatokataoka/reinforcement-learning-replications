@@ -5,10 +5,10 @@ import torch
 import torch.nn as nn
 
 from rl_replicas.algorithms import TRPO
-from rl_replicas.common.networks import MLP
-from rl_replicas.common.optimizers import ConjugateGradientOptimizer
-from rl_replicas.common.policies import CategoricalPolicy, GaussianPolicy
-from rl_replicas.common.value_function import ValueFunction
+from rl_replicas.networks import MLP
+from rl_replicas.optimizers import ConjugateGradientOptimizer
+from rl_replicas.policies import CategoricalPolicy, GaussianPolicy
+from rl_replicas.value_function import ValueFunction
 
 
 class TestTRPO:
