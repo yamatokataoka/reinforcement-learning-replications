@@ -4,6 +4,12 @@ Reinforcement Learning Replications is a set of Pytorch implementations of reinf
 
 ## Features
 
+- Implement Algorithms
+  - Vanilla Policy Gradient (VPG)
+  - Trust Region Policy Optimization (TRPO)
+  - Proximal Policy Optimization (PPO)
+  - Deep Deterministic Policy Gradient (DDPG)
+  - Twin Delayed DDPG (TD3)
 - Use Python standard logging library
 - Support TensorBoard
 
@@ -18,7 +24,7 @@ All experiments were run for 3 random seeds each. Graphs show the each experimen
 |:--------------------------------------:|:--------------------------------------------:|
 | ![CartPole-v0](https://raw.githubusercontent.com/yamatokataoka/reinforcement-learning-replications/master/docs/CartPole-v0.gif) | ![LunarLander-v2](https://raw.githubusercontent.com/yamatokataoka/reinforcement-learning-replications/master/docs/LunarLander-v2.gif) |
 
-### Vanilla Policy Gradient (REINFORCE)
+### Vanilla Policy Gradient
 
 ##### Example Code
 
@@ -45,8 +51,8 @@ output_dir = "./runs/vpg/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 epochs = 200
 seed = 0  # from 0 to 2
 
-policy_network_architecture = [64, 64]
-value_function_network_architecture = [64, 64]
+policy_network_hidden_sizes = [64, 64]
+value_function_hidden_sizes = [64, 64]
 policy_learning_rate = 3e-4
 value_function_learning_rate = 1e-3
 
@@ -54,7 +60,7 @@ env = gym.make(env_name)
 
 policy_network: nn.Module = MLP(
     sizes=[env.observation_space.shape[0]]
-    + policy_network_architecture
+    + policy_network_hidden_sizes
     + [env.action_space.n]
 )
 
@@ -64,7 +70,7 @@ policy: CategoricalPolicy = CategoricalPolicy(
 )
 
 value_function_network: nn.Module = MLP(
-    sizes=[env.observation_space.shape[0]] + value_function_network_architecture + [1]
+    sizes=[env.observation_space.shape[0]] + value_function_hidden_sizes + [1]
 )
 value_function: ValueFunction = ValueFunction(
     network=value_function_network,
