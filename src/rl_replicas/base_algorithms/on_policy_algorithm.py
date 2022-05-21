@@ -22,7 +22,7 @@ class OneEpochExperience(TypedDict):
     observations: List[List[np.ndarray]]
     actions: List[List[np.ndarray]]
     rewards: List[List[float]]
-    observations_with_last_observations: List[List[np.ndarray]]
+    last_observations: List[np.ndarray]
     dones: List[bool]
     episode_returns: List[float]
     episode_lengths: List[int]
@@ -167,7 +167,7 @@ class OnPolicyAlgorithm(ABC):
             "observations": [],
             "actions": [],
             "rewards": [],
-            "observations_with_last_observations": [],
+            "last_observations": [],
             "dones": [],
             "episode_returns": [],
             "episode_lengths": [],
@@ -177,7 +177,6 @@ class OnPolicyAlgorithm(ABC):
         episode_observations: List[np.ndarray] = []
         episode_actions: List[np.ndarray] = []
         episode_rewards: List[float] = []
-        episode_observations_with_last_observations: List[float] = []
         episode_return: float = 0.0
         episode_length: int = 0
 
@@ -185,7 +184,6 @@ class OnPolicyAlgorithm(ABC):
 
         for current_step in range(steps_per_epoch):
             episode_observations.append(observation)
-            episode_observations_with_last_observations.append(observation)
 
             action: np.ndarray = self.predict(observation)
             episode_actions.append(action)
@@ -209,13 +207,13 @@ class OnPolicyAlgorithm(ABC):
                         )
                     )
 
-                episode_observations_with_last_observations.append(observation)
+                episode_last_observation: np.ndarray = observation
 
                 one_epoch_experience["observations"].append(episode_observations)
                 one_epoch_experience["actions"].append(episode_actions)
                 one_epoch_experience["rewards"].append(episode_rewards)
-                one_epoch_experience["observations_with_last_observations"].append(
-                    episode_observations_with_last_observations
+                one_epoch_experience["last_observations"].append(
+                    episode_last_observation
                 )
                 one_epoch_experience["dones"].append(episode_done)
 
@@ -231,8 +229,7 @@ class OnPolicyAlgorithm(ABC):
                     episode_observations,
                     episode_actions,
                     episode_rewards,
-                    episode_observations_with_last_observations,
-                ) = ([], [], [], [])
+                ) = ([], [], [])
 
         return one_epoch_experience
 

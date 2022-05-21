@@ -71,18 +71,18 @@ class PPO(OnPolicyAlgorithm):
         observations_list: List[List[np.ndarray]] = one_epoch_experience["observations"]
         actions_list: List[List[np.ndarray]] = one_epoch_experience["actions"]
         rewards_list: List[List[float]] = one_epoch_experience["rewards"]
-        observations_with_last_observations_list: List[
-            np.ndarray
-        ] = one_epoch_experience["observations_with_last_observations"]
+        last_observations_list: List[np.ndarray] = one_epoch_experience[
+            "last_observations"
+        ]
         dones: List[bool] = one_epoch_experience["dones"]
 
         values_tensor_list: List[Tensor] = []
         with torch.no_grad():
-            for (
-                observations_with_last_observation
-            ) in observations_with_last_observations_list:
+            for (observations, last_observation) in zip(
+                observations_list, last_observations_list
+            ):
                 observations_with_last_observation = torch.from_numpy(
-                    np.stack(observations_with_last_observation)
+                    np.concatenate([observations, [last_observation]])
                 ).float()
                 values_tensor_list.append(
                     self.value_function(observations_with_last_observation).flatten()
@@ -108,8 +108,10 @@ class PPO(OnPolicyAlgorithm):
         ).float()
 
         # Calculate advantages
-        observations = torch.from_numpy(np.concatenate(observations_list)).float()
-        actions = torch.from_numpy(np.concatenate(actions_list)).float()
+        observations: Tensor = torch.from_numpy(
+            np.concatenate(observations_list)
+        ).float()
+        actions: Tensor = torch.from_numpy(np.concatenate(actions_list)).float()
 
         advantages: Tensor = torch.from_numpy(
             np.concatenate(
