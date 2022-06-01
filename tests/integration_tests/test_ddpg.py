@@ -48,11 +48,6 @@ class TestDDPG:
             seed=0,
         )
 
-        # num_epochs: int = 30
-        # for epoch in num_epochs:
-        #     episodes: Episodes = sampler.sample()
-        #     model.train()
-
         model.learn(
             epochs=30,
             output_dir="/tmp/rl_replicas_tests/ddpg-"
