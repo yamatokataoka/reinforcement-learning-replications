@@ -9,10 +9,8 @@ from torch import Tensor
 from torch.distributions import Distribution
 from torch.nn import functional as F
 
-from rl_replicas.base_algorithms.on_policy_algorithm import (
-    OneEpochExperience,
-    OnPolicyAlgorithm,
-)
+from rl_replicas.base_algorithms.on_policy_algorithm import OnPolicyAlgorithm
+from rl_replicas.experience import Experience
 from rl_replicas.policies import Policy
 from rl_replicas.utils import discount_cumulative_sum, gae
 from rl_replicas.value_function import ValueFunction
@@ -66,23 +64,23 @@ class PPO(OnPolicyAlgorithm):
 
     def train(
         self,
-        one_epoch_experience: OneEpochExperience,
+        one_epoch_experience: Experience,
     ) -> None:
         observations_list: List[List[np.ndarray]] = one_epoch_experience["observations"]
         actions_list: List[List[np.ndarray]] = one_epoch_experience["actions"]
         rewards_list: List[List[float]] = one_epoch_experience["rewards"]
-        observations_with_last_observations_list: List[
-            np.ndarray
-        ] = one_epoch_experience["observations_with_last_observations"]
+        last_observations_list: List[np.ndarray] = one_epoch_experience[
+            "last_observations"
+        ]
         dones: List[bool] = one_epoch_experience["dones"]
 
         values_tensor_list: List[Tensor] = []
         with torch.no_grad():
-            for (
-                observations_with_last_observation
-            ) in observations_with_last_observations_list:
+            for (observations, last_observation) in zip(
+                observations_list, last_observations_list
+            ):
                 observations_with_last_observation = torch.from_numpy(
-                    np.stack(observations_with_last_observation)
+                    np.concatenate([observations, [last_observation]])
                 ).float()
                 values_tensor_list.append(
                     self.value_function(observations_with_last_observation).flatten()
@@ -108,8 +106,10 @@ class PPO(OnPolicyAlgorithm):
         ).float()
 
         # Calculate advantages
-        observations = torch.from_numpy(np.concatenate(observations_list)).float()
-        actions = torch.from_numpy(np.concatenate(actions_list)).float()
+        observations: Tensor = torch.from_numpy(
+            np.concatenate(observations_list)
+        ).float()
+        actions: Tensor = torch.from_numpy(np.concatenate(actions_list)).float()
 
         advantages: Tensor = torch.from_numpy(
             np.concatenate(

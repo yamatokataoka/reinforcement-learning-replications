@@ -9,23 +9,13 @@ import numpy as np
 import torch
 from torch import Tensor
 from torch.utils.tensorboard import SummaryWriter
-from typing_extensions import TypedDict
 
+from rl_replicas.experience import Experience
 from rl_replicas.policies import Policy
 from rl_replicas.utils import seed_random_generators
 from rl_replicas.value_function import ValueFunction
 
 logger = logging.getLogger(__name__)
-
-
-class OneEpochExperience(TypedDict):
-    observations: List[List[np.ndarray]]
-    actions: List[List[np.ndarray]]
-    rewards: List[List[float]]
-    observations_with_last_observations: List[List[np.ndarray]]
-    dones: List[bool]
-    episode_returns: List[float]
-    episode_lengths: List[int]
 
 
 class OnPolicyAlgorithm(ABC):
@@ -99,8 +89,8 @@ class OnPolicyAlgorithm(ABC):
 
         for current_epoch in range(epochs):
 
-            one_epoch_experience: OneEpochExperience = (
-                self.collect_one_epoch_experience(steps_per_epoch)
+            one_epoch_experience: Experience = self.collect_one_epoch_experience(
+                steps_per_epoch
             )
 
             if model_saving:
@@ -162,12 +152,12 @@ class OnPolicyAlgorithm(ABC):
             self.writer.flush()
             self.writer.close()
 
-    def collect_one_epoch_experience(self, steps_per_epoch: int) -> OneEpochExperience:
-        one_epoch_experience: OneEpochExperience = {
+    def collect_one_epoch_experience(self, steps_per_epoch: int) -> Experience:
+        one_epoch_experience: Experience = {
             "observations": [],
             "actions": [],
             "rewards": [],
-            "observations_with_last_observations": [],
+            "last_observations": [],
             "dones": [],
             "episode_returns": [],
             "episode_lengths": [],
@@ -177,7 +167,6 @@ class OnPolicyAlgorithm(ABC):
         episode_observations: List[np.ndarray] = []
         episode_actions: List[np.ndarray] = []
         episode_rewards: List[float] = []
-        episode_observations_with_last_observations: List[float] = []
         episode_return: float = 0.0
         episode_length: int = 0
 
@@ -185,7 +174,6 @@ class OnPolicyAlgorithm(ABC):
 
         for current_step in range(steps_per_epoch):
             episode_observations.append(observation)
-            episode_observations_with_last_observations.append(observation)
 
             action: np.ndarray = self.predict(observation)
             episode_actions.append(action)
@@ -209,13 +197,13 @@ class OnPolicyAlgorithm(ABC):
                         )
                     )
 
-                episode_observations_with_last_observations.append(observation)
+                episode_last_observation: np.ndarray = observation
 
                 one_epoch_experience["observations"].append(episode_observations)
                 one_epoch_experience["actions"].append(episode_actions)
                 one_epoch_experience["rewards"].append(episode_rewards)
-                one_epoch_experience["observations_with_last_observations"].append(
-                    episode_observations_with_last_observations
+                one_epoch_experience["last_observations"].append(
+                    episode_last_observation
                 )
                 one_epoch_experience["dones"].append(episode_done)
 
@@ -231,17 +219,16 @@ class OnPolicyAlgorithm(ABC):
                     episode_observations,
                     episode_actions,
                     episode_rewards,
-                    episode_observations_with_last_observations,
-                ) = ([], [], [], [])
+                ) = ([], [], [])
 
         return one_epoch_experience
 
     @abstractmethod
-    def train(self, one_epoch_experience: OneEpochExperience) -> None:
+    def train(self, one_epoch_experience: Experience) -> None:
         """
         Train the algorithm with the experience
 
-        :param one_epoch_experience: (OneEpochExperience) Collected experience on one epoch.
+        :param one_epoch_experience: (Experience) Collected experience on one epoch.
         """
         raise NotImplementedError
 
