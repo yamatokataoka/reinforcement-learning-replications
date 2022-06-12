@@ -21,10 +21,10 @@ logger = logging.getLogger(__name__)
 
 
 class OneEpochExperience(TypedDict):
-    observations: List[np.ndarray]
-    actions: List[np.ndarray]
-    rewards: List[float]
-    next_observations: List[np.ndarray]
+    observations: List[List[np.ndarray]]
+    actions: List[List[np.ndarray]]
+    rewards: List[List[float]]
+    last_observations: List[np.ndarray]
     dones: List[bool]
     episode_returns: List[float]
     episode_lengths: List[int]
@@ -133,12 +133,45 @@ class OffPolicyAlgorithm(ABC):
             episode_returns: List[float] = one_epoch_experience["episode_returns"]
             episode_lengths: List[int] = one_epoch_experience["episode_lengths"]
 
+            flat_observations: List[np.ndarray] = [
+                item
+                for sublist in one_epoch_experience["observations"]
+                for item in sublist
+            ]
+            flat_actions: List[np.ndarray] = [
+                item for sublist in one_epoch_experience["actions"] for item in sublist
+            ]
+            flat_rewards: List[np.ndarray] = [
+                item for sublist in one_epoch_experience["rewards"] for item in sublist
+            ]
+
+            next_observations: List[np.ndarray] = [
+                observations[1:] + [last_observation]
+                for observations, last_observation in zip(
+                    one_epoch_experience["observations"],
+                    one_epoch_experience["last_observations"],
+                )
+            ]
+
+            flat_next_observations: List[np.ndarray] = [
+                item for sublist in next_observations for item in sublist
+            ]
+
+            dones_per_step: List[bool] = []
+            for episode_done, episode_length in zip(
+                one_epoch_experience["dones"], episode_lengths
+            ):
+                # Only last should be True indicating the episode is done at the step
+                dones_per_step.extend([False] * episode_length)
+                if episode_done:
+                    dones_per_step[-1] = True
+
             self.replay_buffer.add_one_epoch_experience(
-                one_epoch_experience["observations"],
-                one_epoch_experience["actions"],
-                one_epoch_experience["rewards"],
-                one_epoch_experience["next_observations"],
-                one_epoch_experience["dones"],
+                flat_observations,
+                flat_actions,
+                flat_rewards,
+                flat_next_observations,
+                dones_per_step,
             )
 
             if model_saving:
@@ -212,21 +245,25 @@ class OffPolicyAlgorithm(ABC):
             "observations": [],
             "actions": [],
             "rewards": [],
-            "next_observations": [],
+            "last_observations": [],
             "dones": [],
             "episode_returns": [],
             "episode_lengths": [],
         }
 
+        # Variables on an episode
+        episode_observations: List[np.ndarray] = []
+        episode_actions: List[np.ndarray] = []
+        episode_rewards: List[float] = []
+        episode_return: float = 0.0
+        episode_length: int = 0
+
         if not hasattr(self, "observation"):
             # Variables on the current episode
-            self.episode_length: int = 0
-            self.episode_return: float = 0
-
             self.observation: np.ndarray = self.env.reset()
 
         for current_step in range(steps_per_epoch):
-            one_epoch_experience["observations"].append(self.observation)
+            episode_observations.append(self.observation)
 
             action: np.ndarray
             if self.current_total_steps < random_start_steps:
@@ -235,33 +272,44 @@ class OffPolicyAlgorithm(ABC):
                 action = self.select_action_with_noise(
                     self.observation, self.action_noise_scale
                 )
+            episode_actions.append(action)
 
-            one_epoch_experience["actions"].append(action)
-
-            next_observation: np.ndarray
             reward: float
             episode_done: bool
-            next_observation, reward, episode_done, _ = self.env.step(action)
+            self.observation, reward, episode_done, _ = self.env.step(action)
 
-            one_epoch_experience["next_observations"].append(next_observation)
-
-            self.observation = next_observation
-
-            one_epoch_experience["rewards"].append(reward)
-            one_epoch_experience["dones"].append(episode_done)
+            episode_rewards.append(reward)
 
             self.current_total_steps += 1
-            self.episode_length += 1
-            self.episode_return += reward
+            episode_length += 1
+            episode_return += reward
 
-            if episode_done:
-                self.current_total_episodes += 1
+            epoch_ended: bool = current_step == steps_per_epoch - 1
 
-                one_epoch_experience["episode_returns"].append(self.episode_return)
-                one_epoch_experience["episode_lengths"].append(self.episode_length)
+            if episode_done or epoch_ended:
+                episode_last_observation: np.ndarray = self.observation
 
-                self.observation = self.env.reset()
-                self.episode_length, self.episode_return = 0, 0
+                one_epoch_experience["observations"].append(episode_observations)
+                one_epoch_experience["actions"].append(episode_actions)
+                one_epoch_experience["rewards"].append(episode_rewards)
+                one_epoch_experience["last_observations"].append(
+                    episode_last_observation
+                )
+                one_epoch_experience["dones"].append(episode_done)
+
+                one_epoch_experience["episode_returns"].append(episode_return)
+                one_epoch_experience["episode_lengths"].append(episode_length)
+
+                if episode_done:
+                    self.current_total_episodes += 1
+                    self.observation = self.env.reset()
+
+                episode_return, episode_length = 0.0, 0
+                (
+                    episode_observations,
+                    episode_actions,
+                    episode_rewards,
+                ) = ([], [], [])
 
         return one_epoch_experience
 
