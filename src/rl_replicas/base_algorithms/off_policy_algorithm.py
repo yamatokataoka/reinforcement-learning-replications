@@ -10,24 +10,14 @@ import numpy as np
 import torch
 from torch import Tensor
 from torch.utils.tensorboard import SummaryWriter
-from typing_extensions import TypedDict
 
+from rl_replicas.experience import Experience
 from rl_replicas.policies import Policy
 from rl_replicas.q_function import QFunction
 from rl_replicas.replay_buffer import ReplayBuffer
 from rl_replicas.utils import seed_random_generators
 
 logger = logging.getLogger(__name__)
-
-
-class OneEpochExperience(TypedDict):
-    observations: List[List[np.ndarray]]
-    actions: List[List[np.ndarray]]
-    rewards: List[List[float]]
-    last_observations: List[np.ndarray]
-    dones: List[bool]
-    episode_returns: List[float]
-    episode_lengths: List[int]
 
 
 class OffPolicyAlgorithm(ABC):
@@ -126,8 +116,8 @@ class OffPolicyAlgorithm(ABC):
         self.replay_buffer: ReplayBuffer = ReplayBuffer(replay_buffer_size)
 
         for current_epoch in range(epochs):
-            one_epoch_experience: OneEpochExperience = (
-                self.collect_one_epoch_experience(steps_per_epoch, random_start_steps)
+            one_epoch_experience: Experience = self.collect_one_epoch_experience(
+                steps_per_epoch, random_start_steps
             )
 
             episode_returns: List[float] = one_epoch_experience["episode_returns"]
@@ -240,8 +230,8 @@ class OffPolicyAlgorithm(ABC):
 
     def collect_one_epoch_experience(
         self, steps_per_epoch: int, random_start_steps: int
-    ) -> OneEpochExperience:
-        one_epoch_experience: OneEpochExperience = {
+    ) -> Experience:
+        one_epoch_experience: Experience = {
             "observations": [],
             "actions": [],
             "rewards": [],
