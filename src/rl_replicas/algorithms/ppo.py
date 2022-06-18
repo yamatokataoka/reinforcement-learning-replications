@@ -12,7 +12,7 @@ from torch.nn import functional as F
 from rl_replicas.base_algorithms.on_policy_algorithm import OnPolicyAlgorithm
 from rl_replicas.experience import Experience
 from rl_replicas.policies import Policy
-from rl_replicas.utils import discount_cumulative_sum, gae
+from rl_replicas.utils import discounted_cumulative_sums, gae
 from rl_replicas.value_function import ValueFunction
 
 logger = logging.getLogger(__name__)
@@ -99,7 +99,7 @@ class PPO(OnPolicyAlgorithm):
         discounted_returns: Tensor = torch.from_numpy(
             np.concatenate(
                 [
-                    discount_cumulative_sum(one_episode_rewards, self.gamma)[:-1]
+                    discounted_cumulative_sums(one_episode_rewards, self.gamma)[:-1]
                     for one_episode_rewards in bootstrapped_rewards_list
                 ]
             )

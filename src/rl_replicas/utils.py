@@ -7,7 +7,7 @@ import torch
 from torch import Tensor
 
 
-def discount_cumulative_sum(vector: np.ndarray, discount: float) -> np.ndarray:
+def discounted_cumulative_sums(vector: np.ndarray, discount: float) -> np.ndarray:
     """
     Compute discounted cumulative sums of vector.
 
@@ -48,7 +48,7 @@ def gae(
     :return gaes: (np.ndarray) GAEs for all states
     """
     deltas: np.ndarray = rewards[:-1] + gamma * values[1:] - values[:-1]
-    gaes: np.ndarray = discount_cumulative_sum(deltas, gamma * gae_lambda)
+    gaes: np.ndarray = discounted_cumulative_sums(deltas, gamma * gae_lambda)
 
     return gaes
 
