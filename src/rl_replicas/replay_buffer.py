@@ -1,6 +1,5 @@
 import random
 from operator import itemgetter
-from typing import Dict
 
 import numpy as np
 
@@ -50,7 +49,7 @@ class ReplayBuffer:
 
                 self.current_size -= 1
 
-    def sample_minibatch(self, minibatch_size: int = 32) -> Dict[str, np.ndarray]:
+    def sample_minibatch(self, minibatch_size: int = 32) -> dict[str, np.ndarray]:
         indices = random.sample(range(0, self.current_size), minibatch_size)
 
         sampled_observations: np.ndarray = np.vstack(
@@ -63,7 +62,7 @@ class ReplayBuffer:
         )
         sampled_dones: np.ndarray = np.asarray(itemgetter(*indices)(self.dones))
 
-        minibatch: Dict[str, np.ndarray] = {
+        minibatch: dict[str, np.ndarray] = {
             "observations": sampled_observations,
             "actions": sampled_actions,
             "rewards": sampled_rewards,

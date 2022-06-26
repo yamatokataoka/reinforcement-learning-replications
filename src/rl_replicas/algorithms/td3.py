@@ -1,6 +1,6 @@
 import copy
 import logging
-from typing import Dict, Optional
+from typing import Optional
 
 import gym
 import numpy as np
@@ -81,7 +81,7 @@ class TD3(OffPolicyAlgorithm):
         all_q_values_2: list[float] = []
 
         for train_step in range(train_steps):
-            minibatch: Dict[str, np.ndarray] = replay_buffer.sample_minibatch(
+            minibatch: dict[str, np.ndarray] = replay_buffer.sample_minibatch(
                 minibatch_size
             )
 
