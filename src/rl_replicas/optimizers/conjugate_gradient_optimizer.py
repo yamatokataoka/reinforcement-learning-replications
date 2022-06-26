@@ -1,5 +1,6 @@
 import logging
-from typing import Callable, Iterable
+from typing import Callable
+from collections.abc import Iterable
 
 import numpy as np
 import torch
