@@ -1,6 +1,5 @@
 import random
 from operator import itemgetter
-from typing import Dict, List
 
 import numpy as np
 
@@ -16,19 +15,19 @@ class ReplayBuffer:
         self.buffer_size = buffer_size
 
         self.current_size: int = 0
-        self.observations: List[np.ndarray] = []
-        self.actions: List[np.ndarray] = []
-        self.rewards: List[float] = []
-        self.next_observations: List[np.ndarray] = []
-        self.dones: List[bool] = []
+        self.observations: list[np.ndarray] = []
+        self.actions: list[np.ndarray] = []
+        self.rewards: list[float] = []
+        self.next_observations: list[np.ndarray] = []
+        self.dones: list[bool] = []
 
     def add_one_epoch_experience(
         self,
-        observations: List[np.ndarray],
-        actions: List[np.ndarray],
-        rewards: List[float],
-        next_observations: List[np.ndarray],
-        dones: List[bool],
+        observations: list[np.ndarray],
+        actions: list[np.ndarray],
+        rewards: list[float],
+        next_observations: list[np.ndarray],
+        dones: list[bool],
     ) -> None:
         self.observations.extend(observations)
         self.actions.extend(actions)
@@ -50,7 +49,7 @@ class ReplayBuffer:
 
                 self.current_size -= 1
 
-    def sample_minibatch(self, minibatch_size: int = 32) -> Dict[str, np.ndarray]:
+    def sample_minibatch(self, minibatch_size: int = 32) -> dict[str, np.ndarray]:
         indices = random.sample(range(0, self.current_size), minibatch_size)
 
         sampled_observations: np.ndarray = np.vstack(
@@ -63,7 +62,7 @@ class ReplayBuffer:
         )
         sampled_dones: np.ndarray = np.asarray(itemgetter(*indices)(self.dones))
 
-        minibatch: Dict[str, np.ndarray] = {
+        minibatch: dict[str, np.ndarray] = {
             "observations": sampled_observations,
             "actions": sampled_actions,
             "rewards": sampled_rewards,
