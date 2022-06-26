@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Iterable, Tuple
+from typing import Callable, Iterable
 
 import numpy as np
 import torch
@@ -151,7 +151,7 @@ class ConjugateGradientOptimizer(Optimizer):
     ) -> Callable:
         param_shapes: list[torch.Size] = [p.shape or torch.Size([1]) for p in params]
         hessian_target_vector = hessian_target_vector_function()
-        hessian_target_vector_grads: Tuple[Tensor, ...] = torch.autograd.grad(
+        hessian_target_vector_grads: tuple[Tensor, ...] = torch.autograd.grad(
             hessian_target_vector, params, create_graph=True
         )
 
