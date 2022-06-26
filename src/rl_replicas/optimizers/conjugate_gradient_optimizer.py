@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Iterable, List, Tuple
+from typing import Callable, Iterable, Tuple
 
 import numpy as np
 import torch
@@ -66,8 +66,8 @@ class ConjugateGradientOptimizer(Optimizer):
         :param kl_divergence_function: (Callable) Function to compute the kl divergence.
         """
         # Collect trainable parameters and gradients
-        params: List[Tensor] = []
-        grads: List[Tensor] = []
+        params: list[Tensor] = []
+        grads: list[Tensor] = []
         for group in self.param_groups:
             for p in group["params"]:
                 if p.grad is not None:
@@ -147,9 +147,9 @@ class ConjugateGradientOptimizer(Optimizer):
         self.param_groups = state["param_groups"]
 
     def _build_hessian_vector_product(
-        self, hessian_target_vector_function: Callable, params: List[Tensor]
+        self, hessian_target_vector_function: Callable, params: list[Tensor]
     ) -> Callable:
-        param_shapes: List[torch.Size] = [p.shape or torch.Size([1]) for p in params]
+        param_shapes: list[torch.Size] = [p.shape or torch.Size([1]) for p in params]
         hessian_target_vector = hessian_target_vector_function()
         hessian_target_vector_grads: Tuple[Tensor, ...] = torch.autograd.grad(
             hessian_target_vector, params, create_graph=True
@@ -165,14 +165,14 @@ class ConjugateGradientOptimizer(Optimizer):
             unflatten_vector: Tensor = unflatten_tensors(vector, param_shapes)
 
             assert len(hessian_target_vector_grads) == len(unflatten_vector)
-            grad_vector_product_list: List[Tensor] = []
+            grad_vector_product_list: list[Tensor] = []
             for g, x in zip(hessian_target_vector_grads, unflatten_vector):
                 single_grad_vector_product = torch.sum(g * x)
                 grad_vector_product_list.append(single_grad_vector_product)
 
             grad_vector_product = torch.sum(torch.stack(grad_vector_product_list))
 
-            hvp: List[Tensor] = list(
+            hvp: list[Tensor] = list(
                 torch.autograd.grad(grad_vector_product, params, retain_graph=True)
             )
             for i, (hx, p) in enumerate(zip(hvp, params)):
@@ -221,17 +221,17 @@ class ConjugateGradientOptimizer(Optimizer):
 
     def _backtracking_line_search(
         self,
-        params: List[Tensor],
+        params: list[Tensor],
         descent_step: float,
         loss_function: Callable,
         constraint_function: Callable,
     ) -> None:
-        previous_params: List[Tensor] = [p.clone() for p in params]
+        previous_params: list[Tensor] = [p.clone() for p in params]
         ratio_list: np.ndarray = self.backtrack_ratio ** np.arange(self.max_backtracks)
         loss_before: Tensor = loss_function()
 
-        param_shapes: List[torch.Size] = [p.shape or torch.Size([1]) for p in params]
-        descent_step_list: List[Tensor] = unflatten_tensors(descent_step, param_shapes)
+        param_shapes: list[torch.Size] = [p.shape or torch.Size([1]) for p in params]
+        descent_step_list: list[Tensor] = unflatten_tensors(descent_step, param_shapes)
         assert len(descent_step_list) == len(params)
 
         for ratio in ratio_list:

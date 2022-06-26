@@ -1,6 +1,6 @@
 import copy
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import gym
 import numpy as np
@@ -74,11 +74,11 @@ class TD3(OffPolicyAlgorithm):
     def train(
         self, replay_buffer: ReplayBuffer, train_steps: int, minibatch_size: int
     ) -> None:
-        policy_losses: List[float] = []
-        q_function_1_losses: List[float] = []
-        q_function_2_losses: List[float] = []
-        all_q_values_1: List[float] = []
-        all_q_values_2: List[float] = []
+        policy_losses: list[float] = []
+        q_function_1_losses: list[float] = []
+        q_function_2_losses: list[float] = []
+        all_q_values_1: list[float] = []
+        all_q_values_2: list[float] = []
 
         for train_step in range(train_steps):
             minibatch: Dict[str, np.ndarray] = replay_buffer.sample_minibatch(

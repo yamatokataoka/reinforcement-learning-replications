@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import gym
 import numpy as np
@@ -55,9 +55,9 @@ class DDPG(OffPolicyAlgorithm):
         train_steps: int,
         minibatch_size: int,
     ) -> None:
-        policy_losses: List[float] = []
-        q_function_losses: List[float] = []
-        all_q_values: List[float] = []
+        policy_losses: list[float] = []
+        q_function_losses: list[float] = []
+        all_q_values: list[float] = []
 
         for _ in range(train_steps):
             minibatch: Dict[str, np.ndarray] = replay_buffer.sample_minibatch(

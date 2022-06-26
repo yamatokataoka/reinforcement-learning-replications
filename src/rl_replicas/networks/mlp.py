@@ -1,4 +1,4 @@
-from typing import List, Type
+from typing import Type
 
 from torch import Tensor, nn
 
@@ -7,20 +7,20 @@ class MLP(nn.Module):
     """
     The multilayer perceptron (MLP)
 
-    :param sizes: (List[int]) The network size
+    :param sizes: (list[int]) The network size
     :param activation_function: (Type[nn.Module]) The activation function
     :param output_activation_function: (Type[nn.Module]) The output activation function
     """
 
     def __init__(
         self,
-        sizes: List[int],
+        sizes: list[int],
         activation_function: Type[nn.Module] = nn.Tanh,
         output_activation_function: Type[nn.Module] = nn.Identity,
     ) -> None:
         super().__init__()
 
-        layers: List[nn.Module] = []
+        layers: list[nn.Module] = []
         for i in range(len(sizes) - 1):
             if i < len(sizes) - 2:
                 current_activation_function = activation_function
