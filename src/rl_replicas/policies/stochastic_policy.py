@@ -10,10 +10,10 @@ from rl_replicas.policies.policy import Policy
 
 class StochasticPolicy(Policy):
     """
-    The abstract base class for stochastic policies.
+    Abstract base class for stochastic policies
 
-    :param network: (nn.Module) The network.
-    :param optimizer: (Optimizer) The optimizer.
+    :param network: (nn.Module) Network.
+    :param optimizer: (Optimizer) Optimizer.
     """
 
     def __init__(self, network: nn.Module, optimizer: Optimizer):
@@ -24,17 +24,17 @@ class StochasticPolicy(Policy):
         """
         Forward pass in policy
 
-        :param observation: (Tensor) The observation of the environment
+        :param observation: (Tensor) Observation from the environment.
         :return: (Distribution) The distribution of action(s).
         """
         raise NotImplementedError
 
     def predict(self, observation: Tensor) -> Tensor:
         """
-        Selects the action(s) based on the observation of the environment.
+        Selects action(s) given observation(s) from the environment
 
-        :param observation: (Tensor) The observation of the environment
-        :return: (Tensor) the action(s)
+        :param observation: (Tensor) Observation(s) from the environment.
+        :return: (Tensor) Action(s).
         """
         with torch.no_grad():
             distribution: Distribution = self.forward(observation)

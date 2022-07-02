@@ -19,15 +19,15 @@ logger = logging.getLogger(__name__)
 
 class VPG(OnPolicyAlgorithm):
     """
-    Vanilla Policy Gradient (REINFORCE) with GAE for advantage estimation
+    Vanilla Policy Gradient (REINFORCE) with Generalized Advantage Estimator (GAE)
 
-    :param policy: (Policy) The policy
-    :param value_function: (ValueFunction) The value function
-    :param env: (gym.Env) The environment to learn from
-    :param gamma: (float) The discount factor for the cumulative return
-    :param gae_lambda: (float) The factor for trade-off of bias vs variance for Generalized Advantage Estimator
-    :param seed: (int) The seed for the pseudo-random generators
-    :param n_value_gradients (int): Number of gradient descent steps to take on value function per epoch.
+    :param policy: (Policy) Policy.
+    :param value_function: (ValueFunction) Value function.
+    :param env: (gym.Env) Environment.
+    :param gamma: (float) The discount factor for the cumulative return.
+    :param gae_lambda: (float) The factor for trade-off of bias vs variance for GAE.
+    :param seed: (int) The seed for the pseudo-random generators.
+    :param n_value_gradients (int): The number of gradient descent steps to take on value function per epoch.
     """
 
     def __init__(
@@ -112,7 +112,7 @@ class VPG(OnPolicyAlgorithm):
             )
         ).float()
 
-        # Normalize advantage
+        # Normalize advantages
         advantages = (advantages - torch.mean(advantages)) / torch.std(advantages)
 
         policy_dist: Distribution = self.policy(observations)
@@ -120,22 +120,22 @@ class VPG(OnPolicyAlgorithm):
 
         policy_loss: Tensor = -torch.mean(log_probs * advantages)
 
-        # for logging
+        # For logging
         policy_loss_before: Tensor = policy_loss.detach()
         entropies: Tensor = policy_dist.entropy().detach()
 
-        # Train policy
+        # Train the policy
         self.policy.optimizer.zero_grad()
         policy_loss.backward()
         self.policy.optimizer.step()
 
-        # for logging
+        # For logging
         with torch.no_grad():
             value_loss_before: Tensor = self.compute_value_loss(
                 observations, discounted_returns
             )
 
-        # Train value function
+        # Train the value function
         for _ in range(self.n_value_gradients):
             value_loss: Tensor = self.compute_value_loss(
                 observations, discounted_returns

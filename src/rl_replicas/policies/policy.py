@@ -6,10 +6,10 @@ from torch.optim import Optimizer
 
 class Policy(nn.Module, ABC):
     """
-    The base policy class
+    Base policy class
 
-    :param network: (nn.Module) The network.
-    :param optimizer: (Optimizer) The optimizer.
+    :param network: (nn.Module) Network.
+    :param optimizer: (Optimizer) Optimizer.
     """
 
     def __init__(self, network: nn.Module, optimizer: Optimizer):
@@ -21,9 +21,9 @@ class Policy(nn.Module, ABC):
     @abstractmethod
     def predict(self, observation: Tensor) -> Tensor:
         """
-        Selects the action(s) based on the observation of the environment.
+        Selects action(s) given observation(s) from the environment
 
-        :param observation: (Tensor) The observation(s) of the environment
-        :return: (Tensor) the action(s)
+        :param observation: (Tensor) Observation(s) from the environment.
+        :return: (Tensor) Action(s)
         """
         raise NotImplementedError

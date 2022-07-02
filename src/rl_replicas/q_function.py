@@ -5,10 +5,10 @@ from torch.optim import Optimizer
 
 class QFunction(nn.Module):
     """
-    The Q Function
+    Q Function
 
-    :param network: (nn.Module) The network.
-    :param optimizer: (Optimizer) The optimizer.
+    :param network: (nn.Module) Network.
+    :param optimizer: (Optimizer) Optimizer.
     """
 
     def __init__(self, network: nn.Module, optimizer: Optimizer) -> None:
@@ -19,11 +19,11 @@ class QFunction(nn.Module):
 
     def forward(self, observation: Tensor, action: Tensor) -> Tensor:
         """
-        Forward pass in the Q-function
+        Forward pass in the Q function
 
-        :param observation: (Tensor) The observation of the environment
-        :param action: (Tensor) The action of the environment
-        :return squeezeed_q_value: (Tensor) The Q-value(s)
+        :param observation: (Tensor) The observation(s) from the environment.
+        :param action: (Tensor) Action(s) taken.
+        :return squeezeed_q_value: (Tensor) The Q value(s).
         """
         input: Tensor = torch.cat([observation, action], -1)
         q_value: Tensor = self.network(input)

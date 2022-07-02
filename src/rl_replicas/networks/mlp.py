@@ -5,9 +5,9 @@ class MLP(nn.Module):
     """
     The multilayer perceptron (MLP)
 
-    :param sizes: (list[int]) The network size
-    :param activation_function: (type[nn.Module]) The activation function
-    :param output_activation_function: (type[nn.Module]) The output activation function
+    :param sizes: (list[int]) The dimensions of all layer(s).
+    :param activation_function: (type[nn.Module]) The activation function.
+    :param output_activation_function: (type[nn.Module]) The output activation function.
     """
 
     def __init__(
@@ -32,8 +32,8 @@ class MLP(nn.Module):
         """
         Forward pass in the MLP
 
-        :param input: (Tensor) The input value
-        :return output: (Tensor) The output value
+        :param input: (Tensor) The input tensor.
+        :return output: (Tensor) The output tensor.
         """
         output: Tensor = self.network(input)
         return output

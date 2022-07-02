@@ -20,15 +20,15 @@ logger = logging.getLogger(__name__)
 
 class OnPolicyAlgorithm(ABC):
     """
-    The base of on-policy algorithms
+    Base class for on-policy algorithms
 
-    :param policy: (Policy) The policy
-    :param value_function: (ValueFunction) The value function
-    :param env: (gym.Env) The environment to learn from
-    :param gamma: (float) The discount factor for the cumulative return
-    :param gae_lambda: (float) The factor for trade-off of bias vs variance for Generalized Advantage Estimator
-    :param seed: (int) The seed for the pseudo-random generators
-    :param n_value_gradients (int): Number of gradient descent steps to take on value function per epoch.
+    :param policy: (Policy) Policy.
+    :param value_function: (ValueFunction) Value function.
+    :param env: (gym.Env) Environment.
+    :param gamma: (float) The discount factor for the cumulative return.
+    :param gae_lambda: (float) The factor for trade-off of bias vs variance for GAE.
+    :param seed: (int) The seed for the pseudo-random generators.
+    :param n_value_gradients (int): The number of gradient descent steps to take on value function per epoch.
     """
 
     def __init__(
@@ -71,9 +71,9 @@ class OnPolicyAlgorithm(ABC):
 
         :param epochs: (int) The number of epochs to run and train.
         :param steps_per_epoch: (int) The number of steps to run per epoch.
-        :param output_dir: (str) The directory of output
-        :param tensorboard: (bool) Whether or not to log for tensorboard
-        :param model_saving: (bool) Whether or not to save trained model (Save and overwrite at each end of epoch)
+        :param output_dir: (str) The output directory.
+        :param tensorboard: (bool) Whether or not to log for tensorboard.
+        :param model_saving: (bool) Whether or not to save trained model (Save and overwrite at each end of epoch).
         """
         self.tensorboard = tensorboard
 
@@ -153,6 +153,15 @@ class OnPolicyAlgorithm(ABC):
             self.writer.close()
 
     def collect_one_epoch_experience(self, steps_per_epoch: int) -> Experience:
+        """
+        Collect experience for one epoch
+
+        :param steps_per_epoch: (int) The number of steps to run per epoch; in other words, batch size is
+            steps_per_epoch.
+        :param random_start_steps: (int) The number of steps for uniform-random action selection for exploration
+            at the beginning.
+        :return: (Experience) Collected experience.
+        """
         one_epoch_experience: Experience = {
             "observations": [],
             "actions": [],
@@ -163,7 +172,7 @@ class OnPolicyAlgorithm(ABC):
             "episode_lengths": [],
         }
 
-        # Variables on an episode
+        # Variables on each episode
         episode_observations: list[np.ndarray] = []
         episode_actions: list[np.ndarray] = []
         episode_rewards: list[float] = []
@@ -228,16 +237,16 @@ class OnPolicyAlgorithm(ABC):
         """
         Train the algorithm with the experience
 
-        :param one_epoch_experience: (Experience) Collected experience on one epoch.
+        :param one_epoch_experience: (Experience) Collected experience for one epoch.
         """
         raise NotImplementedError
 
     def predict(self, observation: np.ndarray) -> np.ndarray:
         """
-        Get the action(s) from an observation which are sampled under the current policy.
+        Predict action(s) given observation(s)
 
-        :param observation: (np.ndarray) The input observation
-        :return: (np.ndarray) The action(s)
+        :param observation: (np.ndarray) Observation(s).
+        :return: (np.ndarray) Action(s).
         """
         observation_tensor: Tensor = torch.from_numpy(observation).float()
         action: Tensor = self.policy.predict(observation_tensor)
