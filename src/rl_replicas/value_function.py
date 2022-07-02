@@ -20,8 +20,8 @@ class ValueFunction(nn.Module):
         """
         Forward pass in the value function
 
-        :param observation: (Tensor) The current observation of the environment
-        :return value: (Tensor) The value
+        :param observation: (Tensor) Observation(s) from the environment.
+        :return value: (Tensor) The value(s).
         """
         value: Tensor = self.network(observation)
 

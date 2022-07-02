@@ -22,15 +22,15 @@ class PPO(OnPolicyAlgorithm):
     """
     Proximal Policy Optimization (by clipping) with early stopping based on approximate KL divergence
 
-    :param policy: (Policy) The policy
-    :param value_function: (ValueFunction) The value function
-    :param env: (gym.Env) The environment to learn from
+    :param policy: (Policy) Policy.
+    :param value_function: (ValueFunction) Value function.
+    :param env: (gym.Env) Environment.
     :param clip_range: (float) The limit on the likelihood ratio between policies for clipping in the policy objective.
     :param max_kl_divergence: (float) The limit on the KL divergence between policies for early stopping.
-    :param gamma: (float) The discount factor for the cumulative return
-    :param gae_lambda: (float) The factor for trade-off of bias vs variance for Generalized Advantage Estimator
-    :param seed: (int) The seed for the pseudo-random generators
-    :param n_value_gradients (int): Number of gradient descent steps to take on value function per epoch.
+    :param gamma: (float) The discount factor for the cumulative return.
+    :param gae_lambda: (float) The factor for trade-off of bias vs variance for GAE.
+    :param seed: (int) The seed for the pseudo-random generators.
+    :param n_value_gradients (int): The number of gradient descent steps to take on value function per epoch.
     """
 
     def __init__(
@@ -130,7 +130,7 @@ class PPO(OnPolicyAlgorithm):
         # Normalize advantage
         advantages = (advantages - torch.mean(advantages)) / torch.std(advantages)
 
-        # for logging
+        # For logging
         with torch.no_grad():
             policy_dist: Distribution = self.policy(observations)
             policy_loss_before: Tensor = self.compute_policy_loss(
@@ -139,7 +139,7 @@ class PPO(OnPolicyAlgorithm):
             log_probs: Tensor = policy_dist.log_prob(actions)
             entropies: Tensor = policy_dist.entropy()
 
-        # Train policy
+        # Train the policy
         for i in range(self.n_policy_gradients):
             policy_loss: Tensor = self.compute_policy_loss(
                 observations, actions, advantages
@@ -161,7 +161,7 @@ class PPO(OnPolicyAlgorithm):
 
         self.old_policy.load_state_dict(self.policy.state_dict())
 
-        # for logging
+        # For logging
         with torch.no_grad():
             value_loss_before: Tensor = self.compute_value_loss(
                 observations, discounted_returns

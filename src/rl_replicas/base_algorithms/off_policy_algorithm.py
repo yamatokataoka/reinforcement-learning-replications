@@ -22,15 +22,15 @@ logger = logging.getLogger(__name__)
 
 class OffPolicyAlgorithm(ABC):
     """
-    The base of off-policy algorithms
+    Base class for off-policy algorithms
 
-    :param policy: (Policy) The policy
-    :param q_function: (QFunction) The Q function
-    :param env: (gym.Env) The environment to learn from
-    :param gamma: (float) The discount factor for the cumulative return
-    :param tau: (float) The interpolation factor in polyak averaging for target networks
-    :param action_noise_scale: (float) The scale of the action noise (std)
-    :param seed: (int) The seed for the pseudo-random generators
+    :param policy: (Policy) Policy.
+    :param q_function: (QFunction) Q function.
+    :param env: (gym.Env) Environment.
+    :param gamma: (float) The discount factor for the cumulative return.
+    :param tau: (float) The interpolation factor in polyak averaging for target networks.
+    :param action_noise_scale: (float) The scale of the action noise (std).
+    :param seed: (int) The seed for the pseudo-random generators.
     """
 
     def __init__(
@@ -89,17 +89,17 @@ class OffPolicyAlgorithm(ABC):
         :param epochs: (int) The number of epochs to run and train.
         :param steps_per_epoch: (int) The number of steps to run per epoch; in other words, batch size is
             steps_per_epoch.
-        :param replay_size: (int) The size of the replay buffer
+        :param replay_size: (int) The size of the replay buffer.
         ;param minibatch_size: (int) The minibatch size for SGD.
         :param random_start_steps: (int) The number of steps for uniform-random action selection for exploration
             at the beginning.
         :param steps_before_update: (int) The number of steps to perform before policy is updated.
-        :param train_steps: (int) The number of training steps on each epoch
-        :param num_evaluation_episodes: (int) The number of evaluation episodes
-        :param evaluation_interval: (int) The interval steps of evaluation
-        :param output_dir: (str) The directory of output
-        :param tensorboard: (bool) Whether or not to log for tensorboard
-        :param model_saving: (bool) Whether or not to save trained model (Save and overwrite at each end of epoch)
+        :param train_steps: (int) The number of training steps on each epoch.
+        :param num_evaluation_episodes: (int) The number of evaluation episodes.
+        :param evaluation_interval: (int) The interval steps of evaluation.
+        :param output_dir: (str) The output directory.
+        :param tensorboard: (bool) Whether or not to log for tensorboard.
+        :param model_saving: (bool) Whether or not to save the trained model (overwrite at each end of epoch).
         """
         self.tensorboard = tensorboard
 
@@ -231,6 +231,15 @@ class OffPolicyAlgorithm(ABC):
     def collect_one_epoch_experience(
         self, steps_per_epoch: int, random_start_steps: int
     ) -> Experience:
+        """
+        Collect experience for one epoch
+
+        :param steps_per_epoch: (int) The number of steps to run per epoch; in other words, batch size is
+            steps_per_epoch.
+        :param random_start_steps: (int) The number of steps for uniform-random action selection for exploration
+            at the beginning.
+        :return: (Experience) Collected experience.
+        """
         one_epoch_experience: Experience = {
             "observations": [],
             "actions": [],
@@ -241,7 +250,7 @@ class OffPolicyAlgorithm(ABC):
             "episode_lengths": [],
         }
 
-        # Variables on an episode
+        # Variables on each episode
         episode_observations: list[np.ndarray] = []
         episode_actions: list[np.ndarray] = []
         episode_rewards: list[float] = []
@@ -308,20 +317,20 @@ class OffPolicyAlgorithm(ABC):
         self, replay_buffer: ReplayBuffer, train_steps: int, minibatch_size: int
     ) -> None:
         """
-        Train the algorithm with the experience.
+        Train the algorithm with the experience
 
-        :param replay_buffer: (ReplayBuffer) The reply buffer
-        :param train_steps: (int) The number of gradient descent updates
-        :param minibatch_size: (int) The minibatch size
+        :param replay_buffer: (ReplayBuffer) Reply buffer.
+        :param train_steps: (int) The number of gradient descent updates.
+        :param minibatch_size: (int) The minibatch size.
         """
         raise NotImplementedError
 
     def predict(self, observation: np.ndarray) -> np.ndarray:
         """
-        Get the action(s) from an observation which are sampled under the current policy.
+        Predict action(s) given observation(s)
 
-        :param observation: (np.ndarray) The input observation
-        :return: (np.ndarray) The action(s)
+        :param observation: (np.ndarray) Observation(s).
+        :return: (np.ndarray) Action(s).
         """
         observation_tensor: Tensor = torch.from_numpy(observation).float()
         action: Tensor = self.policy.predict(observation_tensor)
@@ -333,11 +342,11 @@ class OffPolicyAlgorithm(ABC):
         self, observation: np.ndarray, action_noise_scale: float
     ) -> np.ndarray:
         """
-        Select the action(s) with an observation(s) and add noise.
+        Select action(s) with observation(s) and add noise.
 
-        :param observation: (np.ndarray) The input observation
-        :param action_noise_scale: (float) The scale of the action noise (std)
-        :return: (np.ndarray) The action(s)
+        :param observation: (np.ndarray) Observation(s).
+        :param action_noise_scale: (float) The scale of the action noise (std).
+        :return: (np.ndarray) Action(s).
         """
         action_limit: float = self.env.action_space.high[0]
         action_size: int = self.env.action_space.shape[0]
@@ -353,6 +362,12 @@ class OffPolicyAlgorithm(ABC):
         num_evaluation_episodes: int,
         evaluation_env: gym.Env,
     ) -> None:
+        """
+        Evaluate the policy running evaluation episodes.
+
+        :param num_evaluation_episodes: (int) The number of evaluation episodes.
+        :param evaluation_env: (gym.Env) The environment to use.
+        """
         episode_returns: list[float] = []
         episode_lengths: list[int] = []
 

@@ -6,9 +6,9 @@ import numpy as np
 
 class ReplayBuffer:
     """
-    Replay buffer for off-policy algorithms.
+    Replay buffer for off-policy algorithms
 
-    :param buffer_size: (int) Max number of element in the buffer
+    :param buffer_size: (int) The size of the replay buffer.
     """
 
     def __init__(self, buffer_size: int = int(1e6)) -> None:

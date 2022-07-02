@@ -22,13 +22,13 @@ class TRPO(OnPolicyAlgorithm):
     """
     Trust Region Policy Optimization with GAE for advantage estimation
 
-    :param policy: (Policy) The policy
-    :param value_function: (ValueFunction) The value function
-    :param env: (gym.Env) The environment to learn from
-    :param gamma: (float) The discount factor for the cumulative return
-    :param gae_lambda: (float) The factor for trade-off of bias vs variance for Generalized Advantage Estimator
-    :param seed: (int) The seed for the pseudo-random generators
-    :param n_value_gradients (int): Number of gradient descent steps to take on value function per epoch.
+    :param policy: (Policy) Policy.
+    :param value_function: (ValueFunction) Value function.
+    :param env: (gym.Env) Environment.
+    :param gamma: (float) The discount factor for the cumulative return.
+    :param gae_lambda: (float) The factor for trade-off of bias vs variance for GAE.
+    :param seed: (int) The seed for the pseudo-random generators.
+    :param n_value_gradients (int): The number of gradient descent steps to take on value function per epoch.
     """
 
     def __init__(
@@ -118,7 +118,7 @@ class TRPO(OnPolicyAlgorithm):
             )
         ).float()
 
-        # Normalize advantage
+        # Normalize advantages
         advantages = (advantages - torch.mean(advantages)) / torch.std(advantages)
 
         def compute_surrogate_loss() -> Tensor:
@@ -146,27 +146,27 @@ class TRPO(OnPolicyAlgorithm):
 
         policy_loss: Tensor = compute_surrogate_loss()
 
-        # for logging
+        # For logging
         policy_loss_before: Tensor = policy_loss.detach()
         with torch.no_grad():
             policy_dist: Distribution = self.policy(observations)
         log_probs: Tensor = policy_dist.log_prob(actions)
         entropies: Tensor = policy_dist.entropy()
 
-        # Train policy
+        # Train the policy
         self.policy.optimizer.zero_grad()
         policy_loss.backward()
         self.policy.optimizer.step(compute_surrogate_loss, compute_kl_constraint)
 
         self.old_policy.load_state_dict(self.policy.state_dict())
 
-        # for logging
+        # For logging
         with torch.no_grad():
             value_loss_before: Tensor = self.compute_value_loss(
                 observations, discounted_returns
             )
 
-        # Train value function
+        # Train the value function
         for _ in range(self.n_value_gradients):
             value_loss: Tensor = self.compute_value_loss(
                 observations, discounted_returns

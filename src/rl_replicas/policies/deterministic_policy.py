@@ -7,10 +7,10 @@ from rl_replicas.policies.policy import Policy
 
 class DeterministicPolicy(Policy):
     """
-    The deterministic policy
+    Deterministic policy
 
-    :param network: (nn.Module) The network.
-    :param optimizer: (Optimizer) The optimizer.
+    :param network: (nn.Module) Network.
+    :param optimizer: (Optimizer) Optimizer.
     """
 
     def __init__(self, network: nn.Module, optimizer: Optimizer):
@@ -20,8 +20,8 @@ class DeterministicPolicy(Policy):
         """
         Forward pass in policy
 
-        :param observation: (Tensor) The observation of the environment
-        :return: (Tensor) The action(s).
+        :param observation: (Tensor) Observation of the environment.
+        :return: (Tensor) Action(s).
         """
         action: Tensor = self.network(observation)
 
@@ -29,10 +29,10 @@ class DeterministicPolicy(Policy):
 
     def predict(self, observation: Tensor) -> Tensor:
         """
-        Selects the action(s) based on the observation of the environment.
+        Selects action(s) given observation(s) from the environment
 
-        :param observation: (Tensor) The observation(s) of the environment
-        :return: (Tensor) the action(s)
+        :param observation: (Tensor) Observation(s) from the environment.
+        :return: (Tensor) Action(s).
         """
         with torch.no_grad():
             action: Tensor = self.forward(observation)

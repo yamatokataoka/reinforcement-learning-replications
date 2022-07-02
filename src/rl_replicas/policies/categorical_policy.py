@@ -7,10 +7,10 @@ from rl_replicas.policies.stochastic_policy import StochasticPolicy
 
 class CategoricalPolicy(StochasticPolicy):
     """
-    The categorical policy
+    Categorical policy
 
-    :param network: (nn.Module) The network.
-    :param optimizer: (Optimizer) The optimizer.
+    :param network: (nn.Module) Network.
+    :param optimizer: (Optimizer) Optimizer.
     """
 
     def __init__(self, network: nn.Module, optimizer: Optimizer):
@@ -20,7 +20,7 @@ class CategoricalPolicy(StochasticPolicy):
         """
         Forward pass in policy
 
-        :param observation: (Tensor) The observation of the environment
+        :param observation: (Tensor) Observation of the environment.
         :return: (Distribution) The distribution of action(s).
         """
         logits: Tensor = self.network(observation)

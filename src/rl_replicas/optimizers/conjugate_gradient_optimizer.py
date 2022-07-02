@@ -1,6 +1,6 @@
 import logging
-from typing import Callable
 from collections.abc import Iterable
+from typing import Callable
 
 import numpy as np
 import torch
@@ -26,18 +26,18 @@ State = TypedDict(
 
 class ConjugateGradientOptimizer(Optimizer):
     """
-    Performs constrained optimization via backtracking line search.
+    Performs constrained optimization via backtracking line search
 
     The search direction is computed using a conjugate gradient algorithm,
     which gives x = H^{-1}g, where H is a second order approximation of the
     constraint and g is the gradient of the loss function.
 
-    :param params: (Iterable) Iterable of parameters to optimize.
-    :param max_constraint: (float) Maximum constraint value.
-    :param n_conjugate_gradients: (int) The number of conjugate gradient iterations used to calculate H^-1 g
-    :param max_backtracks: (int) Max number of iterations for backtrack linesearch.
-    :param backtrack_ratio: (float) backtrack ratio for backtracking line search.
-    :param hvp_damping_coefficient: (float) Artifact for numerical stability, should be smallish.
+    :param params: (Iterable) A iterable of parameters to optimize.
+    :param max_constraint: (float) The maximum constraint value.
+    :param n_conjugate_gradients: (int) The number of conjugate gradient iterations used to calculate H^-1 g.
+    :param max_backtracks: (int) The max number of iterations for backtrack linesearch.
+    :param backtrack_ratio: (float) The backtrack ratio for backtracking line search.
+    :param hvp_damping_coefficient: (float) The coefficient for numerical stability, should be smallish.
         Adjusts Hessian-vector product calculation: H -> H + hvp_damping_coefficient*I.
     """
 
@@ -50,7 +50,7 @@ class ConjugateGradientOptimizer(Optimizer):
         backtrack_ratio: float = 0.8,
         hvp_damping_coefficient: float = 1e-5,
     ):
-        # no need defaults
+        # Initializing defaults is required
         defaults: dict = {}
         super().__init__(params, defaults)
         self.max_constraint = max_constraint
@@ -61,10 +61,10 @@ class ConjugateGradientOptimizer(Optimizer):
 
     def step(self, loss_function: Callable, kl_divergence_function: Callable) -> None:
         """
-        Performs a single optimization step.
+        Performs a single optimization step
 
-        :param loss_function: (Callable) Function to compute the loss.
-        :param kl_divergence_function: (Callable) Function to compute the kl divergence.
+        :param loss_function: (Callable) A function to compute the loss.
+        :param kl_divergence_function: (Callable) A function to compute the kl divergence.
         """
         # Collect trainable parameters and gradients
         params: list[Tensor] = []
@@ -117,7 +117,7 @@ class ConjugateGradientOptimizer(Optimizer):
     @property
     def state(self) -> State:
         """
-        State: The hyper-parameters of the optimizer.
+        :return: (State) The hyper-parameters of the optimizer.
         """
         return {
             "max_constraint": self.max_constraint,
@@ -137,7 +137,7 @@ class ConjugateGradientOptimizer(Optimizer):
 
     def __setstate__(self, state: dict) -> None:
         """
-        Restore the optimizer state.
+        Restore the optimizer state
 
         :param state: (dict) State dictionary.
         """
@@ -158,7 +158,7 @@ class ConjugateGradientOptimizer(Optimizer):
 
         def _eval(vector: Tensor) -> Tensor:
             """
-            The evaluation function.
+            The evaluation function
 
             :param vector (Tensor): The vector to be multiplied with Hessian.
             :return: (Tensor) The product of Hessian of function f and v.
@@ -192,10 +192,10 @@ class ConjugateGradientOptimizer(Optimizer):
         residual_tol: float = 1e-10,
     ) -> Tensor:
         """
-        Use Conjugate Gradient iteration to solve Ax = b. Demmel p 312.
+        Use Conjugate Gradient iteration to solve Ax = b. Demmel p 312
 
         :param hessian_vector_product_function: (Callable) A function to compute Hessian vector product.
-        :param b: (Tensor) Right hand side of the equation to solve.
+        :param b: (Tensor) The right hand side of the equation to solve.
         :param residual_tol: (float) Tolerence for convergence.
 
         :return: (Tensor) Solution x* for equation Ax = b.

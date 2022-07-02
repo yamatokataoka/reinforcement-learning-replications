@@ -21,18 +21,18 @@ class TD3(OffPolicyAlgorithm):
     """
     Twin Delayed Deep Deterministic Policy Gradient (TD3)
 
-    :param policy: (Policy) The policy
-    :param q_function_1: (QFunction) The Q function
-    :param q_function_2: (QFunction) The Q function
-    :param env: (gym.Env) The environment to learn from
-    :param gamma: (float) The discount factor for the cumulative return
-    :param tau: (float) The interpolation factor in polyak averaging for target networks
-    :param action_noise_scale: (float) The scale of the noise (std) for the policy to explore better
-    :param target_noise_scale: (float) The scale of the smoothing noise (std) for the target policy to exploit harder
-    :param target_noise_clip: (float) The limit for absolute value of the target policy smoothing noise
+    :param policy: (Policy) Policy.
+    :param q_function_1: (QFunction) Q function.
+    :param q_function_2: (QFunction) Q function.
+    :param env: (gym.Env) Environment.
+    :param gamma: (float) The discount factor for the cumulative return.
+    :param tau: (float) The interpolation factor in polyak averaging for target networks.
+    :param action_noise_scale: (float) The scale of the noise (std) for the policy to explore better.
+    :param target_noise_scale: (float) The scale of the smoothing noise (std) for the target policy to exploit harder.
+    :param target_noise_clip: (float) The limit for absolute value of the target policy smoothing noise.
     :param policy_delay: (int) The policy will only be updated once every policy_delay times for each update of
         the Q-networks.
-    :param seed: (int) The seed for the pseudo-random generators
+    :param seed: (int) The seed for the pseudo-random generators.
     """
 
     def __init__(
@@ -217,8 +217,8 @@ class TD3(OffPolicyAlgorithm):
         """
         Save model
 
-        :param current_epoch: (int) The current epoch
-        :param model_path: (int) The path to save the model
+        :param current_epoch: (int) The current epoch.
+        :param model_path: (int) The path to save the model.
         """
         torch.save(
             {

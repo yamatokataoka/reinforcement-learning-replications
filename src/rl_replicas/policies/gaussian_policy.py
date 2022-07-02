@@ -8,10 +8,10 @@ from rl_replicas.policies.stochastic_policy import StochasticPolicy
 
 class GaussianPolicy(StochasticPolicy):
     """
-    The Gaussian policy
+    Gaussian policy
 
-    :param network: (nn.Module) The network.
-    :param optimizer: (Optimizer) The optimizer.
+    :param network: (nn.Module) Network.
+    :param optimizer: (Optimizer) Optimizer.
     :param log_std: (Tensor) The standard deviation of the distribution.
     """
 
@@ -28,7 +28,7 @@ class GaussianPolicy(StochasticPolicy):
         """
         Forward pass in policy
 
-        :param observation: (Tensor) The observation of the environment
+        :param observation: (Tensor) Observation(s) from the environment
         :return: (Independent) The normal (also called Gaussian) distribution of action(s).
         """
         mean: Tensor = self.network(observation)
