@@ -40,9 +40,9 @@ import torch
 import torch.nn as nn
 
 from rl_replicas.algorithms import VPG
-from rl_replicas.common.networks import MLP
-from rl_replicas.common.policies import CategoricalPolicy
-from rl_replicas.common.value_function import ValueFunction
+from rl_replicas.networks import MLP
+from rl_replicas.policies import CategoricalPolicy
+from rl_replicas.value_function import ValueFunction
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, format="")
 
@@ -51,17 +51,14 @@ output_dir = "./runs/vpg/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 epochs = 200
 seed = 0  # from 0 to 2
 
-policy_network_hidden_sizes = [64, 64]
-value_function_hidden_sizes = [64, 64]
+network_hidden_sizes = [64, 64]
 policy_learning_rate = 3e-4
 value_function_learning_rate = 1e-3
 
 env = gym.make(env_name)
 
 policy_network: nn.Module = MLP(
-    sizes=[env.observation_space.shape[0]]
-    + policy_network_hidden_sizes
-    + [env.action_space.n]
+    sizes=[env.observation_space.shape[0]] + network_hidden_sizes + [env.action_space.n]
 )
 
 policy: CategoricalPolicy = CategoricalPolicy(
@@ -70,7 +67,7 @@ policy: CategoricalPolicy = CategoricalPolicy(
 )
 
 value_function_network: nn.Module = MLP(
-    sizes=[env.observation_space.shape[0]] + value_function_hidden_sizes + [1]
+    sizes=[env.observation_space.shape[0]] + network_hidden_sizes + [1]
 )
 value_function: ValueFunction = ValueFunction(
     network=value_function_network,
@@ -82,6 +79,7 @@ value_function: ValueFunction = ValueFunction(
 model: VPG = VPG(policy, value_function, env, seed=seed)
 
 model.learn(epochs=epochs, output_dir=output_dir, tensorboard=True, model_saving=True)
+
 ```
 
 
