@@ -1,6 +1,7 @@
 import datetime
 import logging
 import sys
+from typing import List
 
 import gym
 import torch
@@ -16,8 +17,8 @@ logging.basicConfig(level=logging.INFO, stream=sys.stdout, format="")
 env_name = "LunarLanderContinuous-v2"  # Pendulum-v0 or LunarLanderContinuous-v2
 output_dir = "./test/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 
-policy_network_architecture: list[int] = [256, 256]
-q_function_network_architecture: list[int] = [256, 256]
+policy_network_architecture: List[int] = [256, 256]
+q_function_network_architecture: List[int] = [256, 256]
 policy_learning_rate: float = 1e-3
 q_function_learning_rate: float = 1e-3
 

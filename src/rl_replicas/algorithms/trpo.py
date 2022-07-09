@@ -1,6 +1,6 @@
 import copy
 import logging
-from typing import Optional
+from typing import List, Optional
 
 import gym
 import numpy as np
@@ -57,15 +57,15 @@ class TRPO(OnPolicyAlgorithm):
         self,
         one_epoch_experience: Experience,
     ) -> None:
-        observations_list: list[list[np.ndarray]] = one_epoch_experience["observations"]
-        actions_list: list[list[np.ndarray]] = one_epoch_experience["actions"]
-        rewards_list: list[list[float]] = one_epoch_experience["rewards"]
-        last_observations_list: list[np.ndarray] = one_epoch_experience[
+        observations_list: List[List[np.ndarray]] = one_epoch_experience["observations"]
+        actions_list: List[List[np.ndarray]] = one_epoch_experience["actions"]
+        rewards_list: List[List[float]] = one_epoch_experience["rewards"]
+        last_observations_list: List[np.ndarray] = one_epoch_experience[
             "last_observations"
         ]
-        dones: list[bool] = one_epoch_experience["dones"]
+        dones: List[bool] = one_epoch_experience["dones"]
 
-        values_tensor_list: list[Tensor] = []
+        values_tensor_list: List[Tensor] = []
         with torch.no_grad():
             for (observations, last_observation) in zip(
                 observations_list, last_observations_list
@@ -77,7 +77,7 @@ class TRPO(OnPolicyAlgorithm):
                     self.value_function(observations_with_last_observation).flatten()
                 )
 
-        bootstrapped_rewards_list: list[list[float]] = []
+        bootstrapped_rewards_list: List[List[float]] = []
         for episode_rewards, episode_done, values_tensor in zip(
             rewards_list, dones, values_tensor_list
         ):
