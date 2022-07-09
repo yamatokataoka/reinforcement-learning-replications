@@ -3,7 +3,7 @@ import logging
 import os
 import time
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import List, Optional
 
 import gym
 import numpy as np
@@ -120,22 +120,22 @@ class OffPolicyAlgorithm(ABC):
                 steps_per_epoch, random_start_steps
             )
 
-            episode_returns: list[float] = one_epoch_experience["episode_returns"]
-            episode_lengths: list[int] = one_epoch_experience["episode_lengths"]
+            episode_returns: List[float] = one_epoch_experience["episode_returns"]
+            episode_lengths: List[int] = one_epoch_experience["episode_lengths"]
 
-            flat_observations: list[np.ndarray] = [
+            flat_observations: List[np.ndarray] = [
                 item
                 for sublist in one_epoch_experience["observations"]
                 for item in sublist
             ]
-            flat_actions: list[np.ndarray] = [
+            flat_actions: List[np.ndarray] = [
                 item for sublist in one_epoch_experience["actions"] for item in sublist
             ]
-            flat_rewards: list[np.ndarray] = [
+            flat_rewards: List[np.ndarray] = [
                 item for sublist in one_epoch_experience["rewards"] for item in sublist
             ]
 
-            next_observations: list[np.ndarray] = [
+            next_observations: List[np.ndarray] = [
                 observations[1:] + [last_observation]
                 for observations, last_observation in zip(
                     one_epoch_experience["observations"],
@@ -143,11 +143,11 @@ class OffPolicyAlgorithm(ABC):
                 )
             ]
 
-            flat_next_observations: list[np.ndarray] = [
+            flat_next_observations: List[np.ndarray] = [
                 item for sublist in next_observations for item in sublist
             ]
 
-            dones_per_step: list[bool] = []
+            dones_per_step: List[bool] = []
             for episode_done, episode_length in zip(
                 one_epoch_experience["dones"], episode_lengths
             ):
@@ -251,9 +251,9 @@ class OffPolicyAlgorithm(ABC):
         }
 
         # Variables on each episode
-        episode_observations: list[np.ndarray] = []
-        episode_actions: list[np.ndarray] = []
-        episode_rewards: list[float] = []
+        episode_observations: List[np.ndarray] = []
+        episode_actions: List[np.ndarray] = []
+        episode_rewards: List[float] = []
         episode_return: float = 0.0
         episode_length: int = 0
 
@@ -368,8 +368,8 @@ class OffPolicyAlgorithm(ABC):
         :param num_evaluation_episodes: (int) The number of evaluation episodes.
         :param evaluation_env: (gym.Env) The environment to use.
         """
-        episode_returns: list[float] = []
-        episode_lengths: list[int] = []
+        episode_returns: List[float] = []
+        episode_lengths: List[int] = []
 
         for _ in range(num_evaluation_episodes):
             observation: np.ndarray = evaluation_env.reset()
