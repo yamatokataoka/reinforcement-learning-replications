@@ -2,7 +2,7 @@ import logging
 import os
 import time
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import List, Optional
 
 import gym
 import numpy as np
@@ -101,8 +101,8 @@ class OnPolicyAlgorithm(ABC):
                 logger.info("Save model")
                 self.save_model(current_epoch, model_path)
 
-            episode_returns: list[float] = one_epoch_experience["episode_returns"]
-            episode_lengths: list[int] = one_epoch_experience["episode_lengths"]
+            episode_returns: List[float] = one_epoch_experience["episode_returns"]
+            episode_lengths: List[int] = one_epoch_experience["episode_lengths"]
 
             logger.info("Epoch: {}".format(current_epoch))
 
@@ -173,9 +173,9 @@ class OnPolicyAlgorithm(ABC):
         }
 
         # Variables on each episode
-        episode_observations: list[np.ndarray] = []
-        episode_actions: list[np.ndarray] = []
-        episode_rewards: list[float] = []
+        episode_observations: List[np.ndarray] = []
+        episode_actions: List[np.ndarray] = []
+        episode_rewards: List[float] = []
         episode_return: float = 0.0
         episode_length: int = 0
 
