@@ -66,13 +66,13 @@ class PPO(OnPolicyAlgorithm):
         self,
         one_epoch_experience: Experience,
     ) -> None:
-        observations_list: List[List[np.ndarray]] = one_epoch_experience["observations"]
-        actions_list: List[List[np.ndarray]] = one_epoch_experience["actions"]
-        rewards_list: List[List[float]] = one_epoch_experience["rewards"]
-        last_observations_list: List[np.ndarray] = one_epoch_experience[
-            "last_observations"
-        ]
-        dones: List[bool] = one_epoch_experience["dones"]
+        observations_list: List[List[np.ndarray]] = one_epoch_experience.observations
+        actions_list: List[List[np.ndarray]] = one_epoch_experience.actions
+        rewards_list: List[List[float]] = one_epoch_experience.rewards
+        last_observations_list: List[
+            np.ndarray
+        ] = one_epoch_experience.last_observations
+        dones: List[bool] = one_epoch_experience.dones
 
         values_tensor_list: List[Tensor] = []
         with torch.no_grad():

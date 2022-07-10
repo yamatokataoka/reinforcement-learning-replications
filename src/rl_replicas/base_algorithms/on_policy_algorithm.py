@@ -101,8 +101,8 @@ class OnPolicyAlgorithm(ABC):
                 logger.info("Save model")
                 self.save_model(current_epoch, model_path)
 
-            episode_returns: List[float] = one_epoch_experience["episode_returns"]
-            episode_lengths: List[int] = one_epoch_experience["episode_lengths"]
+            episode_returns: List[float] = one_epoch_experience.episode_returns
+            episode_lengths: List[int] = one_epoch_experience.episode_lengths
 
             logger.info("Epoch: {}".format(current_epoch))
 
@@ -162,15 +162,7 @@ class OnPolicyAlgorithm(ABC):
             at the beginning.
         :return: (Experience) Collected experience.
         """
-        one_epoch_experience: Experience = {
-            "observations": [],
-            "actions": [],
-            "rewards": [],
-            "last_observations": [],
-            "dones": [],
-            "episode_returns": [],
-            "episode_lengths": [],
-        }
+        one_epoch_experience: Experience = Experience()
 
         # Variables on each episode
         episode_observations: List[np.ndarray] = []
@@ -208,16 +200,14 @@ class OnPolicyAlgorithm(ABC):
 
                 episode_last_observation: np.ndarray = observation
 
-                one_epoch_experience["observations"].append(episode_observations)
-                one_epoch_experience["actions"].append(episode_actions)
-                one_epoch_experience["rewards"].append(episode_rewards)
-                one_epoch_experience["last_observations"].append(
-                    episode_last_observation
-                )
-                one_epoch_experience["dones"].append(episode_done)
+                one_epoch_experience.observations.append(episode_observations)
+                one_epoch_experience.actions.append(episode_actions)
+                one_epoch_experience.rewards.append(episode_rewards)
+                one_epoch_experience.last_observations.append(episode_last_observation)
+                one_epoch_experience.dones.append(episode_done)
 
-                one_epoch_experience["episode_returns"].append(episode_return)
-                one_epoch_experience["episode_lengths"].append(episode_length)
+                one_epoch_experience.episode_returns.append(episode_return)
+                one_epoch_experience.episode_lengths.append(episode_length)
 
                 if episode_done:
                     self.current_total_episodes += 1
