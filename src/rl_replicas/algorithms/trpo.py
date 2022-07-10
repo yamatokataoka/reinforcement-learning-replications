@@ -79,22 +79,28 @@ class TRPO(OnPolicyAlgorithm):
                     ).flatten()
                 )
 
-        bootstrapped_rewards_list: List[List[float]] = []
-        for episode_rewards, episode_dones, values_tensor in zip(
-            rewards_list, dones, values_tensor_list
+        last_values: List[float] = [
+            episode_values[-1].detach().item() for episode_values in values_tensor_list
+        ]
+
+        bootstrapped_rewards: List[List[float]] = []
+        for episode_rewards, episode_dones, last_value in zip(
+            rewards_list, dones, last_values
         ):
-            last_value_float: float = 0
-            last_done: bool = episode_dones[-1]
-            if not last_done:
-                last_value_float = values_tensor[-1].detach().item()
-            bootstrapped_rewards_list.append(episode_rewards + [last_value_float])
+            episode_is_done: bool = episode_dones[-1]
+            episode_bootstrapped_rewards: List[float]
+            if episode_is_done:
+                episode_bootstrapped_rewards = episode_rewards + [0]
+            else:
+                episode_bootstrapped_rewards = episode_rewards + [last_value]
+            bootstrapped_rewards.append(episode_bootstrapped_rewards)
 
         # Calculate rewards-to-go over each episode, to be targets for the value function
         discounted_returns: Tensor = torch.from_numpy(
             np.concatenate(
                 [
                     discounted_cumulative_sums(one_episode_rewards, self.gamma)[:-1]
-                    for one_episode_rewards in bootstrapped_rewards_list
+                    for one_episode_rewards in bootstrapped_rewards
                 ]
             )
         ).float()
@@ -115,7 +121,7 @@ class TRPO(OnPolicyAlgorithm):
                         self.gae_lambda,
                     )
                     for one_episode_rewards, one_episode_values in zip(
-                        bootstrapped_rewards_list, values_tensor_list
+                        bootstrapped_rewards, values_tensor_list
                     )
                 ]
             )
