@@ -69,21 +69,23 @@ class PPO(OnPolicyAlgorithm):
         observations_list: List[List[np.ndarray]] = one_epoch_experience.observations
         actions_list: List[List[np.ndarray]] = one_epoch_experience.actions
         rewards_list: List[List[float]] = one_epoch_experience.rewards
-        last_observations_list: List[
-            np.ndarray
-        ] = one_epoch_experience.last_observations
+        observations_with_last_observation_list: List[
+            List[np.ndarray]
+        ] = one_epoch_experience.observations_with_last_observation
         dones: List[List[bool]] = one_epoch_experience.dones
 
         values_tensor_list: List[Tensor] = []
         with torch.no_grad():
-            for (observations, last_observation) in zip(
-                observations_list, last_observations_list
-            ):
-                observations_with_last_observation = torch.from_numpy(
-                    np.concatenate([observations, [last_observation]])
+            for (
+                observations_with_last_observation
+            ) in observations_with_last_observation_list:
+                observations_with_last_observation_tensor = torch.from_numpy(
+                    np.concatenate([observations_with_last_observation])
                 ).float()
                 values_tensor_list.append(
-                    self.value_function(observations_with_last_observation).flatten()
+                    self.value_function(
+                        observations_with_last_observation_tensor
+                    ).flatten()
                 )
 
         bootstrapped_rewards_list: List[List[float]] = []
