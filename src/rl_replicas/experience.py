@@ -38,3 +38,13 @@ class Experience:
         self.dones = dones if dones else []
         self.episode_returns = episode_returns if episode_returns else []
         self.episode_lengths = episode_lengths if episode_lengths else []
+
+    @property
+    def next_observations(self) -> List[List[np.ndarray]]:
+        return [
+            observations[1:] + [last_observation]
+            for observations, last_observation in zip(
+                self.observations,
+                self.last_observations,
+            )
+        ]

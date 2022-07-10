@@ -135,16 +135,10 @@ class OffPolicyAlgorithm(ABC):
                 item for sublist in one_epoch_experience.rewards for item in sublist
             ]
 
-            next_observations: List[np.ndarray] = [
-                observations[1:] + [last_observation]
-                for observations, last_observation in zip(
-                    one_epoch_experience.observations,
-                    one_epoch_experience.last_observations,
-                )
-            ]
-
             flat_next_observations: List[np.ndarray] = [
-                item for sublist in next_observations for item in sublist
+                item
+                for sublist in one_epoch_experience.next_observations
+                for item in sublist
             ]
 
             dones_per_step: List[bool] = []
