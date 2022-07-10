@@ -57,7 +57,7 @@ class VPG(OnPolicyAlgorithm):
         last_observations_list: List[
             np.ndarray
         ] = one_epoch_experience.last_observations
-        dones: List[bool] = one_epoch_experience.dones
+        dones: List[List[bool]] = one_epoch_experience.dones
 
         values_tensor_list: List[Tensor] = []
         with torch.no_grad():
@@ -72,11 +72,12 @@ class VPG(OnPolicyAlgorithm):
                 )
 
         bootstrapped_rewards_list: List[List[float]] = []
-        for episode_rewards, episode_done, values_tensor in zip(
+        for episode_rewards, episode_dones, values_tensor in zip(
             rewards_list, dones, values_tensor_list
         ):
             last_value_float: float = 0
-            if not episode_done:
+            last_done: bool = episode_dones[-1]
+            if not last_done:
                 last_value_float = values_tensor[-1].detach().item()
             bootstrapped_rewards_list.append(episode_rewards + [last_value_float])
 

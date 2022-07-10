@@ -16,7 +16,7 @@ class Experience:
     :param actions: (Optional[List[List[np.ndarray]]]) A nested list of shape (N, L, A^*).
     :param rewards: (Optional[List[List[float]]]) A nested list of shape (N, L).
     :param last_observations: (Optional[List[np.ndarray]]) A list of np.ndarray (N, O^*).
-    :param dones: (Optional[List[bool]]) A list with length (N).
+    :param dones: (Optional[List[bool]]) A nested list shape (N, L).
     :param episode_returns: (Optional[List[float]]) A list with length (N).
     :param episode_lengths: (Optional[List[int]]) A list with length (N).
     """
@@ -27,7 +27,7 @@ class Experience:
         actions: Optional[List[List[np.ndarray]]] = None,
         rewards: Optional[List[List[float]]] = None,
         last_observations: Optional[List[np.ndarray]] = None,
-        dones: Optional[List[bool]] = None,
+        dones: Optional[List[List[bool]]] = None,
         episode_returns: Optional[List[float]] = None,
         episode_lengths: Optional[List[int]] = None,
     ):
@@ -80,3 +80,7 @@ class Experience:
             for next_observations_per_episode in self.next_observations
             for next_observation in next_observations_per_episode
         ]
+
+    @property
+    def flattened_dones(self) -> List[bool]:
+        return [done for dones_per_episode in self.dones for done in dones_per_episode]

@@ -168,6 +168,7 @@ class OnPolicyAlgorithm(ABC):
         episode_observations: List[np.ndarray] = []
         episode_actions: List[np.ndarray] = []
         episode_rewards: List[float] = []
+        episode_dones: List[bool] = []
         episode_return: float = 0.0
         episode_length: int = 0
 
@@ -185,6 +186,7 @@ class OnPolicyAlgorithm(ABC):
 
             episode_return += reward
             episode_rewards.append(reward)
+            episode_dones.append(episode_done)
 
             episode_length += 1
             self.current_total_steps += 1
@@ -204,7 +206,7 @@ class OnPolicyAlgorithm(ABC):
                 one_epoch_experience.actions.append(episode_actions)
                 one_epoch_experience.rewards.append(episode_rewards)
                 one_epoch_experience.last_observations.append(episode_last_observation)
-                one_epoch_experience.dones.append(episode_done)
+                one_epoch_experience.dones.append(episode_dones)
 
                 one_epoch_experience.episode_returns.append(episode_return)
                 one_epoch_experience.episode_lengths.append(episode_length)
@@ -218,7 +220,8 @@ class OnPolicyAlgorithm(ABC):
                     episode_observations,
                     episode_actions,
                     episode_rewards,
-                ) = ([], [], [])
+                    episode_dones,
+                ) = ([], [], [], [])
 
         return one_epoch_experience
 
