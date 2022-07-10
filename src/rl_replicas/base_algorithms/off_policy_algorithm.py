@@ -123,24 +123,6 @@ class OffPolicyAlgorithm(ABC):
             episode_returns: List[float] = one_epoch_experience.episode_returns
             episode_lengths: List[int] = one_epoch_experience.episode_lengths
 
-            flat_observations: List[np.ndarray] = [
-                item
-                for sublist in one_epoch_experience.observations
-                for item in sublist
-            ]
-            flat_actions: List[np.ndarray] = [
-                item for sublist in one_epoch_experience.actions for item in sublist
-            ]
-            flat_rewards: List[np.ndarray] = [
-                item for sublist in one_epoch_experience.rewards for item in sublist
-            ]
-
-            flat_next_observations: List[np.ndarray] = [
-                item
-                for sublist in one_epoch_experience.next_observations
-                for item in sublist
-            ]
-
             dones_per_step: List[bool] = []
             for episode_done, episode_length in zip(
                 one_epoch_experience.dones, episode_lengths
@@ -151,10 +133,10 @@ class OffPolicyAlgorithm(ABC):
                     dones_per_step[-1] = True
 
             self.replay_buffer.add_one_epoch_experience(
-                flat_observations,
-                flat_actions,
-                flat_rewards,
-                flat_next_observations,
+                one_epoch_experience.flattened_observations,
+                one_epoch_experience.flattened_actions,
+                one_epoch_experience.flattened_rewards,
+                one_epoch_experience.flattened_next_observations,
                 dones_per_step,
             )
 
