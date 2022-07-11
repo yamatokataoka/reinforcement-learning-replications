@@ -74,19 +74,9 @@ class PPO(OnPolicyAlgorithm):
         ] = one_epoch_experience.observations_with_last_observation
         dones: List[List[bool]] = one_epoch_experience.dones
 
-        values_tensor_list: List[Tensor] = []
-        with torch.no_grad():
-            for (
-                observations_with_last_observation
-            ) in observations_with_last_observation_list:
-                observations_with_last_observation_tensor = torch.from_numpy(
-                    np.concatenate([observations_with_last_observation])
-                ).float()
-                values_tensor_list.append(
-                    self.value_function(
-                        observations_with_last_observation_tensor
-                    ).flatten()
-                )
+        values_tensor_list: List[Tensor] = self.compute_values_tensor_list(
+            observations_with_last_observation_list
+        )
 
         last_values: List[float] = [
             episode_values[-1].detach().item() for episode_values in values_tensor_list
@@ -221,6 +211,24 @@ class PPO(OnPolicyAlgorithm):
                 value_loss_before,
                 self.current_total_steps,
             )
+
+    def compute_values_tensor_list(
+        self, observations_with_last_observation_list: List[List[np.ndarray]]
+    ) -> List[Tensor]:
+        values_tensor_list: List[Tensor] = []
+        with torch.no_grad():
+            for (
+                observations_with_last_observation
+            ) in observations_with_last_observation_list:
+                observations_with_last_observation_tensor = torch.from_numpy(
+                    np.concatenate([observations_with_last_observation])
+                ).float()
+                values_tensor_list.append(
+                    self.value_function(
+                        observations_with_last_observation_tensor
+                    ).flatten()
+                )
+        return values_tensor_list
 
     def compute_policy_loss(
         self,
