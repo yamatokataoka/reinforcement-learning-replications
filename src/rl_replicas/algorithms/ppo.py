@@ -82,17 +82,9 @@ class PPO(OnPolicyAlgorithm):
             episode_values[-1].detach().item() for episode_values in values_tensor_list
         ]
 
-        bootstrapped_rewards: List[List[float]] = []
-        for episode_rewards, episode_dones, last_value in zip(
+        bootstrapped_rewards: List[List[float]] = self.bootstrap_rewards(
             rewards_list, dones, last_values
-        ):
-            episode_is_done: bool = episode_dones[-1]
-            episode_bootstrapped_rewards: List[float]
-            if episode_is_done:
-                episode_bootstrapped_rewards = episode_rewards + [0]
-            else:
-                episode_bootstrapped_rewards = episode_rewards + [last_value]
-            bootstrapped_rewards.append(episode_bootstrapped_rewards)
+        )
 
         # Calculate rewards-to-go over each episode, to be targets for the value function
         discounted_returns: Tensor = torch.from_numpy(
@@ -229,6 +221,27 @@ class PPO(OnPolicyAlgorithm):
                     ).flatten()
                 )
         return values_tensor_list
+
+    def bootstrap_rewards(
+        self,
+        rewards_list: List[List[float]],
+        dones: List[List[bool]],
+        last_values: List[float],
+    ) -> List[List[float]]:
+        bootstrapped_rewards: List[List[float]] = []
+
+        for episode_rewards, episode_dones, last_value in zip(
+            rewards_list, dones, last_values
+        ):
+            episode_is_done: bool = episode_dones[-1]
+            episode_bootstrapped_rewards: List[float]
+            if episode_is_done:
+                episode_bootstrapped_rewards = episode_rewards + [0]
+            else:
+                episode_bootstrapped_rewards = episode_rewards + [last_value]
+            bootstrapped_rewards.append(episode_bootstrapped_rewards)
+
+        return bootstrapped_rewards
 
     def compute_policy_loss(
         self,
