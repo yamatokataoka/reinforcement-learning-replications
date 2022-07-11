@@ -99,12 +99,12 @@ class VPG(OnPolicyAlgorithm):
             )
         ).float()
 
-        # Calculate advantages
         observations: Tensor = torch.from_numpy(
             np.concatenate(observations_list)
         ).float()
         actions: Tensor = torch.from_numpy(np.concatenate(actions_list)).float()
 
+        # Calculate advantages
         advantages: Tensor = torch.from_numpy(
             np.concatenate(
                 [
