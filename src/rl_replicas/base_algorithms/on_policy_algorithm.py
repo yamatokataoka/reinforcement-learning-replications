@@ -157,8 +157,6 @@ class OnPolicyAlgorithm(ABC):
         Collect experience for one epoch
 
         :param batch_size: (int) The number of steps to run per epoch.
-        :param random_start_steps: (int) The number of steps for uniform-random action selection for exploration
-            at the beginning.
         :return: (Experience) Collected experience.
         """
         one_epoch_experience: Experience = Experience()
