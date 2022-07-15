@@ -63,7 +63,7 @@ class TRPO(OnPolicyAlgorithm):
         observations_with_last_observation_list: List[
             List[np.ndarray]
         ] = one_epoch_experience.observations_with_last_observation
-        dones: List[List[bool]] = one_epoch_experience.dones
+        episode_dones: List[bool] = one_epoch_experience.episode_dones
 
         values_tensor_list: List[Tensor] = self.compute_values_tensor_list(
             observations_with_last_observation_list
@@ -74,7 +74,7 @@ class TRPO(OnPolicyAlgorithm):
         ]
 
         bootstrapped_rewards: List[List[float]] = self.bootstrap_rewards(
-            rewards_list, dones, last_values
+            rewards_list, episode_dones, last_values
         )
 
         # Calculate rewards-to-go over each episode, to be targets for the value function
@@ -210,17 +210,16 @@ class TRPO(OnPolicyAlgorithm):
     def bootstrap_rewards(
         self,
         rewards_list: List[List[float]],
-        dones: List[List[bool]],
+        episode_dones: List[bool],
         last_values: List[float],
     ) -> List[List[float]]:
         bootstrapped_rewards: List[List[float]] = []
 
-        for episode_rewards, episode_dones, last_value in zip(
-            rewards_list, dones, last_values
+        for episode_rewards, episode_done, last_value in zip(
+            rewards_list, episode_dones, last_values
         ):
-            episode_is_done: bool = episode_dones[-1]
             episode_bootstrapped_rewards: List[float]
-            if episode_is_done:
+            if episode_done:
                 episode_bootstrapped_rewards = episode_rewards + [0]
             else:
                 episode_bootstrapped_rewards = episode_rewards + [last_value]

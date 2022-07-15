@@ -60,6 +60,10 @@ class Experience:
         ]
 
     @property
+    def episode_dones(self) -> List[bool]:
+        return [dones_per_episode[-1] for dones_per_episode in self.dones]
+
+    @property
     def flattened_observations(self) -> List[np.ndarray]:
         return [
             observation
