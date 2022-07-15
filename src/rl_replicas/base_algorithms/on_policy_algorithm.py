@@ -60,7 +60,7 @@ class OnPolicyAlgorithm(ABC):
 
     def learn(
         self,
-        epochs: int = 50,
+        num_epochs: int = 50,
         steps_per_epoch: int = 4000,
         output_dir: str = ".",
         tensorboard: bool = False,
@@ -69,7 +69,7 @@ class OnPolicyAlgorithm(ABC):
         """
         Learn the model
 
-        :param epochs: (int) The number of epochs to run and train.
+        :param num_epochs: (int) The number of epochs to run and train.
         :param steps_per_epoch: (int) The number of steps to run per epoch.
         :param output_dir: (str) The output directory.
         :param tensorboard: (bool) Whether or not to log for tensorboard.
@@ -87,7 +87,7 @@ class OnPolicyAlgorithm(ABC):
         self.current_total_steps: int = 0
         self.current_total_episodes: int = 0
 
-        for current_epoch in range(epochs):
+        for current_epoch in range(num_epochs):
 
             one_epoch_experience: Experience = self.collect_one_epoch_experience(
                 steps_per_epoch

@@ -47,7 +47,7 @@ class TestPPO:
         )
 
         model.learn(
-            epochs=3,
+            num_epochs=3,
             output_dir="/tmp/rl_replicas_tests/ppo-"
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
             tensorboard=True,
@@ -90,7 +90,7 @@ class TestPPO:
         )
 
         model.learn(
-            epochs=3,
+            num_epochs=3,
             output_dir="/tmp/rl_replicas_tests/ppo-"
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
             tensorboard=True,

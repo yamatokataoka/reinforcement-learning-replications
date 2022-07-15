@@ -49,7 +49,7 @@ class TestDDPG:
         )
 
         model.learn(
-            epochs=30,
+            num_epochs=30,
             output_dir="/tmp/rl_replicas_tests/ddpg-"
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
             tensorboard=True,

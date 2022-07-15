@@ -68,7 +68,7 @@ model: TD3 = TD3(policy, q_function_1, q_function_2, env, seed=0)
 print(f"Experiment to {output_dir}")
 
 model.learn(
-    epochs=2000,
+    num_epochs=2000,
     steps_per_epoch=50,
     replay_buffer_size=int(1e6),
     minibatch_size=100,

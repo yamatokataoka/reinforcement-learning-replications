@@ -61,7 +61,7 @@ class TestTD3:
         )
 
         model.learn(
-            epochs=30,
+            num_epochs=30,
             output_dir="/tmp/rl_replicas_tests/td3-"
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
             tensorboard=True,

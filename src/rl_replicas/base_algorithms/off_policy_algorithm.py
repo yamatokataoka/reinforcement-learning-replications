@@ -70,7 +70,7 @@ class OffPolicyAlgorithm(ABC):
 
     def learn(
         self,
-        epochs: int = 2000,
+        num_epochs: int = 2000,
         steps_per_epoch: int = 50,
         replay_buffer_size: int = int(1e6),
         minibatch_size: int = 100,
@@ -86,7 +86,7 @@ class OffPolicyAlgorithm(ABC):
         """
         Learn the model
 
-        :param epochs: (int) The number of epochs to run and train.
+        :param num_epochs: (int) The number of epochs to run and train.
         :param steps_per_epoch: (int) The number of steps to run per epoch; in other words, batch size is
             steps_per_epoch.
         :param replay_size: (int) The size of the replay buffer.
@@ -115,7 +115,7 @@ class OffPolicyAlgorithm(ABC):
 
         self.replay_buffer: ReplayBuffer = ReplayBuffer(replay_buffer_size)
 
-        for current_epoch in range(epochs):
+        for current_epoch in range(num_epochs):
             one_epoch_experience: Experience = self.collect_one_epoch_experience(
                 steps_per_epoch, random_start_steps
             )
