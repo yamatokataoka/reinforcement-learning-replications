@@ -119,9 +119,6 @@ class OffPolicyAlgorithm(ABC):
                 batch_size, random_start_steps
             )
 
-            episode_returns: List[float] = one_epoch_experience.episode_returns
-            episode_lengths: List[int] = one_epoch_experience.episode_lengths
-
             self.replay_buffer.add_one_epoch_experience(
                 one_epoch_experience.flattened_observations,
                 one_epoch_experience.flattened_actions,
@@ -137,6 +134,9 @@ class OffPolicyAlgorithm(ABC):
 
                 logger.info("Save model")
                 self.save_model(current_epoch, model_path)
+
+            episode_returns: List[float] = one_epoch_experience.episode_returns
+            episode_lengths: List[int] = one_epoch_experience.episode_lengths
 
             logger.info("Epoch: {}".format(current_epoch))
 
