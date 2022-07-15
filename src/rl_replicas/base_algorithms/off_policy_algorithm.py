@@ -120,48 +120,15 @@ class OffPolicyAlgorithm(ABC):
                 steps_per_epoch, random_start_steps
             )
 
-            episode_returns: List[float] = one_epoch_experience["episode_returns"]
-            episode_lengths: List[int] = one_epoch_experience["episode_lengths"]
-
-            flat_observations: List[np.ndarray] = [
-                item
-                for sublist in one_epoch_experience["observations"]
-                for item in sublist
-            ]
-            flat_actions: List[np.ndarray] = [
-                item for sublist in one_epoch_experience["actions"] for item in sublist
-            ]
-            flat_rewards: List[np.ndarray] = [
-                item for sublist in one_epoch_experience["rewards"] for item in sublist
-            ]
-
-            next_observations: List[np.ndarray] = [
-                observations[1:] + [last_observation]
-                for observations, last_observation in zip(
-                    one_epoch_experience["observations"],
-                    one_epoch_experience["last_observations"],
-                )
-            ]
-
-            flat_next_observations: List[np.ndarray] = [
-                item for sublist in next_observations for item in sublist
-            ]
-
-            dones_per_step: List[bool] = []
-            for episode_done, episode_length in zip(
-                one_epoch_experience["dones"], episode_lengths
-            ):
-                # Only last should be True indicating the episode is done at the step
-                dones_per_step.extend([False] * episode_length)
-                if episode_done:
-                    dones_per_step[-1] = True
+            episode_returns: List[float] = one_epoch_experience.episode_returns
+            episode_lengths: List[int] = one_epoch_experience.episode_lengths
 
             self.replay_buffer.add_one_epoch_experience(
-                flat_observations,
-                flat_actions,
-                flat_rewards,
-                flat_next_observations,
-                dones_per_step,
+                one_epoch_experience.flattened_observations,
+                one_epoch_experience.flattened_actions,
+                one_epoch_experience.flattened_rewards,
+                one_epoch_experience.flattened_next_observations,
+                one_epoch_experience.flattened_dones,
             )
 
             if model_saving:
@@ -240,20 +207,13 @@ class OffPolicyAlgorithm(ABC):
             at the beginning.
         :return: (Experience) Collected experience.
         """
-        one_epoch_experience: Experience = {
-            "observations": [],
-            "actions": [],
-            "rewards": [],
-            "last_observations": [],
-            "dones": [],
-            "episode_returns": [],
-            "episode_lengths": [],
-        }
+        one_epoch_experience: Experience = Experience()
 
         # Variables on each episode
         episode_observations: List[np.ndarray] = []
         episode_actions: List[np.ndarray] = []
         episode_rewards: List[float] = []
+        episode_dones: List[bool] = []
         episode_return: float = 0.0
         episode_length: int = 0
 
@@ -278,6 +238,7 @@ class OffPolicyAlgorithm(ABC):
             self.observation, reward, episode_done, _ = self.env.step(action)
 
             episode_rewards.append(reward)
+            episode_dones.append(episode_done)
 
             self.current_total_steps += 1
             episode_length += 1
@@ -288,16 +249,14 @@ class OffPolicyAlgorithm(ABC):
             if episode_done or epoch_ended:
                 episode_last_observation: np.ndarray = self.observation
 
-                one_epoch_experience["observations"].append(episode_observations)
-                one_epoch_experience["actions"].append(episode_actions)
-                one_epoch_experience["rewards"].append(episode_rewards)
-                one_epoch_experience["last_observations"].append(
-                    episode_last_observation
-                )
-                one_epoch_experience["dones"].append(episode_done)
+                one_epoch_experience.observations.append(episode_observations)
+                one_epoch_experience.actions.append(episode_actions)
+                one_epoch_experience.rewards.append(episode_rewards)
+                one_epoch_experience.last_observations.append(episode_last_observation)
+                one_epoch_experience.dones.append(episode_dones)
 
-                one_epoch_experience["episode_returns"].append(episode_return)
-                one_epoch_experience["episode_lengths"].append(episode_length)
+                one_epoch_experience.episode_returns.append(episode_return)
+                one_epoch_experience.episode_lengths.append(episode_length)
 
                 if episode_done:
                     self.current_total_episodes += 1
@@ -308,7 +267,8 @@ class OffPolicyAlgorithm(ABC):
                     episode_observations,
                     episode_actions,
                     episode_rewards,
-                ) = ([], [], [])
+                    episode_dones,
+                ) = ([], [], [], [])
 
         return one_epoch_experience
 

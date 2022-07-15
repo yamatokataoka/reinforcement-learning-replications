@@ -51,51 +51,42 @@ class VPG(OnPolicyAlgorithm):
         )
 
     def train(self, one_epoch_experience: Experience) -> None:
-        observations_list: List[List[np.ndarray]] = one_epoch_experience["observations"]
-        actions_list: List[List[np.ndarray]] = one_epoch_experience["actions"]
-        rewards_list: List[List[float]] = one_epoch_experience["rewards"]
-        last_observations_list: List[np.ndarray] = one_epoch_experience[
-            "last_observations"
+        observations_list: List[List[np.ndarray]] = one_epoch_experience.observations
+        actions_list: List[List[np.ndarray]] = one_epoch_experience.actions
+        rewards_list: List[List[float]] = one_epoch_experience.rewards
+        observations_with_last_observation_list: List[
+            List[np.ndarray]
+        ] = one_epoch_experience.observations_with_last_observation
+        dones: List[List[bool]] = one_epoch_experience.dones
+
+        values_tensor_list: List[Tensor] = self.compute_values_tensor_list(
+            observations_with_last_observation_list
+        )
+
+        last_values: List[float] = [
+            episode_values[-1].detach().item() for episode_values in values_tensor_list
         ]
-        dones: List[bool] = one_epoch_experience["dones"]
 
-        values_tensor_list: List[Tensor] = []
-        with torch.no_grad():
-            for (observations, last_observation) in zip(
-                observations_list, last_observations_list
-            ):
-                observations_with_last_observation = torch.from_numpy(
-                    np.concatenate([observations, [last_observation]])
-                ).float()
-                values_tensor_list.append(
-                    self.value_function(observations_with_last_observation).flatten()
-                )
-
-        bootstrapped_rewards_list: List[List[float]] = []
-        for episode_rewards, episode_done, values_tensor in zip(
-            rewards_list, dones, values_tensor_list
-        ):
-            last_value_float: float = 0
-            if not episode_done:
-                last_value_float = values_tensor[-1].detach().item()
-            bootstrapped_rewards_list.append(episode_rewards + [last_value_float])
+        bootstrapped_rewards: List[List[float]] = self.bootstrap_rewards(
+            rewards_list, dones, last_values
+        )
 
         # Calculate rewards-to-go over each episode, to be targets for the value function
         discounted_returns: Tensor = torch.from_numpy(
             np.concatenate(
                 [
                     discounted_cumulative_sums(one_episode_rewards, self.gamma)[:-1]
-                    for one_episode_rewards in bootstrapped_rewards_list
+                    for one_episode_rewards in bootstrapped_rewards
                 ]
             )
         ).float()
 
-        # Calculate advantages
         observations: Tensor = torch.from_numpy(
             np.concatenate(observations_list)
         ).float()
         actions: Tensor = torch.from_numpy(np.concatenate(actions_list)).float()
 
+        # Calculate advantages
         advantages: Tensor = torch.from_numpy(
             np.concatenate(
                 [
@@ -106,7 +97,7 @@ class VPG(OnPolicyAlgorithm):
                         self.gae_lambda,
                     )
                     for one_episode_rewards, one_episode_values in zip(
-                        bootstrapped_rewards_list, values_tensor_list
+                        bootstrapped_rewards, values_tensor_list
                     )
                 ]
             )
@@ -166,6 +157,45 @@ class VPG(OnPolicyAlgorithm):
             self.writer.add_scalar(
                 "value/loss", value_loss_before, self.current_total_steps
             )
+
+    def compute_values_tensor_list(
+        self, observations_with_last_observation_list: List[List[np.ndarray]]
+    ) -> List[Tensor]:
+        values_tensor_list: List[Tensor] = []
+        with torch.no_grad():
+            for (
+                observations_with_last_observation
+            ) in observations_with_last_observation_list:
+                observations_with_last_observation_tensor = torch.from_numpy(
+                    np.concatenate([observations_with_last_observation])
+                ).float()
+                values_tensor_list.append(
+                    self.value_function(
+                        observations_with_last_observation_tensor
+                    ).flatten()
+                )
+        return values_tensor_list
+
+    def bootstrap_rewards(
+        self,
+        rewards_list: List[List[float]],
+        dones: List[List[bool]],
+        last_values: List[float],
+    ) -> List[List[float]]:
+        bootstrapped_rewards: List[List[float]] = []
+
+        for episode_rewards, episode_dones, last_value in zip(
+            rewards_list, dones, last_values
+        ):
+            episode_is_done: bool = episode_dones[-1]
+            episode_bootstrapped_rewards: List[float]
+            if episode_is_done:
+                episode_bootstrapped_rewards = episode_rewards + [0]
+            else:
+                episode_bootstrapped_rewards = episode_rewards + [last_value]
+            bootstrapped_rewards.append(episode_bootstrapped_rewards)
+
+        return bootstrapped_rewards
 
     def compute_value_loss(
         self, observations: Tensor, discounted_returns: Tensor
