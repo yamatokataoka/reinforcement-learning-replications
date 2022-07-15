@@ -28,7 +28,7 @@ class OnPolicyAlgorithm(ABC):
     :param gamma: (float) The discount factor for the cumulative return.
     :param gae_lambda: (float) The factor for trade-off of bias vs variance for GAE.
     :param seed: (int) The seed for the pseudo-random generators.
-    :param n_value_gradients (int): The number of gradient descent steps to take on value function per epoch.
+    :param num_value_gradients (int): The number of gradient descent steps to take on value function per epoch.
     """
 
     def __init__(
@@ -39,7 +39,7 @@ class OnPolicyAlgorithm(ABC):
         gamma: float,
         gae_lambda: float,
         seed: Optional[int],
-        n_value_gradients: int,
+        num_value_gradients: int,
     ) -> None:
         self.policy = policy
         self.value_function = value_function
@@ -48,7 +48,7 @@ class OnPolicyAlgorithm(ABC):
         self.gae_lambda = gae_lambda
         if seed is not None:
             self.seed: int = seed
-        self.n_value_gradients = n_value_gradients
+        self.num_value_gradients = num_value_gradients
 
         if seed is not None:
             self._seed()

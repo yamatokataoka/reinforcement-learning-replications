@@ -28,7 +28,7 @@ class TRPO(OnPolicyAlgorithm):
     :param gamma: (float) The discount factor for the cumulative return.
     :param gae_lambda: (float) The factor for trade-off of bias vs variance for GAE.
     :param seed: (int) The seed for the pseudo-random generators.
-    :param n_value_gradients (int): The number of gradient descent steps to take on value function per epoch.
+    :param num_value_gradients (int): The number of gradient descent steps to take on value function per epoch.
     """
 
     def __init__(
@@ -39,7 +39,7 @@ class TRPO(OnPolicyAlgorithm):
         gamma: float = 0.99,
         gae_lambda: float = 0.97,
         seed: Optional[int] = None,
-        n_value_gradients: int = 80,
+        num_value_gradients: int = 80,
     ) -> None:
         super().__init__(
             policy=policy,
@@ -48,7 +48,7 @@ class TRPO(OnPolicyAlgorithm):
             gamma=gamma,
             gae_lambda=gae_lambda,
             seed=seed,
-            n_value_gradients=n_value_gradients,
+            num_value_gradients=num_value_gradients,
         )
 
         self.old_policy: Policy = copy.deepcopy(self.policy)
@@ -158,7 +158,7 @@ class TRPO(OnPolicyAlgorithm):
             )
 
         # Train the value function
-        for _ in range(self.n_value_gradients):
+        for _ in range(self.num_value_gradients):
             value_loss: Tensor = self.compute_value_loss(
                 observations, discounted_returns
             )
