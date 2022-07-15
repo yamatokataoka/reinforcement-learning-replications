@@ -30,6 +30,7 @@ class PPO(OnPolicyAlgorithm):
     :param gamma: (float) The discount factor for the cumulative return.
     :param gae_lambda: (float) The factor for trade-off of bias vs variance for GAE.
     :param seed: (int) The seed for the pseudo-random generators.
+    :param num_policy_gradients (int): The number of gradient descent steps to take on policy per epoch.
     :param n_value_gradients (int): The number of gradient descent steps to take on value function per epoch.
     """
 
@@ -43,7 +44,7 @@ class PPO(OnPolicyAlgorithm):
         gamma: float = 0.99,
         gae_lambda: float = 0.97,
         seed: Optional[int] = None,
-        n_policy_gradients: int = 80,
+        num_policy_gradients: int = 80,
         n_value_gradients: int = 80,
     ) -> None:
         super().__init__(
@@ -57,7 +58,7 @@ class PPO(OnPolicyAlgorithm):
         )
 
         self.clip_range = clip_range
-        self.n_policy_gradients = n_policy_gradients
+        self.num_policy_gradients = num_policy_gradients
         self.max_kl_divergence = max_kl_divergence
 
         self.old_policy: Policy = copy.deepcopy(self.policy)
@@ -131,7 +132,7 @@ class PPO(OnPolicyAlgorithm):
             entropies: Tensor = policy_dist.entropy()
 
         # Train the policy
-        for i in range(self.n_policy_gradients):
+        for i in range(self.num_policy_gradients):
             policy_loss: Tensor = self.compute_policy_loss(
                 observations, actions, advantages
             )
