@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--algorithm", type=str, default="vpg")
 parser.add_argument("--environment", type=str, default="CartPole-v0")
 parser.add_argument("--num_epochs", type=int, default=5)
-parser.add_argument("--steps_per_epoch", type=int, default=4000)
+parser.add_argument("--batch_size", type=int, default=4000)
 parser.add_argument("--policy_network_arch", nargs="+", type=int, default=[64, 64])
 parser.add_argument(
     "--value_function_network_arch", nargs="+", type=int, default=[64, 64]
@@ -36,7 +36,7 @@ args = parser.parse_args()
 algorithm_name = args.algorithm
 environment_name = args.environment
 num_epochs = args.num_epochs
-steps_per_epoch = args.steps_per_epoch
+batch_size = args.batch_size
 policy_network_architecture = args.policy_network_arch
 value_function_network_architecture = args.value_function_network_arch
 policy_learning_rate = args.policy_lr
@@ -152,7 +152,7 @@ if tensorboard or model_saving:
     print("Start experiment to: {}".format(output_dir))
 
 print("num_epochs:          {}".format(num_epochs))
-print("steps_per_epoch:     {}".format(steps_per_epoch))
+print("batch_size:          {}".format(batch_size))
 print("algorithm:           {}".format(algorithm_name))
 print("environment:         {}".format(environment_name))
 print("seed:                {}".format(seed))
@@ -163,7 +163,7 @@ if algorithm_name != "trpo":
 
 model.learn(
     num_epochs=num_epochs,
-    steps_per_epoch=steps_per_epoch,
+    batch_size=batch_size,
     output_dir=output_dir,
     tensorboard=tensorboard,
     model_saving=model_saving,

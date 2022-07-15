@@ -61,7 +61,7 @@ class OnPolicyAlgorithm(ABC):
     def learn(
         self,
         num_epochs: int = 50,
-        steps_per_epoch: int = 4000,
+        batch_size: int = 4000,
         output_dir: str = ".",
         tensorboard: bool = False,
         model_saving: bool = False,
@@ -70,7 +70,7 @@ class OnPolicyAlgorithm(ABC):
         Learn the model
 
         :param num_epochs: (int) The number of epochs to run and train.
-        :param steps_per_epoch: (int) The number of steps to run per epoch.
+        :param batch_size: (int) The number of steps to run per epoch.
         :param output_dir: (str) The output directory.
         :param tensorboard: (bool) Whether or not to log for tensorboard.
         :param model_saving: (bool) Whether or not to save trained model (Save and overwrite at each end of epoch).
@@ -90,7 +90,7 @@ class OnPolicyAlgorithm(ABC):
         for current_epoch in range(num_epochs):
 
             one_epoch_experience: Experience = self.collect_one_epoch_experience(
-                steps_per_epoch
+                batch_size
             )
 
             if model_saving:
@@ -152,12 +152,11 @@ class OnPolicyAlgorithm(ABC):
             self.writer.flush()
             self.writer.close()
 
-    def collect_one_epoch_experience(self, steps_per_epoch: int) -> Experience:
+    def collect_one_epoch_experience(self, batch_size: int) -> Experience:
         """
         Collect experience for one epoch
 
-        :param steps_per_epoch: (int) The number of steps to run per epoch; in other words, batch size is
-            steps_per_epoch.
+        :param batch_size: (int) The number of steps to run per epoch.
         :param random_start_steps: (int) The number of steps for uniform-random action selection for exploration
             at the beginning.
         :return: (Experience) Collected experience.
@@ -174,7 +173,7 @@ class OnPolicyAlgorithm(ABC):
 
         observation: np.ndarray = self.env.reset()
 
-        for current_step in range(steps_per_epoch):
+        for current_step in range(batch_size):
             episode_observations.append(observation)
 
             action: np.ndarray = self.predict(observation)
@@ -190,7 +189,7 @@ class OnPolicyAlgorithm(ABC):
 
             episode_length += 1
             self.current_total_steps += 1
-            epoch_ended: bool = current_step == steps_per_epoch - 1
+            epoch_ended: bool = current_step == batch_size - 1
 
             if episode_done or epoch_ended:
                 if epoch_ended and not episode_done:

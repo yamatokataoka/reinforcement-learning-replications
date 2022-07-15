@@ -69,7 +69,7 @@ print(f"Experiment to {output_dir}")
 
 model.learn(
     num_epochs=2000,
-    steps_per_epoch=50,
+    batch_size=50,
     replay_buffer_size=int(1e6),
     minibatch_size=100,
     random_start_steps=10000,

@@ -71,7 +71,7 @@ class OffPolicyAlgorithm(ABC):
     def learn(
         self,
         num_epochs: int = 2000,
-        steps_per_epoch: int = 50,
+        batch_size: int = 50,
         replay_buffer_size: int = int(1e6),
         minibatch_size: int = 100,
         random_start_steps: int = 10000,
@@ -87,8 +87,7 @@ class OffPolicyAlgorithm(ABC):
         Learn the model
 
         :param num_epochs: (int) The number of epochs to run and train.
-        :param steps_per_epoch: (int) The number of steps to run per epoch; in other words, batch size is
-            steps_per_epoch.
+        :param batch_size: (int) The number of steps to run per epoch.
         :param replay_size: (int) The size of the replay buffer.
         ;param minibatch_size: (int) The minibatch size for SGD.
         :param random_start_steps: (int) The number of steps for uniform-random action selection for exploration
@@ -117,7 +116,7 @@ class OffPolicyAlgorithm(ABC):
 
         for current_epoch in range(num_epochs):
             one_epoch_experience: Experience = self.collect_one_epoch_experience(
-                steps_per_epoch, random_start_steps
+                batch_size, random_start_steps
             )
 
             episode_returns: List[float] = one_epoch_experience.episode_returns
@@ -196,13 +195,12 @@ class OffPolicyAlgorithm(ABC):
             self.writer.close()
 
     def collect_one_epoch_experience(
-        self, steps_per_epoch: int, random_start_steps: int
+        self, batch_size: int, random_start_steps: int
     ) -> Experience:
         """
         Collect experience for one epoch
 
-        :param steps_per_epoch: (int) The number of steps to run per epoch; in other words, batch size is
-            steps_per_epoch.
+        :param batch_size: (int) The number of steps to run per epoch.
         :param random_start_steps: (int) The number of steps for uniform-random action selection for exploration
             at the beginning.
         :return: (Experience) Collected experience.
@@ -221,7 +219,7 @@ class OffPolicyAlgorithm(ABC):
             # Variables on the current episode
             self.observation: np.ndarray = self.env.reset()
 
-        for current_step in range(steps_per_epoch):
+        for current_step in range(batch_size):
             episode_observations.append(self.observation)
 
             action: np.ndarray
@@ -244,7 +242,7 @@ class OffPolicyAlgorithm(ABC):
             episode_length += 1
             episode_return += reward
 
-            epoch_ended: bool = current_step == steps_per_epoch - 1
+            epoch_ended: bool = current_step == batch_size - 1
 
             if episode_done or epoch_ended:
                 episode_last_observation: np.ndarray = self.observation
