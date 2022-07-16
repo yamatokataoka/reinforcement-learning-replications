@@ -119,7 +119,7 @@ class OffPolicyAlgorithm(ABC):
                 batch_size, random_start_steps
             )
 
-            self.replay_buffer.add_one_epoch_experience(
+            self.replay_buffer.add_experience(
                 one_epoch_experience.flattened_observations,
                 one_epoch_experience.flattened_actions,
                 one_epoch_experience.flattened_rewards,
