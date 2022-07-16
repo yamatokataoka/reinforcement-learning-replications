@@ -63,10 +63,7 @@ class PPO(OnPolicyAlgorithm):
 
         self.old_policy: Policy = copy.deepcopy(self.policy)
 
-    def train(
-        self,
-        experience: Experience,
-    ) -> None:
+    def train(self, experience: Experience) -> None:
         values_tensor_list: List[Tensor] = self.compute_values_tensor_list(
             experience.observations_with_last_observation
         )
@@ -236,10 +233,7 @@ class PPO(OnPolicyAlgorithm):
         return bootstrapped_rewards
 
     def compute_policy_loss(
-        self,
-        observations: Tensor,
-        actions: Tensor,
-        advantages: Tensor,
+        self, observations: Tensor, actions: Tensor, advantages: Tensor
     ) -> Tensor:
         policy_dist: Distribution = self.policy(observations)
         log_probs: Tensor = policy_dist.log_prob(actions)
@@ -267,9 +261,7 @@ class PPO(OnPolicyAlgorithm):
         return policy_loss
 
     def compute_approximate_kl_divergence(
-        self,
-        observations: Tensor,
-        actions: Tensor,
+        self, observations: Tensor, actions: Tensor
     ) -> Tensor:
         with torch.no_grad():
             policy_dist: Distribution = self.policy(observations)
@@ -283,9 +275,7 @@ class PPO(OnPolicyAlgorithm):
         return torch.mean(approximate_kl_divergence)
 
     def compute_value_loss(
-        self,
-        observations: Tensor,
-        discounted_returns: Tensor,
+        self, observations: Tensor, discounted_returns: Tensor
     ) -> Tensor:
         values: Tensor = self.value_function(observations)
         squeezed_values: Tensor = torch.squeeze(values, -1)

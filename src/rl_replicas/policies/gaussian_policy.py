@@ -15,12 +15,7 @@ class GaussianPolicy(StochasticPolicy):
     :param log_std: (Tensor) The standard deviation of the distribution.
     """
 
-    def __init__(
-        self,
-        network: nn.Module,
-        optimizer: Optimizer,
-        log_std: nn.Parameter,
-    ):
+    def __init__(self, network: nn.Module, optimizer: Optimizer, log_std: nn.Parameter):
         super().__init__(network, optimizer)
         self.log_std = log_std
 

@@ -53,10 +53,7 @@ class TRPO(OnPolicyAlgorithm):
 
         self.old_policy: Policy = copy.deepcopy(self.policy)
 
-    def train(
-        self,
-        experience: Experience,
-    ) -> None:
+    def train(self, experience: Experience) -> None:
         values_tensor_list: List[Tensor] = self.compute_values_tensor_list(
             experience.observations_with_last_observation
         )

@@ -316,9 +316,7 @@ class OffPolicyAlgorithm(ABC):
         return action
 
     def evaluate_policy(
-        self,
-        num_evaluation_episodes: int,
-        evaluation_env: gym.Env,
+        self, num_evaluation_episodes: int, evaluation_env: gym.Env
     ) -> None:
         """
         Evaluate the policy running evaluation episodes.

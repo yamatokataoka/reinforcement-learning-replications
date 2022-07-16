@@ -63,7 +63,7 @@ policy_network: nn.Module = MLP(
 
 policy: CategoricalPolicy = CategoricalPolicy(
     network=policy_network,
-    optimizer=torch.optim.Adam(policy_network.parameters(), lr=policy_learning_rate),
+    optimizer=torch.optim.Adam(policy_network.parameters(), lr=policy_learning_rate)
 )
 
 value_function_network: nn.Module = MLP(
