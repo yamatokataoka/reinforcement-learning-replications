@@ -76,7 +76,7 @@ class OffPolicyAlgorithm(ABC):
         minibatch_size: int = 100,
         num_random_start_steps: int = 10000,
         num_steps_before_update: int = 1000,
-        train_steps: int = 50,
+        num_train_steps: int = 50,
         num_evaluation_episodes: int = 5,
         evaluation_interval: int = 4000,
         output_dir: str = ".",
@@ -93,7 +93,7 @@ class OffPolicyAlgorithm(ABC):
         :param num_random_start_steps: (int) The number of steps for uniform-random action selection for exploration
             at the beginning.
         :param num_steps_before_update: (int) The number of steps to perform before policy is updated.
-        :param train_steps: (int) The number of training steps on each epoch.
+        :param num_train_steps: (int) The number of training steps on each epoch.
         :param num_evaluation_episodes: (int) The number of evaluation episodes.
         :param evaluation_interval: (int) The interval steps of evaluation.
         :param output_dir: (str) The output directory.
@@ -188,7 +188,7 @@ class OffPolicyAlgorithm(ABC):
             )
 
             if self.current_total_steps >= num_steps_before_update:
-                self.train(self.replay_buffer, train_steps, minibatch_size)
+                self.train(self.replay_buffer, num_train_steps, minibatch_size)
 
         if self.tensorboard:
             self.writer.flush()
@@ -272,13 +272,13 @@ class OffPolicyAlgorithm(ABC):
 
     @abstractmethod
     def train(
-        self, replay_buffer: ReplayBuffer, train_steps: int, minibatch_size: int
+        self, replay_buffer: ReplayBuffer, num_train_steps: int, minibatch_size: int
     ) -> None:
         """
         Train the algorithm with the experience
 
         :param replay_buffer: (ReplayBuffer) Reply buffer.
-        :param train_steps: (int) The number of gradient descent updates.
+        :param num_train_steps: (int) The number of gradient descent updates.
         :param minibatch_size: (int) The minibatch size.
         """
         raise NotImplementedError

@@ -60,7 +60,7 @@ model.learn(
     minibatch_size=100,
     num_random_start_steps=10000,
     num_steps_before_update=1000,
-    train_steps=50,
+    num_train_steps=50,
     output_dir=output_dir,
     num_evaluation_episodes=3,
     evaluation_interval=4000,
