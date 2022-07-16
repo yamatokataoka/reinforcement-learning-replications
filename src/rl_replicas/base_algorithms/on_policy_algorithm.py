@@ -223,11 +223,11 @@ class OnPolicyAlgorithm(ABC):
         return one_epoch_experience
 
     @abstractmethod
-    def train(self, one_epoch_experience: Experience) -> None:
+    def train(self, experience: Experience) -> None:
         """
         Train the algorithm with the experience
 
-        :param one_epoch_experience: (Experience) Collected experience for one epoch.
+        :param experience: (Experience) Collected experience.
         """
         raise NotImplementedError
 

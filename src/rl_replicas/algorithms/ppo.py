@@ -65,18 +65,10 @@ class PPO(OnPolicyAlgorithm):
 
     def train(
         self,
-        one_epoch_experience: Experience,
+        experience: Experience,
     ) -> None:
-        observations_list: List[List[np.ndarray]] = one_epoch_experience.observations
-        actions_list: List[List[np.ndarray]] = one_epoch_experience.actions
-        rewards_list: List[List[float]] = one_epoch_experience.rewards
-        observations_with_last_observation_list: List[
-            List[np.ndarray]
-        ] = one_epoch_experience.observations_with_last_observation
-        episode_dones: List[bool] = one_epoch_experience.episode_dones
-
         values_tensor_list: List[Tensor] = self.compute_values_tensor_list(
-            observations_with_last_observation_list
+            experience.observations_with_last_observation
         )
 
         last_values: List[float] = [
@@ -84,7 +76,7 @@ class PPO(OnPolicyAlgorithm):
         ]
 
         bootstrapped_rewards: List[List[float]] = self.bootstrap_rewards(
-            rewards_list, episode_dones, last_values
+            experience.rewards, experience.episode_dones, last_values
         )
 
         # Calculate rewards-to-go over each episode, to be targets for the value function
@@ -98,9 +90,9 @@ class PPO(OnPolicyAlgorithm):
         ).float()
 
         observations: Tensor = torch.from_numpy(
-            np.concatenate(observations_list)
+            np.concatenate(experience.observations)
         ).float()
-        actions: Tensor = torch.from_numpy(np.concatenate(actions_list)).float()
+        actions: Tensor = torch.from_numpy(np.concatenate(experience.actions)).float()
 
         # Calculate advantages
         advantages: Tensor = torch.from_numpy(
