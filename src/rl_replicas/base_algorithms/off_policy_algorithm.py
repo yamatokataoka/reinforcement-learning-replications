@@ -75,7 +75,7 @@ class OffPolicyAlgorithm(ABC):
         replay_buffer_size: int = int(1e6),
         minibatch_size: int = 100,
         num_random_start_steps: int = 10000,
-        steps_before_update: int = 1000,
+        num_steps_before_update: int = 1000,
         train_steps: int = 50,
         num_evaluation_episodes: int = 5,
         evaluation_interval: int = 4000,
@@ -92,7 +92,7 @@ class OffPolicyAlgorithm(ABC):
         ;param minibatch_size: (int) The minibatch size for SGD.
         :param num_random_start_steps: (int) The number of steps for uniform-random action selection for exploration
             at the beginning.
-        :param steps_before_update: (int) The number of steps to perform before policy is updated.
+        :param num_steps_before_update: (int) The number of steps to perform before policy is updated.
         :param train_steps: (int) The number of training steps on each epoch.
         :param num_evaluation_episodes: (int) The number of evaluation episodes.
         :param evaluation_interval: (int) The interval steps of evaluation.
@@ -187,7 +187,7 @@ class OffPolicyAlgorithm(ABC):
                 "Time:                   {:<8.3g}".format(time.time() - start_time)
             )
 
-            if self.current_total_steps >= steps_before_update:
+            if self.current_total_steps >= num_steps_before_update:
                 self.train(self.replay_buffer, train_steps, minibatch_size)
 
         if self.tensorboard:

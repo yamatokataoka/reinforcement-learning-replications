@@ -59,7 +59,7 @@ model.learn(
     replay_buffer_size=int(1e6),
     minibatch_size=100,
     num_random_start_steps=10000,
-    steps_before_update=1000,
+    num_steps_before_update=1000,
     train_steps=50,
     output_dir=output_dir,
     num_evaluation_episodes=3,
