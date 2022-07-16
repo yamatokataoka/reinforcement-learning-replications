@@ -74,7 +74,7 @@ class OffPolicyAlgorithm(ABC):
         batch_size: int = 50,
         replay_buffer_size: int = int(1e6),
         minibatch_size: int = 100,
-        random_start_steps: int = 10000,
+        num_random_start_steps: int = 10000,
         steps_before_update: int = 1000,
         train_steps: int = 50,
         num_evaluation_episodes: int = 5,
@@ -90,7 +90,7 @@ class OffPolicyAlgorithm(ABC):
         :param batch_size: (int) The number of steps to run per epoch.
         :param replay_size: (int) The size of the replay buffer.
         ;param minibatch_size: (int) The minibatch size for SGD.
-        :param random_start_steps: (int) The number of steps for uniform-random action selection for exploration
+        :param num_random_start_steps: (int) The number of steps for uniform-random action selection for exploration
             at the beginning.
         :param steps_before_update: (int) The number of steps to perform before policy is updated.
         :param train_steps: (int) The number of training steps on each epoch.
@@ -116,7 +116,7 @@ class OffPolicyAlgorithm(ABC):
 
         for current_epoch in range(num_epochs):
             one_epoch_experience: Experience = self.collect_one_epoch_experience(
-                batch_size, random_start_steps
+                batch_size, num_random_start_steps
             )
 
             self.replay_buffer.add_experience(
@@ -195,13 +195,13 @@ class OffPolicyAlgorithm(ABC):
             self.writer.close()
 
     def collect_one_epoch_experience(
-        self, batch_size: int, random_start_steps: int
+        self, batch_size: int, num_random_start_steps: int
     ) -> Experience:
         """
         Collect experience for one epoch
 
         :param batch_size: (int) The number of steps to run per epoch.
-        :param random_start_steps: (int) The number of steps for uniform-random action selection for exploration
+        :param num_random_start_steps: (int) The number of steps for uniform-random action selection for exploration
             at the beginning.
         :return: (Experience) Collected experience.
         """
@@ -223,7 +223,7 @@ class OffPolicyAlgorithm(ABC):
             episode_observations.append(self.observation)
 
             action: np.ndarray
-            if self.current_total_steps < random_start_steps:
+            if self.current_total_steps < num_random_start_steps:
                 action = self.env.action_space.sample()
             else:
                 action = self.select_action_with_noise(
