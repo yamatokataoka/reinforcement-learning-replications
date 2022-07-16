@@ -95,7 +95,7 @@ class OffPolicyAlgorithm(ABC):
         :param num_steps_before_update: (int) The number of steps to perform before policy is updated.
         :param num_train_steps: (int) The number of training steps on each epoch.
         :param num_evaluation_episodes: (int) The number of evaluation episodes.
-        :param evaluation_interval: (int) The interval steps of evaluation.
+        :param evaluation_interval: (int) The interval steps between evaluation.
         :param output_dir: (str) The output directory.
         :param tensorboard: (bool) Whether or not to log for tensorboard.
         :param model_saving: (bool) Whether or not to save the trained model (overwrite at each end of epoch).
