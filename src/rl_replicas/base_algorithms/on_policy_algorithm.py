@@ -28,7 +28,7 @@ class OnPolicyAlgorithm(ABC):
     :param gamma: (float) The discount factor for the cumulative return.
     :param gae_lambda: (float) The factor for trade-off of bias vs variance for GAE.
     :param seed: (int) The seed for the pseudo-random generators.
-    :param n_value_gradients (int): The number of gradient descent steps to take on value function per epoch.
+    :param num_value_gradients (int): The number of gradient descent steps to take on value function per epoch.
     """
 
     def __init__(
@@ -39,7 +39,7 @@ class OnPolicyAlgorithm(ABC):
         gamma: float,
         gae_lambda: float,
         seed: Optional[int],
-        n_value_gradients: int,
+        num_value_gradients: int,
     ) -> None:
         self.policy = policy
         self.value_function = value_function
@@ -48,7 +48,7 @@ class OnPolicyAlgorithm(ABC):
         self.gae_lambda = gae_lambda
         if seed is not None:
             self.seed: int = seed
-        self.n_value_gradients = n_value_gradients
+        self.num_value_gradients = num_value_gradients
 
         if seed is not None:
             self._seed()
@@ -60,8 +60,8 @@ class OnPolicyAlgorithm(ABC):
 
     def learn(
         self,
-        epochs: int = 50,
-        steps_per_epoch: int = 4000,
+        num_epochs: int = 50,
+        batch_size: int = 4000,
         output_dir: str = ".",
         tensorboard: bool = False,
         model_saving: bool = False,
@@ -69,8 +69,8 @@ class OnPolicyAlgorithm(ABC):
         """
         Learn the model
 
-        :param epochs: (int) The number of epochs to run and train.
-        :param steps_per_epoch: (int) The number of steps to run per epoch.
+        :param num_epochs: (int) The number of epochs to run and train.
+        :param batch_size: (int) The number of steps to run per epoch.
         :param output_dir: (str) The output directory.
         :param tensorboard: (bool) Whether or not to log for tensorboard.
         :param model_saving: (bool) Whether or not to save trained model (Save and overwrite at each end of epoch).
@@ -87,10 +87,10 @@ class OnPolicyAlgorithm(ABC):
         self.current_total_steps: int = 0
         self.current_total_episodes: int = 0
 
-        for current_epoch in range(epochs):
+        for current_epoch in range(num_epochs):
 
             one_epoch_experience: Experience = self.collect_one_epoch_experience(
-                steps_per_epoch
+                batch_size
             )
 
             if model_saving:
@@ -152,14 +152,11 @@ class OnPolicyAlgorithm(ABC):
             self.writer.flush()
             self.writer.close()
 
-    def collect_one_epoch_experience(self, steps_per_epoch: int) -> Experience:
+    def collect_one_epoch_experience(self, batch_size: int) -> Experience:
         """
         Collect experience for one epoch
 
-        :param steps_per_epoch: (int) The number of steps to run per epoch; in other words, batch size is
-            steps_per_epoch.
-        :param random_start_steps: (int) The number of steps for uniform-random action selection for exploration
-            at the beginning.
+        :param batch_size: (int) The number of steps to run per epoch.
         :return: (Experience) Collected experience.
         """
         one_epoch_experience: Experience = Experience()
@@ -174,7 +171,7 @@ class OnPolicyAlgorithm(ABC):
 
         observation: np.ndarray = self.env.reset()
 
-        for current_step in range(steps_per_epoch):
+        for current_step in range(batch_size):
             episode_observations.append(observation)
 
             action: np.ndarray = self.predict(observation)
@@ -190,7 +187,7 @@ class OnPolicyAlgorithm(ABC):
 
             episode_length += 1
             self.current_total_steps += 1
-            epoch_ended: bool = current_step == steps_per_epoch - 1
+            epoch_ended: bool = current_step == batch_size - 1
 
             if episode_done or epoch_ended:
                 if epoch_ended and not episode_done:
@@ -226,11 +223,11 @@ class OnPolicyAlgorithm(ABC):
         return one_epoch_experience
 
     @abstractmethod
-    def train(self, one_epoch_experience: Experience) -> None:
+    def train(self, experience: Experience) -> None:
         """
         Train the algorithm with the experience
 
-        :param one_epoch_experience: (Experience) Collected experience for one epoch.
+        :param experience: (Experience) Collected experience.
         """
         raise NotImplementedError
 

@@ -30,7 +30,8 @@ class PPO(OnPolicyAlgorithm):
     :param gamma: (float) The discount factor for the cumulative return.
     :param gae_lambda: (float) The factor for trade-off of bias vs variance for GAE.
     :param seed: (int) The seed for the pseudo-random generators.
-    :param n_value_gradients (int): The number of gradient descent steps to take on value function per epoch.
+    :param num_policy_gradients (int): The number of gradient descent steps to take on policy per epoch.
+    :param num_value_gradients (int): The number of gradient descent steps to take on value function per epoch.
     """
 
     def __init__(
@@ -43,8 +44,8 @@ class PPO(OnPolicyAlgorithm):
         gamma: float = 0.99,
         gae_lambda: float = 0.97,
         seed: Optional[int] = None,
-        n_policy_gradients: int = 80,
-        n_value_gradients: int = 80,
+        num_policy_gradients: int = 80,
+        num_value_gradients: int = 80,
     ) -> None:
         super().__init__(
             policy=policy,
@@ -53,29 +54,18 @@ class PPO(OnPolicyAlgorithm):
             gamma=gamma,
             gae_lambda=gae_lambda,
             seed=seed,
-            n_value_gradients=n_value_gradients,
+            num_value_gradients=num_value_gradients,
         )
 
         self.clip_range = clip_range
-        self.n_policy_gradients = n_policy_gradients
+        self.num_policy_gradients = num_policy_gradients
         self.max_kl_divergence = max_kl_divergence
 
         self.old_policy: Policy = copy.deepcopy(self.policy)
 
-    def train(
-        self,
-        one_epoch_experience: Experience,
-    ) -> None:
-        observations_list: List[List[np.ndarray]] = one_epoch_experience.observations
-        actions_list: List[List[np.ndarray]] = one_epoch_experience.actions
-        rewards_list: List[List[float]] = one_epoch_experience.rewards
-        observations_with_last_observation_list: List[
-            List[np.ndarray]
-        ] = one_epoch_experience.observations_with_last_observation
-        dones: List[List[bool]] = one_epoch_experience.dones
-
+    def train(self, experience: Experience) -> None:
         values_tensor_list: List[Tensor] = self.compute_values_tensor_list(
-            observations_with_last_observation_list
+            experience.observations_with_last_observation
         )
 
         last_values: List[float] = [
@@ -83,7 +73,7 @@ class PPO(OnPolicyAlgorithm):
         ]
 
         bootstrapped_rewards: List[List[float]] = self.bootstrap_rewards(
-            rewards_list, dones, last_values
+            experience.rewards, experience.episode_dones, last_values
         )
 
         # Calculate rewards-to-go over each episode, to be targets for the value function
@@ -97,9 +87,9 @@ class PPO(OnPolicyAlgorithm):
         ).float()
 
         observations: Tensor = torch.from_numpy(
-            np.concatenate(observations_list)
+            np.concatenate(experience.observations)
         ).float()
-        actions: Tensor = torch.from_numpy(np.concatenate(actions_list)).float()
+        actions: Tensor = torch.from_numpy(np.concatenate(experience.actions)).float()
 
         # Calculate advantages
         advantages: Tensor = torch.from_numpy(
@@ -131,7 +121,7 @@ class PPO(OnPolicyAlgorithm):
             entropies: Tensor = policy_dist.entropy()
 
         # Train the policy
-        for i in range(self.n_policy_gradients):
+        for i in range(self.num_policy_gradients):
             policy_loss: Tensor = self.compute_policy_loss(
                 observations, actions, advantages
             )
@@ -159,7 +149,7 @@ class PPO(OnPolicyAlgorithm):
             )
 
         # Train value function
-        for _ in range(self.n_value_gradients):
+        for _ in range(self.num_value_gradients):
             value_loss: Tensor = self.compute_value_loss(
                 observations, discounted_returns
             )
@@ -225,17 +215,16 @@ class PPO(OnPolicyAlgorithm):
     def bootstrap_rewards(
         self,
         rewards_list: List[List[float]],
-        dones: List[List[bool]],
+        episode_dones: List[bool],
         last_values: List[float],
     ) -> List[List[float]]:
         bootstrapped_rewards: List[List[float]] = []
 
-        for episode_rewards, episode_dones, last_value in zip(
-            rewards_list, dones, last_values
+        for episode_rewards, episode_done, last_value in zip(
+            rewards_list, episode_dones, last_values
         ):
-            episode_is_done: bool = episode_dones[-1]
             episode_bootstrapped_rewards: List[float]
-            if episode_is_done:
+            if episode_done:
                 episode_bootstrapped_rewards = episode_rewards + [0]
             else:
                 episode_bootstrapped_rewards = episode_rewards + [last_value]
@@ -244,10 +233,7 @@ class PPO(OnPolicyAlgorithm):
         return bootstrapped_rewards
 
     def compute_policy_loss(
-        self,
-        observations: Tensor,
-        actions: Tensor,
-        advantages: Tensor,
+        self, observations: Tensor, actions: Tensor, advantages: Tensor
     ) -> Tensor:
         policy_dist: Distribution = self.policy(observations)
         log_probs: Tensor = policy_dist.log_prob(actions)
@@ -275,9 +261,7 @@ class PPO(OnPolicyAlgorithm):
         return policy_loss
 
     def compute_approximate_kl_divergence(
-        self,
-        observations: Tensor,
-        actions: Tensor,
+        self, observations: Tensor, actions: Tensor
     ) -> Tensor:
         with torch.no_grad():
             policy_dist: Distribution = self.policy(observations)
@@ -291,9 +275,7 @@ class PPO(OnPolicyAlgorithm):
         return torch.mean(approximate_kl_divergence)
 
     def compute_value_loss(
-        self,
-        observations: Tensor,
-        discounted_returns: Tensor,
+        self, observations: Tensor, discounted_returns: Tensor
     ) -> Tensor:
         values: Tensor = self.value_function(observations)
         squeezed_values: Tensor = torch.squeeze(values, -1)

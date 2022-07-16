@@ -47,7 +47,7 @@ class TestVPG:
         )
 
         model.learn(
-            epochs=3,
+            num_epochs=3,
             output_dir="/tmp/rl_replicas_tests/vpg-"
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
             tensorboard=True,
@@ -88,7 +88,7 @@ class TestVPG:
         )
 
         model.learn(
-            epochs=3,
+            num_epochs=3,
             output_dir="/tmp/rl_replicas_tests/vpg-"
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
             tensorboard=True,

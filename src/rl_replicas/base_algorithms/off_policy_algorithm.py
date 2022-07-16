@@ -70,13 +70,13 @@ class OffPolicyAlgorithm(ABC):
 
     def learn(
         self,
-        epochs: int = 2000,
-        steps_per_epoch: int = 50,
+        num_epochs: int = 2000,
+        batch_size: int = 50,
         replay_buffer_size: int = int(1e6),
         minibatch_size: int = 100,
-        random_start_steps: int = 10000,
-        steps_before_update: int = 1000,
-        train_steps: int = 50,
+        num_random_start_steps: int = 10000,
+        num_steps_before_update: int = 1000,
+        num_train_steps: int = 50,
         num_evaluation_episodes: int = 5,
         evaluation_interval: int = 4000,
         output_dir: str = ".",
@@ -86,17 +86,16 @@ class OffPolicyAlgorithm(ABC):
         """
         Learn the model
 
-        :param epochs: (int) The number of epochs to run and train.
-        :param steps_per_epoch: (int) The number of steps to run per epoch; in other words, batch size is
-            steps_per_epoch.
+        :param num_epochs: (int) The number of epochs to run and train.
+        :param batch_size: (int) The number of steps to run per epoch.
         :param replay_size: (int) The size of the replay buffer.
         ;param minibatch_size: (int) The minibatch size for SGD.
-        :param random_start_steps: (int) The number of steps for uniform-random action selection for exploration
+        :param num_random_start_steps: (int) The number of steps for uniform-random action selection for exploration
             at the beginning.
-        :param steps_before_update: (int) The number of steps to perform before policy is updated.
-        :param train_steps: (int) The number of training steps on each epoch.
+        :param num_steps_before_update: (int) The number of steps to perform before policy is updated.
+        :param num_train_steps: (int) The number of training steps on each epoch.
         :param num_evaluation_episodes: (int) The number of evaluation episodes.
-        :param evaluation_interval: (int) The interval steps of evaluation.
+        :param evaluation_interval: (int) The interval steps between evaluation.
         :param output_dir: (str) The output directory.
         :param tensorboard: (bool) Whether or not to log for tensorboard.
         :param model_saving: (bool) Whether or not to save the trained model (overwrite at each end of epoch).
@@ -115,15 +114,12 @@ class OffPolicyAlgorithm(ABC):
 
         self.replay_buffer: ReplayBuffer = ReplayBuffer(replay_buffer_size)
 
-        for current_epoch in range(epochs):
+        for current_epoch in range(num_epochs):
             one_epoch_experience: Experience = self.collect_one_epoch_experience(
-                steps_per_epoch, random_start_steps
+                batch_size, num_random_start_steps
             )
 
-            episode_returns: List[float] = one_epoch_experience.episode_returns
-            episode_lengths: List[int] = one_epoch_experience.episode_lengths
-
-            self.replay_buffer.add_one_epoch_experience(
+            self.replay_buffer.add_experience(
                 one_epoch_experience.flattened_observations,
                 one_epoch_experience.flattened_actions,
                 one_epoch_experience.flattened_rewards,
@@ -138,6 +134,9 @@ class OffPolicyAlgorithm(ABC):
 
                 logger.info("Save model")
                 self.save_model(current_epoch, model_path)
+
+            episode_returns: List[float] = one_epoch_experience.episode_returns
+            episode_lengths: List[int] = one_epoch_experience.episode_lengths
 
             logger.info("Epoch: {}".format(current_epoch))
 
@@ -188,22 +187,21 @@ class OffPolicyAlgorithm(ABC):
                 "Time:                   {:<8.3g}".format(time.time() - start_time)
             )
 
-            if self.current_total_steps >= steps_before_update:
-                self.train(self.replay_buffer, train_steps, minibatch_size)
+            if self.current_total_steps >= num_steps_before_update:
+                self.train(self.replay_buffer, num_train_steps, minibatch_size)
 
         if self.tensorboard:
             self.writer.flush()
             self.writer.close()
 
     def collect_one_epoch_experience(
-        self, steps_per_epoch: int, random_start_steps: int
+        self, batch_size: int, num_random_start_steps: int
     ) -> Experience:
         """
         Collect experience for one epoch
 
-        :param steps_per_epoch: (int) The number of steps to run per epoch; in other words, batch size is
-            steps_per_epoch.
-        :param random_start_steps: (int) The number of steps for uniform-random action selection for exploration
+        :param batch_size: (int) The number of steps to run per epoch.
+        :param num_random_start_steps: (int) The number of steps for uniform-random action selection for exploration
             at the beginning.
         :return: (Experience) Collected experience.
         """
@@ -221,11 +219,11 @@ class OffPolicyAlgorithm(ABC):
             # Variables on the current episode
             self.observation: np.ndarray = self.env.reset()
 
-        for current_step in range(steps_per_epoch):
+        for current_step in range(batch_size):
             episode_observations.append(self.observation)
 
             action: np.ndarray
-            if self.current_total_steps < random_start_steps:
+            if self.current_total_steps < num_random_start_steps:
                 action = self.env.action_space.sample()
             else:
                 action = self.select_action_with_noise(
@@ -244,7 +242,7 @@ class OffPolicyAlgorithm(ABC):
             episode_length += 1
             episode_return += reward
 
-            epoch_ended: bool = current_step == steps_per_epoch - 1
+            epoch_ended: bool = current_step == batch_size - 1
 
             if episode_done or epoch_ended:
                 episode_last_observation: np.ndarray = self.observation
@@ -274,13 +272,13 @@ class OffPolicyAlgorithm(ABC):
 
     @abstractmethod
     def train(
-        self, replay_buffer: ReplayBuffer, train_steps: int, minibatch_size: int
+        self, replay_buffer: ReplayBuffer, num_train_steps: int, minibatch_size: int
     ) -> None:
         """
         Train the algorithm with the experience
 
         :param replay_buffer: (ReplayBuffer) Reply buffer.
-        :param train_steps: (int) The number of gradient descent updates.
+        :param num_train_steps: (int) The number of gradient descent updates.
         :param minibatch_size: (int) The minibatch size.
         """
         raise NotImplementedError
@@ -318,9 +316,7 @@ class OffPolicyAlgorithm(ABC):
         return action
 
     def evaluate_policy(
-        self,
-        num_evaluation_episodes: int,
-        evaluation_env: gym.Env,
+        self, num_evaluation_episodes: int, evaluation_env: gym.Env
     ) -> None:
         """
         Evaluate the policy running evaluation episodes.

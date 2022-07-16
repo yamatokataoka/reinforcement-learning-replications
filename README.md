@@ -48,7 +48,7 @@ logging.basicConfig(level=logging.INFO, stream=sys.stdout, format="")
 
 env_name = "CartPole-v0"  # CartPole-v0 or LunarLander-v2
 output_dir = "./runs/vpg/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-epochs = 200
+num_epochs = 200
 seed = 0  # from 0 to 2
 
 network_hidden_sizes = [64, 64]
@@ -63,7 +63,7 @@ policy_network: nn.Module = MLP(
 
 policy: CategoricalPolicy = CategoricalPolicy(
     network=policy_network,
-    optimizer=torch.optim.Adam(policy_network.parameters(), lr=policy_learning_rate),
+    optimizer=torch.optim.Adam(policy_network.parameters(), lr=policy_learning_rate)
 )
 
 value_function_network: nn.Module = MLP(
@@ -78,7 +78,7 @@ value_function: ValueFunction = ValueFunction(
 
 model: VPG = VPG(policy, value_function, env, seed=seed)
 
-model.learn(epochs=epochs, output_dir=output_dir, tensorboard=True, model_saving=True)
+model.learn(num_epochs=num_epochs, output_dir=output_dir, tensorboard=True, model_saving=True)
 
 ```
 

@@ -27,7 +27,7 @@ class VPG(OnPolicyAlgorithm):
     :param gamma: (float) The discount factor for the cumulative return.
     :param gae_lambda: (float) The factor for trade-off of bias vs variance for GAE.
     :param seed: (int) The seed for the pseudo-random generators.
-    :param n_value_gradients (int): The number of gradient descent steps to take on value function per epoch.
+    :param num_value_gradients (int): The number of gradient descent steps to take on value function per epoch.
     """
 
     def __init__(
@@ -38,7 +38,7 @@ class VPG(OnPolicyAlgorithm):
         gamma: float = 0.99,
         gae_lambda: float = 0.97,
         seed: Optional[int] = None,
-        n_value_gradients: int = 80,
+        num_value_gradients: int = 80,
     ) -> None:
         super().__init__(
             policy=policy,
@@ -47,20 +47,12 @@ class VPG(OnPolicyAlgorithm):
             gamma=gamma,
             gae_lambda=gae_lambda,
             seed=seed,
-            n_value_gradients=n_value_gradients,
+            num_value_gradients=num_value_gradients,
         )
 
-    def train(self, one_epoch_experience: Experience) -> None:
-        observations_list: List[List[np.ndarray]] = one_epoch_experience.observations
-        actions_list: List[List[np.ndarray]] = one_epoch_experience.actions
-        rewards_list: List[List[float]] = one_epoch_experience.rewards
-        observations_with_last_observation_list: List[
-            List[np.ndarray]
-        ] = one_epoch_experience.observations_with_last_observation
-        dones: List[List[bool]] = one_epoch_experience.dones
-
+    def train(self, experience: Experience) -> None:
         values_tensor_list: List[Tensor] = self.compute_values_tensor_list(
-            observations_with_last_observation_list
+            experience.observations_with_last_observation
         )
 
         last_values: List[float] = [
@@ -68,7 +60,7 @@ class VPG(OnPolicyAlgorithm):
         ]
 
         bootstrapped_rewards: List[List[float]] = self.bootstrap_rewards(
-            rewards_list, dones, last_values
+            experience.rewards, experience.episode_dones, last_values
         )
 
         # Calculate rewards-to-go over each episode, to be targets for the value function
@@ -82,9 +74,9 @@ class VPG(OnPolicyAlgorithm):
         ).float()
 
         observations: Tensor = torch.from_numpy(
-            np.concatenate(observations_list)
+            np.concatenate(experience.observations)
         ).float()
-        actions: Tensor = torch.from_numpy(np.concatenate(actions_list)).float()
+        actions: Tensor = torch.from_numpy(np.concatenate(experience.actions)).float()
 
         # Calculate advantages
         advantages: Tensor = torch.from_numpy(
@@ -127,7 +119,7 @@ class VPG(OnPolicyAlgorithm):
             )
 
         # Train the value function
-        for _ in range(self.n_value_gradients):
+        for _ in range(self.num_value_gradients):
             value_loss: Tensor = self.compute_value_loss(
                 observations, discounted_returns
             )
@@ -179,17 +171,16 @@ class VPG(OnPolicyAlgorithm):
     def bootstrap_rewards(
         self,
         rewards_list: List[List[float]],
-        dones: List[List[bool]],
+        episode_dones: List[bool],
         last_values: List[float],
     ) -> List[List[float]]:
         bootstrapped_rewards: List[List[float]] = []
 
-        for episode_rewards, episode_dones, last_value in zip(
-            rewards_list, dones, last_values
+        for episode_rewards, episode_done, last_value in zip(
+            rewards_list, episode_dones, last_values
         ):
-            episode_is_done: bool = episode_dones[-1]
             episode_bootstrapped_rewards: List[float]
-            if episode_is_done:
+            if episode_done:
                 episode_bootstrapped_rewards = episode_rewards + [0]
             else:
                 episode_bootstrapped_rewards = episode_rewards + [last_value]

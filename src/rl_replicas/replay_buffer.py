@@ -22,7 +22,7 @@ class ReplayBuffer:
         self.next_observations: List[np.ndarray] = []
         self.dones: List[bool] = []
 
-    def add_one_epoch_experience(
+    def add_experience(
         self,
         observations: List[np.ndarray],
         actions: List[np.ndarray],

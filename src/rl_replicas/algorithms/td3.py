@@ -72,7 +72,7 @@ class TD3(OffPolicyAlgorithm):
             param.requires_grad = False
 
     def train(
-        self, replay_buffer: ReplayBuffer, train_steps: int, minibatch_size: int
+        self, replay_buffer: ReplayBuffer, num_train_steps: int, minibatch_size: int
     ) -> None:
         policy_losses: List[float] = []
         q_function_1_losses: List[float] = []
@@ -80,7 +80,7 @@ class TD3(OffPolicyAlgorithm):
         all_q_values_1: List[float] = []
         all_q_values_2: List[float] = []
 
-        for train_step in range(train_steps):
+        for train_step in range(num_train_steps):
             minibatch: Dict[str, np.ndarray] = replay_buffer.sample_minibatch(
                 minibatch_size
             )

@@ -50,16 +50,13 @@ class DDPG(OffPolicyAlgorithm):
         )
 
     def train(
-        self,
-        replay_buffer: ReplayBuffer,
-        train_steps: int,
-        minibatch_size: int,
+        self, replay_buffer: ReplayBuffer, num_train_steps: int, minibatch_size: int
     ) -> None:
         policy_losses: List[float] = []
         q_function_losses: List[float] = []
         all_q_values: List[float] = []
 
-        for _ in range(train_steps):
+        for _ in range(num_train_steps):
             minibatch: Dict[str, np.ndarray] = replay_buffer.sample_minibatch(
                 minibatch_size
             )
