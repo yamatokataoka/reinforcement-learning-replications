@@ -1,4 +1,3 @@
-import random
 from operator import itemgetter
 from typing import Dict, List
 
