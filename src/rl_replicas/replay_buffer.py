@@ -41,17 +41,16 @@ class ReplayBuffer:
         if self.current_size > self.buffer_size:
             num_exceeded_experinece: int = self.current_size - self.buffer_size
 
-            for _ in range(num_exceeded_experinece):
-                self.observations.pop()
-                self.actions.pop()
-                self.rewards.pop()
-                self.next_observations.pop()
-                self.dones.pop()
+            del self.observations[-num_exceeded_experinece:]
+            del self.actions[-num_exceeded_experinece:]
+            del self.rewards[-num_exceeded_experinece:]
+            del self.next_observations[-num_exceeded_experinece:]
+            del self.dones[-num_exceeded_experinece:]
 
-                self.current_size -= 1
+            self.current_size -= num_exceeded_experinece
 
     def sample_minibatch(self, minibatch_size: int = 32) -> Dict[str, np.ndarray]:
-        indices = random.sample(range(0, self.current_size), minibatch_size)
+        indices = np.random.randint(0, self.current_size, minibatch_size)
 
         sampled_observations: np.ndarray = np.vstack(
             itemgetter(*indices)(self.observations)
