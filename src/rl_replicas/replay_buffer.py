@@ -41,11 +41,11 @@ class ReplayBuffer:
         if self.current_size > self.buffer_size:
             num_exceeded_experinece: int = self.current_size - self.buffer_size
 
-            del self.observations[-num_exceeded_experinece:]
-            del self.actions[-num_exceeded_experinece:]
-            del self.rewards[-num_exceeded_experinece:]
-            del self.next_observations[-num_exceeded_experinece:]
-            del self.dones[-num_exceeded_experinece:]
+            del self.observations[:num_exceeded_experinece]
+            del self.actions[:num_exceeded_experinece]
+            del self.rewards[:num_exceeded_experinece]
+            del self.next_observations[:num_exceeded_experinece]
+            del self.dones[:num_exceeded_experinece]
 
             self.current_size -= num_exceeded_experinece
 
