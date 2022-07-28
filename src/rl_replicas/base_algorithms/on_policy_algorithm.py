@@ -12,6 +12,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from rl_replicas.experience import Experience
 from rl_replicas.policies import Policy
+from rl_replicas.samplers import Sampler
 from rl_replicas.utils import seed_random_generators
 from rl_replicas.value_function import ValueFunction
 
@@ -25,6 +26,7 @@ class OnPolicyAlgorithm(ABC):
     :param policy: (Policy) Policy.
     :param value_function: (ValueFunction) Value function.
     :param env: (gym.Env) Environment.
+    :param sampler: (Sampler) Sampler.
     :param gamma: (float) The discount factor for the cumulative return.
     :param gae_lambda: (float) The factor for trade-off of bias vs variance for GAE.
     :param seed: (int) The seed for the pseudo-random generators.
@@ -36,6 +38,7 @@ class OnPolicyAlgorithm(ABC):
         policy: Policy,
         value_function: ValueFunction,
         env: gym.Env,
+        sampler: Sampler,
         gamma: float,
         gae_lambda: float,
         seed: Optional[int],
@@ -44,6 +47,7 @@ class OnPolicyAlgorithm(ABC):
         self.policy = policy
         self.value_function = value_function
         self.env = env
+        self.sampler = sampler
         self.gamma = gamma
         self.gae_lambda = gae_lambda
         if seed is not None:
@@ -88,10 +92,7 @@ class OnPolicyAlgorithm(ABC):
         self.current_total_episodes: int = 0
 
         for current_epoch in range(num_epochs):
-
-            one_epoch_experience: Experience = self.collect_one_epoch_experience(
-                batch_size
-            )
+            experience: Experience = self.sampler.sample(batch_size, self.policy)
 
             if model_saving:
                 logger.info("Set up model saving")
@@ -101,8 +102,11 @@ class OnPolicyAlgorithm(ABC):
                 logger.info("Save model")
                 self.save_model(current_epoch, model_path)
 
-            episode_returns: List[float] = one_epoch_experience.episode_returns
-            episode_lengths: List[int] = one_epoch_experience.episode_lengths
+            episode_returns: List[float] = experience.episode_returns
+            episode_lengths: List[int] = experience.episode_lengths
+
+            self.current_total_steps += sum(experience.episode_lengths)
+            self.current_total_episodes += sum(experience.episode_dones)
 
             logger.info("Epoch: {}".format(current_epoch))
 
@@ -146,81 +150,11 @@ class OnPolicyAlgorithm(ABC):
                     self.current_total_steps,
                 )
 
-            self.train(one_epoch_experience)
+            self.train(experience)
 
         if self.tensorboard:
             self.writer.flush()
             self.writer.close()
-
-    def collect_one_epoch_experience(self, batch_size: int) -> Experience:
-        """
-        Collect experience for one epoch
-
-        :param batch_size: (int) The number of steps to run per epoch.
-        :return: (Experience) Collected experience.
-        """
-        one_epoch_experience: Experience = Experience()
-
-        # Variables on each episode
-        episode_observations: List[np.ndarray] = []
-        episode_actions: List[np.ndarray] = []
-        episode_rewards: List[float] = []
-        episode_dones: List[bool] = []
-        episode_return: float = 0.0
-        episode_length: int = 0
-
-        observation: np.ndarray = self.env.reset()
-
-        for current_step in range(batch_size):
-            episode_observations.append(observation)
-
-            action: np.ndarray = self.predict(observation)
-            episode_actions.append(action)
-
-            reward: float
-            episode_done: bool
-            observation, reward, episode_done, _ = self.env.step(action)
-
-            episode_return += reward
-            episode_rewards.append(reward)
-            episode_dones.append(episode_done)
-
-            episode_length += 1
-            self.current_total_steps += 1
-            epoch_ended: bool = current_step == batch_size - 1
-
-            if episode_done or epoch_ended:
-                if epoch_ended and not episode_done:
-                    logger.debug(
-                        "The trajectory cut off at {} steps on the current episode".format(
-                            episode_length
-                        )
-                    )
-
-                episode_last_observation: np.ndarray = observation
-
-                one_epoch_experience.observations.append(episode_observations)
-                one_epoch_experience.actions.append(episode_actions)
-                one_epoch_experience.rewards.append(episode_rewards)
-                one_epoch_experience.last_observations.append(episode_last_observation)
-                one_epoch_experience.dones.append(episode_dones)
-
-                one_epoch_experience.episode_returns.append(episode_return)
-                one_epoch_experience.episode_lengths.append(episode_length)
-
-                if episode_done:
-                    self.current_total_episodes += 1
-
-                observation = self.env.reset()
-                episode_return, episode_length = 0.0, 0
-                (
-                    episode_observations,
-                    episode_actions,
-                    episode_rewards,
-                    episode_dones,
-                ) = ([], [], [], [])
-
-        return one_epoch_experience
 
     @abstractmethod
     def train(self, experience: Experience) -> None:

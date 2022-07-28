@@ -12,6 +12,7 @@ from rl_replicas.base_algorithms import OffPolicyAlgorithm
 from rl_replicas.policies import Policy
 from rl_replicas.q_function import QFunction
 from rl_replicas.replay_buffer import ReplayBuffer
+from rl_replicas.samplers import Sampler
 from rl_replicas.utils import polyak_average
 
 logger = logging.getLogger(__name__)
@@ -22,9 +23,11 @@ class TD3(OffPolicyAlgorithm):
     Twin Delayed Deep Deterministic Policy Gradient (TD3)
 
     :param policy: (Policy) Policy.
+    :param exploration_policy: (Policy) Exploration policy.
     :param q_function_1: (QFunction) Q function.
     :param q_function_2: (QFunction) Q function.
     :param env: (gym.Env) Environment.
+    :param sampler: (Sampler) Sampler.
     :param gamma: (float) The discount factor for the cumulative return.
     :param tau: (float) The interpolation factor in polyak averaging for target networks.
     :param action_noise_scale: (float) The scale of the noise (std) for the policy to explore better.
@@ -38,9 +41,11 @@ class TD3(OffPolicyAlgorithm):
     def __init__(
         self,
         policy: Policy,
+        exploration_policy: Policy,
         q_function_1: QFunction,
         q_function_2: QFunction,
         env: gym.Env,
+        sampler: Sampler,
         gamma: float = 0.99,
         tau: float = 0.005,
         action_noise_scale: float = 0.1,
@@ -51,8 +56,10 @@ class TD3(OffPolicyAlgorithm):
     ) -> None:
         super().__init__(
             policy=policy,
+            exploration_policy=exploration_policy,
             q_function=q_function_1,
             env=env,
+            sampler=sampler,
             gamma=gamma,
             tau=tau,
             action_noise_scale=action_noise_scale,

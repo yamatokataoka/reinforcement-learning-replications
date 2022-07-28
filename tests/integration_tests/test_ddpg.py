@@ -6,8 +6,9 @@ import torch.nn as nn
 
 from rl_replicas.algorithms import DDPG
 from rl_replicas.networks import MLP
-from rl_replicas.policies import DeterministicPolicy
+from rl_replicas.policies import DeterministicPolicy, RandomPolicy
 from rl_replicas.q_function import QFunction
+from rl_replicas.samplers import BatchSampler, Sampler
 
 
 class TestDDPG:
@@ -35,16 +36,20 @@ class TestDDPG:
             activation_function=nn.ReLU,
         )
 
+        sampler: Sampler = BatchSampler(env, is_continuous=True)
+
         model: DDPG = DDPG(
             DeterministicPolicy(
                 network=policy_network,
                 optimizer=torch.optim.Adam(policy_network.parameters(), lr=1e-3),
             ),
+            RandomPolicy(env.action_space),
             QFunction(
                 network=q_function_network,
                 optimizer=torch.optim.Adam(q_function_network.parameters(), lr=1e-3),
             ),
             env,
+            sampler,
             seed=0,
         )
 

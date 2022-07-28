@@ -12,6 +12,7 @@ from torch.nn import functional as F
 from rl_replicas.base_algorithms.on_policy_algorithm import OnPolicyAlgorithm
 from rl_replicas.experience import Experience
 from rl_replicas.policies import Policy
+from rl_replicas.samplers import Sampler
 from rl_replicas.utils import discounted_cumulative_sums, gae
 from rl_replicas.value_function import ValueFunction
 
@@ -25,6 +26,7 @@ class PPO(OnPolicyAlgorithm):
     :param policy: (Policy) Policy.
     :param value_function: (ValueFunction) Value function.
     :param env: (gym.Env) Environment.
+    :param sampler: (Sampler) Sampler.
     :param clip_range: (float) The limit on the likelihood ratio between policies for clipping in the policy objective.
     :param max_kl_divergence: (float) The limit on the KL divergence between policies for early stopping.
     :param gamma: (float) The discount factor for the cumulative return.
@@ -39,6 +41,7 @@ class PPO(OnPolicyAlgorithm):
         policy: Policy,
         value_function: ValueFunction,
         env: gym.Env,
+        sampler: Sampler,
         clip_range: float = 0.2,
         max_kl_divergence: float = 0.01,
         gamma: float = 0.99,
@@ -51,6 +54,7 @@ class PPO(OnPolicyAlgorithm):
             policy=policy,
             value_function=value_function,
             env=env,
+            sampler=sampler,
             gamma=gamma,
             gae_lambda=gae_lambda,
             seed=seed,
