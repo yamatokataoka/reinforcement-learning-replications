@@ -14,7 +14,10 @@ class CategoricalPolicy(StochasticPolicy):
     """
 
     def __init__(self, network: nn.Module, optimizer: Optimizer):
-        super().__init__(network, optimizer)
+        super().__init__()
+
+        self.network = network
+        self.optimizer = optimizer
 
     def forward(self, observation: Tensor) -> Categorical:
         """

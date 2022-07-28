@@ -16,7 +16,10 @@ class GaussianPolicy(StochasticPolicy):
     """
 
     def __init__(self, network: nn.Module, optimizer: Optimizer, log_std: nn.Parameter):
-        super().__init__(network, optimizer)
+        super().__init__()
+
+        self.network = network
+        self.optimizer = optimizer
         self.log_std = log_std
 
     def forward(self, observation: Tensor) -> Independent:
