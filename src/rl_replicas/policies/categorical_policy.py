@@ -21,7 +21,7 @@ class CategoricalPolicy(StochasticPolicy):
         Forward pass in policy
 
         :param observation: (Tensor) Observation of the environment.
-        :return: (Distribution) The distribution of action(s).
+        :return: (Categorical) The distribution of action(s).
         """
         logits: Tensor = self.network(observation)
         distribution: Categorical = Categorical(logits=logits)
