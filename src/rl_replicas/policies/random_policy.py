@@ -6,6 +6,12 @@ from rl_replicas.policies import Policy
 
 
 class RandomPolicy(Policy):
+    """
+    Random policy
+
+    :param action_space: (Space) Action space.
+    """
+
     def __init__(self, action_space: Space):
         self.action_space = action_space
 
