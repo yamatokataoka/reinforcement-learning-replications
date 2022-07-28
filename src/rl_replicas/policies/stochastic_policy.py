@@ -1,9 +1,8 @@
 from abc import abstractmethod
 
 import torch
-from torch import Tensor, nn
+from torch import Tensor
 from torch.distributions import Distribution
-from torch.optim import Optimizer
 
 from rl_replicas.policies.policy import Policy
 
@@ -11,13 +10,7 @@ from rl_replicas.policies.policy import Policy
 class StochasticPolicy(Policy):
     """
     Abstract base class for stochastic policies
-
-    :param network: (nn.Module) Network.
-    :param optimizer: (Optimizer) Optimizer.
     """
-
-    def __init__(self, network: nn.Module, optimizer: Optimizer):
-        super().__init__(network, optimizer)
 
     @abstractmethod
     def forward(self, observation: Tensor) -> Distribution:
@@ -30,12 +23,6 @@ class StochasticPolicy(Policy):
         raise NotImplementedError
 
     def predict(self, observation: Tensor) -> Tensor:
-        """
-        Selects action(s) given observation(s) from the environment
-
-        :param observation: (Tensor) Observation(s) from the environment.
-        :return: (Tensor) Action(s).
-        """
         with torch.no_grad():
             distribution: Distribution = self.forward(observation)
 

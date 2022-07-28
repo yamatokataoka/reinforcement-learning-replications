@@ -12,6 +12,7 @@ from torch.nn import functional as F
 from rl_replicas.base_algorithms.on_policy_algorithm import OnPolicyAlgorithm
 from rl_replicas.experience import Experience
 from rl_replicas.policies import Policy
+from rl_replicas.samplers import Sampler
 from rl_replicas.utils import discounted_cumulative_sums, gae
 from rl_replicas.value_function import ValueFunction
 
@@ -25,6 +26,7 @@ class TRPO(OnPolicyAlgorithm):
     :param policy: (Policy) Policy.
     :param value_function: (ValueFunction) Value function.
     :param env: (gym.Env) Environment.
+    :param sampler: (Sampler) Sampler.
     :param gamma: (float) The discount factor for the cumulative return.
     :param gae_lambda: (float) The factor for trade-off of bias vs variance for GAE.
     :param seed: (int) The seed for the pseudo-random generators.
@@ -36,6 +38,7 @@ class TRPO(OnPolicyAlgorithm):
         policy: Policy,
         value_function: ValueFunction,
         env: gym.Env,
+        sampler: Sampler,
         gamma: float = 0.99,
         gae_lambda: float = 0.97,
         seed: Optional[int] = None,
@@ -45,6 +48,7 @@ class TRPO(OnPolicyAlgorithm):
             policy=policy,
             value_function=value_function,
             env=env,
+            sampler=sampler,
             gamma=gamma,
             gae_lambda=gae_lambda,
             seed=seed,

@@ -6,8 +6,9 @@ import torch.nn as nn
 
 from rl_replicas.algorithms import TD3
 from rl_replicas.networks import MLP
-from rl_replicas.policies import DeterministicPolicy
+from rl_replicas.policies import DeterministicPolicy, RandomPolicy
 from rl_replicas.q_function import QFunction
+from rl_replicas.samplers import BatchSampler, Sampler
 
 
 class TestTD3:
@@ -39,11 +40,14 @@ class TestTD3:
             sizes=q_function_network_sizes, activation_function=nn.ReLU
         )
 
+        sampler: Sampler = BatchSampler(env, is_continuous=True)
+
         model: TD3 = TD3(
             DeterministicPolicy(
                 network=policy_network,
                 optimizer=torch.optim.Adam(policy_network.parameters(), lr=1e-3),
             ),
+            RandomPolicy(env.action_space),
             QFunction(
                 network=q_function_1_network,
                 optimizer=torch.optim.Adam(
@@ -57,6 +61,7 @@ class TestTD3:
                 ),
             ),
             env,
+            sampler,
             seed=0,
         )
 

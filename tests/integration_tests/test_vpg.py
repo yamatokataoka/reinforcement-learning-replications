@@ -7,6 +7,7 @@ import torch.nn as nn
 from rl_replicas.algorithms import VPG
 from rl_replicas.networks import MLP
 from rl_replicas.policies import CategoricalPolicy, GaussianPolicy
+from rl_replicas.samplers import BatchSampler
 from rl_replicas.value_function import ValueFunction
 
 
@@ -43,6 +44,7 @@ class TestVPG:
                 ),
             ),
             env,
+            BatchSampler(env),
             seed=0,
         )
 
@@ -84,6 +86,7 @@ class TestVPG:
                 ),
             ),
             env,
+            BatchSampler(env),
             seed=0,
         )
 

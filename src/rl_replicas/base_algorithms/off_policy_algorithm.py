@@ -15,6 +15,7 @@ from rl_replicas.experience import Experience
 from rl_replicas.policies import Policy
 from rl_replicas.q_function import QFunction
 from rl_replicas.replay_buffer import ReplayBuffer
+from rl_replicas.samplers import Sampler
 from rl_replicas.utils import seed_random_generators
 
 logger = logging.getLogger(__name__)
@@ -25,6 +26,7 @@ class OffPolicyAlgorithm(ABC):
     Base class for off-policy algorithms
 
     :param policy: (Policy) Policy.
+    :param exploration_policy: (Policy) Exploration policy.
     :param q_function: (QFunction) Q function.
     :param env: (gym.Env) Environment.
     :param gamma: (float) The discount factor for the cumulative return.
@@ -36,16 +38,20 @@ class OffPolicyAlgorithm(ABC):
     def __init__(
         self,
         policy: Policy,
+        exploration_policy: Policy,
         q_function: QFunction,
         env: gym.Env,
+        sampler: Sampler,
         gamma: float,
         tau: float,
         action_noise_scale: float,
         seed: Optional[int],
     ) -> None:
         self.policy = policy
+        self.exploration_policy = exploration_policy
         self.q_function = q_function
         self.env = env
+        self.sampler = sampler
         self.gamma = gamma
         self.tau = tau
         self.action_noise_scale = action_noise_scale
@@ -115,16 +121,18 @@ class OffPolicyAlgorithm(ABC):
         self.replay_buffer: ReplayBuffer = ReplayBuffer(replay_buffer_size)
 
         for current_epoch in range(num_epochs):
-            one_epoch_experience: Experience = self.collect_one_epoch_experience(
-                batch_size, num_random_start_steps
-            )
+            experience: Experience
+            if self.current_total_steps < num_random_start_steps:
+                experience = self.sampler.sample(batch_size, self.exploration_policy)
+            else:
+                experience = self.sampler.sample(batch_size, self.policy)
 
             self.replay_buffer.add_experience(
-                one_epoch_experience.flattened_observations,
-                one_epoch_experience.flattened_actions,
-                one_epoch_experience.flattened_rewards,
-                one_epoch_experience.flattened_next_observations,
-                one_epoch_experience.flattened_dones,
+                experience.flattened_observations,
+                experience.flattened_actions,
+                experience.flattened_rewards,
+                experience.flattened_next_observations,
+                experience.flattened_dones,
             )
 
             if model_saving:
@@ -135,8 +143,11 @@ class OffPolicyAlgorithm(ABC):
                 logger.info("Save model")
                 self.save_model(current_epoch, model_path)
 
-            episode_returns: List[float] = one_epoch_experience.episode_returns
-            episode_lengths: List[int] = one_epoch_experience.episode_lengths
+            episode_returns: List[float] = experience.episode_returns
+            episode_lengths: List[int] = experience.episode_lengths
+
+            self.current_total_steps += sum(experience.episode_lengths)
+            self.current_total_episodes += sum(experience.flattened_dones)
 
             logger.info("Epoch: {}".format(current_epoch))
 
@@ -193,82 +204,6 @@ class OffPolicyAlgorithm(ABC):
         if self.tensorboard:
             self.writer.flush()
             self.writer.close()
-
-    def collect_one_epoch_experience(
-        self, batch_size: int, num_random_start_steps: int
-    ) -> Experience:
-        """
-        Collect experience for one epoch
-
-        :param batch_size: (int) The number of steps to run per epoch.
-        :param num_random_start_steps: (int) The number of steps for uniform-random action selection for exploration
-            at the beginning.
-        :return: (Experience) Collected experience.
-        """
-        one_epoch_experience: Experience = Experience()
-
-        # Variables on each episode
-        episode_observations: List[np.ndarray] = []
-        episode_actions: List[np.ndarray] = []
-        episode_rewards: List[float] = []
-        episode_dones: List[bool] = []
-        episode_return: float = 0.0
-        episode_length: int = 0
-
-        if not hasattr(self, "observation"):
-            # Variables on the current episode
-            self.observation: np.ndarray = self.env.reset()
-
-        for current_step in range(batch_size):
-            episode_observations.append(self.observation)
-
-            action: np.ndarray
-            if self.current_total_steps < num_random_start_steps:
-                action = self.env.action_space.sample()
-            else:
-                action = self.select_action_with_noise(
-                    self.observation, self.action_noise_scale
-                )
-            episode_actions.append(action)
-
-            reward: float
-            episode_done: bool
-            self.observation, reward, episode_done, _ = self.env.step(action)
-
-            episode_rewards.append(reward)
-            episode_dones.append(episode_done)
-
-            self.current_total_steps += 1
-            episode_length += 1
-            episode_return += reward
-
-            epoch_ended: bool = current_step == batch_size - 1
-
-            if episode_done or epoch_ended:
-                episode_last_observation: np.ndarray = self.observation
-
-                one_epoch_experience.observations.append(episode_observations)
-                one_epoch_experience.actions.append(episode_actions)
-                one_epoch_experience.rewards.append(episode_rewards)
-                one_epoch_experience.last_observations.append(episode_last_observation)
-                one_epoch_experience.dones.append(episode_dones)
-
-                one_epoch_experience.episode_returns.append(episode_return)
-                one_epoch_experience.episode_lengths.append(episode_length)
-
-                if episode_done:
-                    self.current_total_episodes += 1
-                    self.observation = self.env.reset()
-
-                episode_return, episode_length = 0.0, 0
-                (
-                    episode_observations,
-                    episode_actions,
-                    episode_rewards,
-                    episode_dones,
-                ) = ([], [], [], [])
-
-        return one_epoch_experience
 
     @abstractmethod
     def train(

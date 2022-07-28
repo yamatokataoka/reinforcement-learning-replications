@@ -8,6 +8,7 @@ from rl_replicas.algorithms import TRPO
 from rl_replicas.networks import MLP
 from rl_replicas.optimizers import ConjugateGradientOptimizer
 from rl_replicas.policies import CategoricalPolicy, GaussianPolicy
+from rl_replicas.samplers import BatchSampler
 from rl_replicas.value_function import ValueFunction
 
 
@@ -46,6 +47,7 @@ class TestTRPO:
                 ),
             ),
             env,
+            BatchSampler(env),
             seed=0,
         )
 
@@ -91,6 +93,7 @@ class TestTRPO:
                 ),
             ),
             env,
+            BatchSampler(env),
             seed=0,
         )
 

@@ -7,6 +7,7 @@ import torch.nn as nn
 from rl_replicas.algorithms import PPO
 from rl_replicas.networks import MLP
 from rl_replicas.policies import CategoricalPolicy, GaussianPolicy
+from rl_replicas.samplers import BatchSampler
 from rl_replicas.value_function import ValueFunction
 
 
@@ -43,6 +44,7 @@ class TestPPO:
                 ),
             ),
             env,
+            BatchSampler(env),
             seed=0,
         )
 
@@ -86,6 +88,7 @@ class TestPPO:
                 ),
             ),
             env,
+            BatchSampler(env),
             seed=0,
         )
 
