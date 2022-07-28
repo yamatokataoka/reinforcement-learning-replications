@@ -28,12 +28,6 @@ class DeterministicPolicy(Policy):
         return action
 
     def predict(self, observation: Tensor) -> Tensor:
-        """
-        Selects action(s) given observation(s) from the environment
-
-        :param observation: (Tensor) Observation(s) from the environment.
-        :return: (Tensor) Action(s).
-        """
         with torch.no_grad():
             action: Tensor = self.forward(observation)
 

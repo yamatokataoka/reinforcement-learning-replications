@@ -30,12 +30,6 @@ class StochasticPolicy(Policy):
         raise NotImplementedError
 
     def predict(self, observation: Tensor) -> Tensor:
-        """
-        Selects action(s) given observation(s) from the environment
-
-        :param observation: (Tensor) Observation(s) from the environment.
-        :return: (Tensor) Action(s).
-        """
         with torch.no_grad():
             distribution: Distribution = self.forward(observation)
 

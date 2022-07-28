@@ -21,7 +21,7 @@ class Policy(nn.Module, ABC):
     @abstractmethod
     def predict(self, observation: Tensor) -> Tensor:
         """
-        Selects action(s) given observation(s) from the environment
+        Predict action(s) given observation(s) from the environment
 
         :param observation: (Tensor) Observation(s) from the environment.
         :return: (Tensor) Action(s)
