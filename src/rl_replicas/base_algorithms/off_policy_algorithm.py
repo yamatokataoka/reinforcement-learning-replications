@@ -3,7 +3,7 @@ import logging
 import os
 import time
 from abc import ABC, abstractmethod
-from typing import List
+from typing import Dict, List
 
 import gym
 import numpy as np
@@ -11,6 +11,7 @@ import torch
 from torch import Tensor
 from torch.utils.tensorboard import SummaryWriter
 
+from rl_replicas.evaluator import Evaluator
 from rl_replicas.experience import Experience
 from rl_replicas.policies import Policy
 from rl_replicas.q_function import QFunction
@@ -30,6 +31,7 @@ class OffPolicyAlgorithm(ABC):
     :param env: (gym.Env) Environment.
     :param sampler: (Sampler) Sampler.
     :param replay_buffer: (ReplayBuffer) Replay buffer.
+    :param evaluator: (Evaluator) Evaluator.
     :param gamma: (float) The discount factor for the cumulative return.
     :param tau: (float) The interpolation factor in polyak averaging for target networks.
     :param action_noise_scale: (float) The scale of the action noise (std).
@@ -43,6 +45,7 @@ class OffPolicyAlgorithm(ABC):
         env: gym.Env,
         sampler: Sampler,
         replay_buffer: ReplayBuffer,
+        evaluator: Evaluator,
         gamma: float,
         tau: float,
         action_noise_scale: float,
@@ -53,6 +56,7 @@ class OffPolicyAlgorithm(ABC):
         self.env = env
         self.sampler = sampler
         self.replay_buffer = replay_buffer
+        self.evaluator = evaluator
         self.gamma = gamma
         self.tau = tau
         self.action_noise_scale = action_noise_scale
@@ -180,7 +184,46 @@ class OffPolicyAlgorithm(ABC):
                 num_evaluation_episodes > 0
                 and self.current_total_steps % evaluation_interval == 0
             ):
-                self.evaluate_policy(num_evaluation_episodes, self.evaluation_env)
+                evaluation_results: Dict[str, List] = self.evaluator.evaluate(
+                    self.policy, self.evaluation_env, num_evaluation_episodes
+                )
+                logger.info(
+                    "Average Evaluation Episode Return: {:<8.3g}".format(
+                        np.mean(evaluation_results["episode_returns"])
+                    )
+                )
+                logger.info(
+                    "Evaluation Episode Return STD:     {:<8.3g}".format(
+                        np.std(evaluation_results["episode_returns"])
+                    )
+                )
+                logger.info(
+                    "Max Evaluation Episode Return:     {:<8.3g}".format(
+                        np.max(evaluation_results["episode_returns"])
+                    )
+                )
+                logger.info(
+                    "Min Evaluation Episode Return:     {:<8.3g}".format(
+                        np.min(evaluation_results["episode_returns"])
+                    )
+                )
+                logger.info(
+                    "Average Evaluation Episode Length: {:<8.3g}".format(
+                        np.mean(evaluation_results["episode_lengths"])
+                    )
+                )
+
+                if self.tensorboard:
+                    self.writer.add_scalar(
+                        "evaluation/average_episode_return",
+                        np.mean(evaluation_results["episode_returns"]),
+                        self.current_total_steps,
+                    )
+                    self.writer.add_scalar(
+                        "evaluation/average_episode_length",
+                        np.mean(evaluation_results["episode_lengths"]),
+                        self.current_total_steps,
+                    )
 
             logger.info(
                 "Time:                   {:<8.3g}".format(time.time() - start_time)
