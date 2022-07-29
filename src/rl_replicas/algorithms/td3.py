@@ -28,6 +28,7 @@ class TD3(OffPolicyAlgorithm):
     :param q_function_2: (QFunction) Q function.
     :param env: (gym.Env) Environment.
     :param sampler: (Sampler) Sampler.
+    :param replay_buffer: (ReplayBuffer) Replay buffer.
     :param gamma: (float) The discount factor for the cumulative return.
     :param tau: (float) The interpolation factor in polyak averaging for target networks.
     :param action_noise_scale: (float) The scale of the noise (std) for the policy to explore better.
@@ -45,6 +46,7 @@ class TD3(OffPolicyAlgorithm):
         q_function_2: QFunction,
         env: gym.Env,
         sampler: Sampler,
+        replay_buffer: ReplayBuffer,
         gamma: float = 0.99,
         tau: float = 0.005,
         action_noise_scale: float = 0.1,
@@ -58,6 +60,7 @@ class TD3(OffPolicyAlgorithm):
             q_function=q_function_1,
             env=env,
             sampler=sampler,
+            replay_buffer=replay_buffer,
             gamma=gamma,
             tau=tau,
             action_noise_scale=action_noise_scale,

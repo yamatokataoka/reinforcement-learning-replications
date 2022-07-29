@@ -8,6 +8,7 @@ from rl_replicas.algorithms import TD3
 from rl_replicas.networks import MLP
 from rl_replicas.policies import DeterministicPolicy, RandomPolicy
 from rl_replicas.q_function import QFunction
+from rl_replicas.replay_buffer import ReplayBuffer
 from rl_replicas.samplers import BatchSampler
 from rl_replicas.seed_manager import SeedManager
 
@@ -65,6 +66,7 @@ class TestTD3:
             ),
             env,
             BatchSampler(env, seed_manager, is_continuous=True),
+            ReplayBuffer(int(1e6)),
         )
 
         model.learn(
