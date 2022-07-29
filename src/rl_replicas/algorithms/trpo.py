@@ -1,6 +1,6 @@
 import copy
 import logging
-from typing import List, Optional
+from typing import List
 
 import gym
 import numpy as np
@@ -29,7 +29,6 @@ class TRPO(OnPolicyAlgorithm):
     :param sampler: (Sampler) Sampler.
     :param gamma: (float) The discount factor for the cumulative return.
     :param gae_lambda: (float) The factor for trade-off of bias vs variance for GAE.
-    :param seed: (int) The seed for the pseudo-random generators.
     :param num_value_gradients (int): The number of gradient descent steps to take on value function per epoch.
     """
 
@@ -41,7 +40,6 @@ class TRPO(OnPolicyAlgorithm):
         sampler: Sampler,
         gamma: float = 0.99,
         gae_lambda: float = 0.97,
-        seed: Optional[int] = None,
         num_value_gradients: int = 80,
     ) -> None:
         super().__init__(
@@ -51,7 +49,6 @@ class TRPO(OnPolicyAlgorithm):
             sampler=sampler,
             gamma=gamma,
             gae_lambda=gae_lambda,
-            seed=seed,
             num_value_gradients=num_value_gradients,
         )
 

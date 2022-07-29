@@ -9,6 +9,7 @@ from rl_replicas.networks import MLP
 from rl_replicas.optimizers import ConjugateGradientOptimizer
 from rl_replicas.policies import CategoricalPolicy, GaussianPolicy
 from rl_replicas.samplers import BatchSampler
+from rl_replicas.seed_manager import SeedManager
 from rl_replicas.value_function import ValueFunction
 
 
@@ -21,7 +22,11 @@ class TestTRPO:
         """
         Test TRPO with CartPole environment (discrete action spaces)
         """
+        seed_manager: SeedManager = SeedManager(0)
+        seed_manager.set_seed_for_libraries()
+
         env = gym.make("CartPole-v0")
+        env.action_space.seed(seed_manager.seed)
 
         observation_size: int = env.observation_space.shape[0]
 
@@ -47,8 +52,7 @@ class TestTRPO:
                 ),
             ),
             env,
-            BatchSampler(env),
-            seed=0,
+            BatchSampler(env, seed_manager),
         )
 
         model.learn(
@@ -65,7 +69,11 @@ class TestTRPO:
         """
         Test TRPO with Pendulum environment (continuous action spaces)
         """
+        seed_manager: SeedManager = SeedManager(0)
+        seed_manager.set_seed_for_libraries()
+
         env = gym.make("Pendulum-v1")
+        env.action_space.seed(seed_manager.seed)
 
         observation_size: int = env.observation_space.shape[0]
         action_size: int = env.action_space.shape[0]
@@ -93,8 +101,7 @@ class TestTRPO:
                 ),
             ),
             env,
-            BatchSampler(env),
-            seed=0,
+            BatchSampler(env, seed_manager),
         )
 
         model.learn(

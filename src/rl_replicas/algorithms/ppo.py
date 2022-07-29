@@ -1,6 +1,6 @@
 import copy
 import logging
-from typing import List, Optional
+from typing import List
 
 import gym
 import numpy as np
@@ -31,7 +31,6 @@ class PPO(OnPolicyAlgorithm):
     :param max_kl_divergence: (float) The limit on the KL divergence between policies for early stopping.
     :param gamma: (float) The discount factor for the cumulative return.
     :param gae_lambda: (float) The factor for trade-off of bias vs variance for GAE.
-    :param seed: (int) The seed for the pseudo-random generators.
     :param num_policy_gradients (int): The number of gradient descent steps to take on policy per epoch.
     :param num_value_gradients (int): The number of gradient descent steps to take on value function per epoch.
     """
@@ -46,7 +45,6 @@ class PPO(OnPolicyAlgorithm):
         max_kl_divergence: float = 0.01,
         gamma: float = 0.99,
         gae_lambda: float = 0.97,
-        seed: Optional[int] = None,
         num_policy_gradients: int = 80,
         num_value_gradients: int = 80,
     ) -> None:
@@ -57,7 +55,6 @@ class PPO(OnPolicyAlgorithm):
             sampler=sampler,
             gamma=gamma,
             gae_lambda=gae_lambda,
-            seed=seed,
             num_value_gradients=num_value_gradients,
         )
 

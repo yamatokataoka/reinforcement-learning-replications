@@ -3,7 +3,7 @@ import logging
 import os
 import time
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List
 
 import gym
 import numpy as np
@@ -16,7 +16,6 @@ from rl_replicas.policies import Policy
 from rl_replicas.q_function import QFunction
 from rl_replicas.replay_buffer import ReplayBuffer
 from rl_replicas.samplers import Sampler
-from rl_replicas.utils import seed_random_generators
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +31,6 @@ class OffPolicyAlgorithm(ABC):
     :param gamma: (float) The discount factor for the cumulative return.
     :param tau: (float) The interpolation factor in polyak averaging for target networks.
     :param action_noise_scale: (float) The scale of the action noise (std).
-    :param seed: (int) The seed for the pseudo-random generators.
     """
 
     def __init__(
@@ -45,7 +43,6 @@ class OffPolicyAlgorithm(ABC):
         gamma: float,
         tau: float,
         action_noise_scale: float,
-        seed: Optional[int],
     ) -> None:
         self.policy = policy
         self.exploration_policy = exploration_policy
@@ -55,24 +52,15 @@ class OffPolicyAlgorithm(ABC):
         self.gamma = gamma
         self.tau = tau
         self.action_noise_scale = action_noise_scale
-        if seed is not None:
-            self.seed: int = seed
 
         self.evaluation_env = gym.make(env.spec.id)
         self.target_policy = copy.deepcopy(self.policy)
         self.target_q_function = copy.deepcopy(self.q_function)
-        if seed is not None:
-            self._seed()
 
         for param in self.target_policy.network.parameters():
             param.requires_grad = False
         for param in self.target_q_function.network.parameters():
             param.requires_grad = False
-
-    def _seed(self) -> None:
-        seed_random_generators(self.seed)
-        self.env.action_space.seed(self.seed)
-        self.env.seed(self.seed)
 
     def learn(
         self,

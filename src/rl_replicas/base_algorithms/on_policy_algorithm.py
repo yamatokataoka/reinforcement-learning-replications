@@ -2,7 +2,7 @@ import logging
 import os
 import time
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List
 
 import gym
 import numpy as np
@@ -13,7 +13,6 @@ from torch.utils.tensorboard import SummaryWriter
 from rl_replicas.experience import Experience
 from rl_replicas.policies import Policy
 from rl_replicas.samplers import Sampler
-from rl_replicas.utils import seed_random_generators
 from rl_replicas.value_function import ValueFunction
 
 logger = logging.getLogger(__name__)
@@ -29,7 +28,6 @@ class OnPolicyAlgorithm(ABC):
     :param sampler: (Sampler) Sampler.
     :param gamma: (float) The discount factor for the cumulative return.
     :param gae_lambda: (float) The factor for trade-off of bias vs variance for GAE.
-    :param seed: (int) The seed for the pseudo-random generators.
     :param num_value_gradients (int): The number of gradient descent steps to take on value function per epoch.
     """
 
@@ -41,7 +39,6 @@ class OnPolicyAlgorithm(ABC):
         sampler: Sampler,
         gamma: float,
         gae_lambda: float,
-        seed: Optional[int],
         num_value_gradients: int,
     ) -> None:
         self.policy = policy
@@ -50,17 +47,7 @@ class OnPolicyAlgorithm(ABC):
         self.sampler = sampler
         self.gamma = gamma
         self.gae_lambda = gae_lambda
-        if seed is not None:
-            self.seed: int = seed
         self.num_value_gradients = num_value_gradients
-
-        if seed is not None:
-            self._seed()
-
-    def _seed(self) -> None:
-        seed_random_generators(self.seed)
-        self.env.action_space.seed(self.seed)
-        self.env.seed(self.seed)
 
     def learn(
         self,
