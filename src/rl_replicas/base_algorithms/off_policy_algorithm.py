@@ -28,6 +28,8 @@ class OffPolicyAlgorithm(ABC):
     :param exploration_policy: (Policy) Exploration policy.
     :param q_function: (QFunction) Q function.
     :param env: (gym.Env) Environment.
+    :param sampler: (Sampler) Sampler.
+    :param replay_buffer: (ReplayBuffer) Replay buffer.
     :param gamma: (float) The discount factor for the cumulative return.
     :param tau: (float) The interpolation factor in polyak averaging for target networks.
     :param action_noise_scale: (float) The scale of the action noise (std).
@@ -40,6 +42,7 @@ class OffPolicyAlgorithm(ABC):
         q_function: QFunction,
         env: gym.Env,
         sampler: Sampler,
+        replay_buffer: ReplayBuffer,
         gamma: float,
         tau: float,
         action_noise_scale: float,
@@ -49,6 +52,7 @@ class OffPolicyAlgorithm(ABC):
         self.q_function = q_function
         self.env = env
         self.sampler = sampler
+        self.replay_buffer = replay_buffer
         self.gamma = gamma
         self.tau = tau
         self.action_noise_scale = action_noise_scale
@@ -66,7 +70,6 @@ class OffPolicyAlgorithm(ABC):
         self,
         num_epochs: int = 2000,
         batch_size: int = 50,
-        replay_buffer_size: int = int(1e6),
         minibatch_size: int = 100,
         num_random_start_steps: int = 10000,
         num_steps_before_update: int = 1000,
@@ -105,8 +108,6 @@ class OffPolicyAlgorithm(ABC):
             os.makedirs(output_dir, exist_ok=True)
             tensorboard_path: str = os.path.join(output_dir, "tensorboard")
             self.writer: SummaryWriter = SummaryWriter(tensorboard_path)
-
-        self.replay_buffer: ReplayBuffer = ReplayBuffer(replay_buffer_size)
 
         for current_epoch in range(num_epochs):
             experience: Experience
