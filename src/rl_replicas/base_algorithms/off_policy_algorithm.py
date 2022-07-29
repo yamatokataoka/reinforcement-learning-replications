@@ -85,7 +85,6 @@ class OffPolicyAlgorithm(ABC):
 
         :param num_epochs: (int) The number of epochs to run and train.
         :param batch_size: (int) The number of steps to run per epoch.
-        :param replay_size: (int) The size of the replay buffer.
         ;param minibatch_size: (int) The minibatch size for SGD.
         :param num_random_start_steps: (int) The number of steps for uniform-random action selection for exploration
             at the beginning.
