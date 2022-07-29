@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 
 from rl_replicas.algorithms import TD3
+from rl_replicas.evaluator import Evaluator
 from rl_replicas.networks import MLP
 from rl_replicas.policies import DeterministicPolicy, RandomPolicy
 from rl_replicas.q_function import QFunction
@@ -67,10 +68,12 @@ class TestTD3:
             env,
             BatchSampler(env, seed_manager, is_continuous=True),
             ReplayBuffer(int(1e6)),
+            Evaluator(seed_manager),
         )
 
         model.learn(
             num_epochs=30,
+            evaluation_interval=500,
             output_dir="/tmp/rl_replicas_tests/td3-"
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
             tensorboard=True,
