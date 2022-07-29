@@ -8,7 +8,8 @@ from rl_replicas.algorithms import TD3
 from rl_replicas.networks import MLP
 from rl_replicas.policies import DeterministicPolicy, RandomPolicy
 from rl_replicas.q_function import QFunction
-from rl_replicas.samplers import BatchSampler, Sampler
+from rl_replicas.samplers import BatchSampler
+from rl_replicas.seed_manager import SeedManager
 
 
 class TestTD3:
@@ -20,7 +21,11 @@ class TestTD3:
         """
         Test TD3 with Pendulum environment (continuous action spaces)
         """
+        seed_manager: SeedManager = SeedManager(0)
+        seed_manager.set_seed_for_libraries()
+
         env = gym.make("Pendulum-v1")
+        env.action_space.seed(seed_manager.seed)
 
         observation_size: int = env.observation_space.shape[0]
         action_size: int = env.action_space.shape[0]
@@ -39,8 +44,6 @@ class TestTD3:
         q_function_2_network: nn.Module = MLP(
             sizes=q_function_network_sizes, activation_function=nn.ReLU
         )
-
-        sampler: Sampler = BatchSampler(env, is_continuous=True)
 
         model: TD3 = TD3(
             DeterministicPolicy(
@@ -61,8 +64,7 @@ class TestTD3:
                 ),
             ),
             env,
-            sampler,
-            seed=0,
+            BatchSampler(env, seed_manager, is_continuous=True),
         )
 
         model.learn(

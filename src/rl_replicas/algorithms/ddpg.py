@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import gym
 import numpy as np
@@ -29,7 +29,6 @@ class DDPG(OffPolicyAlgorithm):
     :param gamma: (float) The discount factor for the cumulative return.
     :param tau: (float) The interpolation factor in polyak averaging for target networks.
     :param action_noise_scale: (float) The scale of the noise (std).
-    :param seed: (int) The seed for the pseudo-random generators.
     """
 
     def __init__(
@@ -42,7 +41,6 @@ class DDPG(OffPolicyAlgorithm):
         gamma: float = 0.99,
         tau: float = 0.005,
         action_noise_scale: float = 0.1,
-        seed: Optional[int] = None,
     ) -> None:
         super().__init__(
             policy=policy,
@@ -53,7 +51,6 @@ class DDPG(OffPolicyAlgorithm):
             gamma=gamma,
             tau=tau,
             action_noise_scale=action_noise_scale,
-            seed=seed,
         )
 
     def train(

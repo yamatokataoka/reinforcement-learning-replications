@@ -1,6 +1,6 @@
 import copy
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import gym
 import numpy as np
@@ -35,7 +35,6 @@ class TD3(OffPolicyAlgorithm):
     :param target_noise_clip: (float) The limit for absolute value of the target policy smoothing noise.
     :param policy_delay: (int) The policy will only be updated once every policy_delay times for each update of
         the Q-networks.
-    :param seed: (int) The seed for the pseudo-random generators.
     """
 
     def __init__(
@@ -52,7 +51,6 @@ class TD3(OffPolicyAlgorithm):
         target_noise_scale: float = 0.2,
         target_noise_clip: float = 0.5,
         policy_delay: int = 2,
-        seed: Optional[int] = None,
     ) -> None:
         super().__init__(
             policy=policy,
@@ -63,7 +61,6 @@ class TD3(OffPolicyAlgorithm):
             gamma=gamma,
             tau=tau,
             action_noise_scale=action_noise_scale,
-            seed=seed,
         )
 
         self.target_noise_scale = target_noise_scale
