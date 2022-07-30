@@ -127,11 +127,10 @@ class OffPolicyAlgorithm(ABC):
             )
 
             if model_saving:
-                logger.info("Set up model saving")
                 os.makedirs(output_dir, exist_ok=True)
                 model_path: str = os.path.join(output_dir, "model.pt")
 
-                logger.info("Save model")
+                logger.debug("Save model")
                 self.save_model(current_epoch, model_path)
 
             episode_returns: List[float] = experience.episode_returns
