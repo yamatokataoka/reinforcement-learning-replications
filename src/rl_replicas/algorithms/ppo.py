@@ -167,33 +167,32 @@ class PPO(OnPolicyAlgorithm):
 
         logger.info("Value Function Loss:    {:<8.3g}".format(value_loss_before))
 
-        if self.tensorboard:
-            self.writer.add_scalar(
-                "policy/loss",
-                policy_loss_before,
-                self.current_total_steps,
-            )
-            self.writer.add_scalar(
-                "policy/avarage_entropy",
-                torch.mean(entropies),
-                self.current_total_steps,
-            )
-            self.writer.add_scalar(
-                "policy/log_prob_std",
-                torch.std(log_probs),
-                self.current_total_steps,
-            )
-            self.writer.add_scalar(
-                "policy/approximate_kl_divergence",
-                approximate_kl_divergence,
-                self.current_total_steps,
-            )
+        self.writer.add_scalar(
+            "policy/loss",
+            policy_loss_before,
+            self.current_total_steps,
+        )
+        self.writer.add_scalar(
+            "policy/avarage_entropy",
+            torch.mean(entropies),
+            self.current_total_steps,
+        )
+        self.writer.add_scalar(
+            "policy/log_prob_std",
+            torch.std(log_probs),
+            self.current_total_steps,
+        )
+        self.writer.add_scalar(
+            "policy/approximate_kl_divergence",
+            approximate_kl_divergence,
+            self.current_total_steps,
+        )
 
-            self.writer.add_scalar(
-                "value/loss",
-                value_loss_before,
-                self.current_total_steps,
-            )
+        self.writer.add_scalar(
+            "value/loss",
+            value_loss_before,
+            self.current_total_steps,
+        )
 
     def compute_values_tensor_list(
         self, observations_with_last_observation_list: List[List[np.ndarray]]

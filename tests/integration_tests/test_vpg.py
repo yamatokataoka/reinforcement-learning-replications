@@ -56,7 +56,6 @@ class TestVPG:
             num_epochs=3,
             output_dir="/tmp/rl_replicas_tests/vpg-"
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
-            tensorboard=True,
             model_saving=True,
         )
 
@@ -101,6 +100,5 @@ class TestVPG:
             num_epochs=3,
             output_dir="/tmp/rl_replicas_tests/vpg-"
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
-            tensorboard=True,
             model_saving=True,
         )

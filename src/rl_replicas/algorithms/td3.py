@@ -185,28 +185,26 @@ class TD3(OffPolicyAlgorithm):
                     self.tau,
                 )
 
-                if self.tensorboard:
-                    self.writer.add_scalar(
-                        "policy/loss", policy_loss, self.current_total_steps
-                    )
+                self.writer.add_scalar(
+                    "policy/loss", policy_loss, self.current_total_steps
+                )
 
-        if self.tensorboard:
-            self.writer.add_scalar(
-                "q-function_1/loss", q_function_1_loss, self.current_total_steps
-            )
-            self.writer.add_scalar(
-                "q-function_2/loss", q_function_2_loss, self.current_total_steps
-            )
-            self.writer.add_scalar(
-                "q-function_1/avarage_q-value",
-                torch.mean(q_values_1),
-                self.current_total_steps,
-            )
-            self.writer.add_scalar(
-                "q-function_2/avarage_q-value",
-                torch.mean(q_values_2),
-                self.current_total_steps,
-            )
+        self.writer.add_scalar(
+            "q-function_1/loss", q_function_1_loss, self.current_total_steps
+        )
+        self.writer.add_scalar(
+            "q-function_2/loss", q_function_2_loss, self.current_total_steps
+        )
+        self.writer.add_scalar(
+            "q-function_1/avarage_q-value",
+            torch.mean(q_values_1),
+            self.current_total_steps,
+        )
+        self.writer.add_scalar(
+            "q-function_2/avarage_q-value",
+            torch.mean(q_values_2),
+            self.current_total_steps,
+        )
 
         logger.info("Policy Loss:            {:<8.3g}".format(np.mean(policy_losses)))
         logger.info(
