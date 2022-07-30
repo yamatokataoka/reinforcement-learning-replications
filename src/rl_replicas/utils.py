@@ -1,4 +1,3 @@
-import random
 from typing import Iterable, List
 
 import numpy as np
@@ -22,17 +21,6 @@ def discounted_cumulative_sums(vector: np.ndarray, discount: float) -> np.ndarra
           x2]
     """
     return scipy.signal.lfilter([1], [1, -discount], vector[::-1], axis=0)[::-1]
-
-
-def seed_random_generators(seed: int) -> None:
-    """
-    Set the seed of the pseudo-random generators (python, numpy, pytorch)
-
-    :param seed: (int) The seed.
-    """
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
 
 
 def gae(
