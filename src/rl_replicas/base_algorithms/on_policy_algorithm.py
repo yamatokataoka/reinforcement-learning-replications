@@ -53,7 +53,6 @@ class OnPolicyAlgorithm(ABC):
         num_epochs: int = 50,
         batch_size: int = 4000,
         output_dir: str = ".",
-        tensorboard: bool = False,
         model_saving: bool = False,
     ) -> None:
         """
@@ -62,20 +61,16 @@ class OnPolicyAlgorithm(ABC):
         :param num_epochs: (int) The number of epochs to run and train.
         :param batch_size: (int) The number of steps to run per epoch.
         :param output_dir: (str) The output directory.
-        :param tensorboard: (bool) Whether or not to log for tensorboard.
         :param model_saving: (bool) Whether or not to save trained model (Save and overwrite at each end of epoch).
         """
-        self.tensorboard = tensorboard
-
-        if self.tensorboard:
-            logger.info("Set up tensorboard")
-            os.makedirs(output_dir, exist_ok=True)
-            tensorboard_path: str = os.path.join(output_dir, "tensorboard")
-            self.writer: SummaryWriter = SummaryWriter(tensorboard_path)
-
         start_time: float = time.time()
         self.current_total_steps: int = 0
         self.current_total_episodes: int = 0
+
+        os.makedirs(output_dir, exist_ok=True)
+
+        tensorboard_path: str = os.path.join(output_dir, "tensorboard")
+        self.writer: SummaryWriter = SummaryWriter(tensorboard_path)
 
         for current_epoch in range(num_epochs):
             experience: Experience = self.sampler.sample(batch_size, self.policy)
@@ -123,23 +118,21 @@ class OnPolicyAlgorithm(ABC):
                 "Time:                   {:<8.3g}".format(time.time() - start_time)
             )
 
-            if self.tensorboard:
-                self.writer.add_scalar(
-                    "training/average_episode_return",
-                    np.mean(episode_returns),
-                    self.current_total_steps,
-                )
-                self.writer.add_scalar(
-                    "training/average_episode_length",
-                    np.mean(episode_lengths),
-                    self.current_total_steps,
-                )
+            self.writer.add_scalar(
+                "training/average_episode_return",
+                np.mean(episode_returns),
+                self.current_total_steps,
+            )
+            self.writer.add_scalar(
+                "training/average_episode_length",
+                np.mean(episode_lengths),
+                self.current_total_steps,
+            )
 
             self.train(experience)
 
-        if self.tensorboard:
-            self.writer.flush()
-            self.writer.close()
+        self.writer.flush()
+        self.writer.close()
 
     @abstractmethod
     def train(self, experience: Experience) -> None:

@@ -76,6 +76,5 @@ class TestTD3:
             evaluation_interval=500,
             output_dir="/tmp/rl_replicas_tests/td3-"
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
-            tensorboard=True,
             model_saving=True,
         )

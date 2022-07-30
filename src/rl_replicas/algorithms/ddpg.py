@@ -126,22 +126,21 @@ class DDPG(OffPolicyAlgorithm):
                 self.tau,
             )
 
-        if self.tensorboard:
-            self.writer.add_scalar(
-                "policy/loss",
-                policy_loss,
-                self.current_total_steps,
-            )
-            self.writer.add_scalar(
-                "q-function/loss",
-                q_function_loss,
-                self.current_total_steps,
-            )
-            self.writer.add_scalar(
-                "q-function/avarage_q-value",
-                torch.mean(q_values),
-                self.current_total_steps,
-            )
+        self.writer.add_scalar(
+            "policy/loss",
+            policy_loss,
+            self.current_total_steps,
+        )
+        self.writer.add_scalar(
+            "q-function/loss",
+            q_function_loss,
+            self.current_total_steps,
+        )
+        self.writer.add_scalar(
+            "q-function/avarage_q-value",
+            torch.mean(q_values),
+            self.current_total_steps,
+        )
 
         logger.info("Policy Loss:            {:<8.3g}".format(np.mean(policy_losses)))
         logger.info(

@@ -59,7 +59,6 @@ class TestTRPO:
             num_epochs=3,
             output_dir="/tmp/rl_replicas_tests/trpo-"
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
-            tensorboard=True,
             model_saving=True,
         )
 
@@ -108,6 +107,5 @@ class TestTRPO:
             num_epochs=3,
             output_dir="/tmp/rl_replicas_tests/trpo-"
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
-            tensorboard=True,
             model_saving=True,
         )

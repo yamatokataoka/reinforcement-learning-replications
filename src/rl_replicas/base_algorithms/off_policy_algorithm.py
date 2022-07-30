@@ -80,7 +80,6 @@ class OffPolicyAlgorithm(ABC):
         num_evaluation_episodes: int = 5,
         evaluation_interval: int = 4000,
         output_dir: str = ".",
-        tensorboard: bool = False,
         model_saving: bool = False,
     ) -> None:
         """
@@ -96,20 +95,16 @@ class OffPolicyAlgorithm(ABC):
         :param num_evaluation_episodes: (int) The number of evaluation episodes.
         :param evaluation_interval: (int) The interval steps between evaluation.
         :param output_dir: (str) The output directory.
-        :param tensorboard: (bool) Whether or not to log for tensorboard.
         :param model_saving: (bool) Whether or not to save the trained model (overwrite at each end of epoch).
         """
-        self.tensorboard = tensorboard
-
         start_time: float = time.time()
         self.current_total_steps: int = 0
         self.current_total_episodes: int = 0
 
-        if self.tensorboard:
-            logger.info("Set up tensorboard")
-            os.makedirs(output_dir, exist_ok=True)
-            tensorboard_path: str = os.path.join(output_dir, "tensorboard")
-            self.writer: SummaryWriter = SummaryWriter(tensorboard_path)
+        os.makedirs(output_dir, exist_ok=True)
+
+        tensorboard_path: str = os.path.join(output_dir, "tensorboard")
+        self.writer: SummaryWriter = SummaryWriter(tensorboard_path)
 
         for current_epoch in range(num_epochs):
             experience: Experience
@@ -166,17 +161,16 @@ class OffPolicyAlgorithm(ABC):
                     "Average Episode Length: {:<8.3g}".format(np.mean(episode_lengths))
                 )
 
-                if self.tensorboard:
-                    self.writer.add_scalar(
-                        "training/average_episode_return",
-                        np.mean(episode_returns),
-                        self.current_total_steps,
-                    )
-                    self.writer.add_scalar(
-                        "training/average_episode_length",
-                        np.mean(episode_lengths),
-                        self.current_total_steps,
-                    )
+                self.writer.add_scalar(
+                    "training/average_episode_return",
+                    np.mean(episode_returns),
+                    self.current_total_steps,
+                )
+                self.writer.add_scalar(
+                    "training/average_episode_length",
+                    np.mean(episode_lengths),
+                    self.current_total_steps,
+                )
 
             if (
                 num_evaluation_episodes > 0
@@ -211,17 +205,16 @@ class OffPolicyAlgorithm(ABC):
                     )
                 )
 
-                if self.tensorboard:
-                    self.writer.add_scalar(
-                        "evaluation/average_episode_return",
-                        np.mean(evaluation_results["episode_returns"]),
-                        self.current_total_steps,
-                    )
-                    self.writer.add_scalar(
-                        "evaluation/average_episode_length",
-                        np.mean(evaluation_results["episode_lengths"]),
-                        self.current_total_steps,
-                    )
+                self.writer.add_scalar(
+                    "evaluation/average_episode_return",
+                    np.mean(evaluation_results["episode_returns"]),
+                    self.current_total_steps,
+                )
+                self.writer.add_scalar(
+                    "evaluation/average_episode_length",
+                    np.mean(evaluation_results["episode_lengths"]),
+                    self.current_total_steps,
+                )
 
             logger.info(
                 "Time:                   {:<8.3g}".format(time.time() - start_time)
@@ -230,9 +223,8 @@ class OffPolicyAlgorithm(ABC):
             if self.current_total_steps >= num_steps_before_update:
                 self.train(self.replay_buffer, num_train_steps, minibatch_size)
 
-        if self.tensorboard:
-            self.writer.flush()
-            self.writer.close()
+        self.writer.flush()
+        self.writer.close()
 
     @abstractmethod
     def train(
