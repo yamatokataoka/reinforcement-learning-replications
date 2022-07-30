@@ -1,5 +1,6 @@
 from abc import abstractmethod
 
+import numpy as np
 import torch
 from torch import Tensor
 from torch.distributions import Distribution
@@ -22,10 +23,19 @@ class StochasticPolicy(Policy):
         """
         raise NotImplementedError
 
-    def predict(self, observation: Tensor) -> Tensor:
+    def get_action_tensor(self, observation: Tensor) -> Tensor:
         with torch.no_grad():
             distribution: Distribution = self.forward(observation)
 
         action: Tensor = distribution.sample()
 
         return action
+
+    def get_action_numpy(self, observation: np.ndarray) -> np.ndarray:
+        observation_tensor: Tensor = torch.from_numpy(observation).float()
+        with torch.no_grad():
+            distribution: Distribution = self.forward(observation_tensor)
+
+        action: Tensor = distribution.sample()
+
+        return action.detach().numpy()

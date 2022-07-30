@@ -7,7 +7,6 @@ from typing import List
 import gym
 import numpy as np
 import torch
-from torch import Tensor
 from torch.utils.tensorboard import SummaryWriter
 
 from rl_replicas.experience import Experience
@@ -159,11 +158,9 @@ class OnPolicyAlgorithm(ABC):
         :param observation: (np.ndarray) Observation(s).
         :return: (np.ndarray) Action(s).
         """
-        observation_tensor: Tensor = torch.from_numpy(observation).float()
-        action: Tensor = self.policy.predict(observation_tensor)
-        action_ndarray: np.ndarray = action.detach().numpy()
+        action: np.ndarray = self.policy.get_action_numpy(observation)
 
-        return action_ndarray
+        return action
 
     def save_model(self, epoch: int, model_path: str) -> None:
         """

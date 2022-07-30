@@ -3,7 +3,6 @@ from typing import List, Optional
 
 import gym
 import numpy as np
-import torch
 
 from rl_replicas.experience import Experience
 from rl_replicas.policies import Policy
@@ -50,9 +49,7 @@ class BatchSampler(Sampler):
         for current_step in range(num_samples):
             episode_observations.append(self.observation)
 
-            action: np.ndarray = policy.predict(
-                torch.from_numpy(self.observation)
-            ).numpy()
+            action: np.ndarray = policy.get_action_numpy(self.observation)
             episode_actions.append(action)
 
             reward: float

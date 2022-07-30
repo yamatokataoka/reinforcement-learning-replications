@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from torch import Tensor, nn
 from torch.optim import Optimizer
@@ -30,8 +31,15 @@ class DeterministicPolicy(Policy):
 
         return action
 
-    def predict(self, observation: Tensor) -> Tensor:
+    def get_action_tensor(self, observation: Tensor) -> Tensor:
         with torch.no_grad():
             action: Tensor = self.forward(observation)
 
         return action
+
+    def get_action_numpy(self, observation: np.ndarray) -> np.ndarray:
+        observation_tensor: Tensor = torch.from_numpy(observation).float()
+        with torch.no_grad():
+            action: Tensor = self.forward(observation_tensor)
+
+        return action.detach().numpy()
