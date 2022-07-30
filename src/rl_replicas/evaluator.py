@@ -2,7 +2,6 @@ from typing import Dict, List
 
 import gym
 import numpy as np
-import torch
 
 from rl_replicas.policies import Policy
 from rl_replicas.seed_manager import SeedManager
@@ -33,9 +32,7 @@ class Evaluator:
             episode_length: int = 0
 
             while not done:
-                action: np.ndarray = policy.predict(
-                    torch.from_numpy(observation)
-                ).numpy()
+                action: np.ndarray = policy.get_action_numpy(observation)
 
                 reward: float
                 observation, reward, done, _ = env.step(action)
