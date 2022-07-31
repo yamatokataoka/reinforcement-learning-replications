@@ -178,24 +178,6 @@ class TRPO(OnPolicyAlgorithm):
             "value/loss", value_loss_before, self.current_total_steps
         )
 
-    def compute_values_tensor_list(
-        self, observations_with_last_observation_list: List[List[np.ndarray]]
-    ) -> List[Tensor]:
-        values_tensor_list: List[Tensor] = []
-        with torch.no_grad():
-            for (
-                observations_with_last_observation
-            ) in observations_with_last_observation_list:
-                observations_with_last_observation_tensor = torch.from_numpy(
-                    np.concatenate([observations_with_last_observation])
-                ).float()
-                values_tensor_list.append(
-                    self.value_function(
-                        observations_with_last_observation_tensor
-                    ).flatten()
-                )
-        return values_tensor_list
-
     def bootstrap_rewards(
         self,
         rewards_list: List[List[float]],
