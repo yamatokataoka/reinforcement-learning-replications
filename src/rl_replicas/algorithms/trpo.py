@@ -72,59 +72,59 @@ class TRPO(OnPolicyAlgorithm):
             experience.rewards, experience.episode_dones, last_values
         )
 
-        # Calculate rewards-to-go over each episode, to be targets for the value function
-        discounted_returns: Tensor = torch.from_numpy(
-            np.concatenate(
-                [
-                    discounted_cumulative_sums(episode_rewards, self.gamma)[:-1]
-                    for episode_rewards in bootstrapped_rewards
-                ]
-            )
+        discounted_returns: List[np.ndarray] = [
+            discounted_cumulative_sums(episode_rewards, self.gamma)[:-1]
+            for episode_rewards in bootstrapped_rewards
+        ]
+        flattened_discounted_returns: Tensor = torch.from_numpy(
+            np.concatenate(discounted_returns)
         ).float()
 
-        observations: Tensor = torch.from_numpy(
+        flattened_observations: Tensor = torch.from_numpy(
             np.concatenate(experience.observations)
         ).float()
-        actions: Tensor = torch.from_numpy(np.concatenate(experience.actions)).float()
-
-        # Calculate advantages
-        advantages: Tensor = torch.from_numpy(
-            np.concatenate(
-                [
-                    gae(
-                        episode_rewards,
-                        self.gamma,
-                        episode_values,
-                        self.gae_lambda,
-                    )
-                    for episode_rewards, episode_values in zip(
-                        bootstrapped_rewards, values_numpy_list
-                    )
-                ]
-            )
+        flattened_actions: Tensor = torch.from_numpy(
+            np.concatenate(experience.actions)
         ).float()
 
+        gaes: List[np.ndarray] = [
+            gae(
+                episode_rewards,
+                self.gamma,
+                episode_values,
+                self.gae_lambda,
+            )
+            for episode_rewards, episode_values in zip(
+                bootstrapped_rewards, values_numpy_list
+            )
+        ]
+        flattened_advantages: Tensor = torch.from_numpy(np.concatenate(gaes)).float()
+
         # Normalize advantages
-        advantages = (advantages - torch.mean(advantages)) / torch.std(advantages)
+        flattened_advantages = (
+            flattened_advantages - torch.mean(flattened_advantages)
+        ) / torch.std(flattened_advantages)
 
         def compute_surrogate_loss() -> Tensor:
-            policy_dist: Distribution = self.policy(observations)
-            log_probs: Tensor = policy_dist.log_prob(actions)
+            policy_dist: Distribution = self.policy(flattened_observations)
+            log_probs: Tensor = policy_dist.log_prob(flattened_actions)
 
             with torch.no_grad():
-                old_policy_dist: Distribution = self.old_policy(observations)
-                old_log_probs: Tensor = old_policy_dist.log_prob(actions)
+                old_policy_dist: Distribution = self.old_policy(flattened_observations)
+                old_log_probs: Tensor = old_policy_dist.log_prob(flattened_actions)
 
             likelihood_ratio: Tensor = torch.exp(log_probs - old_log_probs)
-            surrogate_loss: Tensor = -torch.mean(likelihood_ratio * advantages)
+            surrogate_loss: Tensor = -torch.mean(
+                likelihood_ratio * flattened_advantages
+            )
 
             return surrogate_loss
 
         def compute_kl_constraint() -> Tensor:
-            policy_dist: Distribution = self.policy(observations)
+            policy_dist: Distribution = self.policy(flattened_observations)
 
             with torch.no_grad():
-                old_policy_dist: Distribution = self.old_policy(observations)
+                old_policy_dist: Distribution = self.old_policy(flattened_observations)
 
             kl_constraint: Tensor = kl.kl_divergence(old_policy_dist, policy_dist)
 
@@ -135,8 +135,8 @@ class TRPO(OnPolicyAlgorithm):
         # For logging
         policy_loss_before: Tensor = policy_loss.detach()
         with torch.no_grad():
-            policy_dist: Distribution = self.policy(observations)
-        log_probs: Tensor = policy_dist.log_prob(actions)
+            policy_dist: Distribution = self.policy(flattened_observations)
+        log_probs: Tensor = policy_dist.log_prob(flattened_actions)
         entropies: Tensor = policy_dist.entropy()
 
         # Train the policy
@@ -149,13 +149,13 @@ class TRPO(OnPolicyAlgorithm):
         # For logging
         with torch.no_grad():
             value_loss_before: Tensor = self.compute_value_loss(
-                observations, discounted_returns
+                flattened_observations, flattened_discounted_returns
             )
 
         # Train the value function
         for _ in range(self.num_value_gradients):
             value_loss: Tensor = self.compute_value_loss(
-                observations, discounted_returns
+                flattened_observations, flattened_discounted_returns
             )
             self.value_function.optimizer.zero_grad()
             value_loss.backward()

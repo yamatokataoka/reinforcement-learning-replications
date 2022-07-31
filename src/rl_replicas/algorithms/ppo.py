@@ -82,57 +82,55 @@ class PPO(OnPolicyAlgorithm):
             experience.rewards, experience.episode_dones, last_values
         )
 
-        # Calculate rewards-to-go over each episode, to be targets for the value function
-        discounted_returns: Tensor = torch.from_numpy(
-            np.concatenate(
-                [
-                    discounted_cumulative_sums(episode_rewards, self.gamma)[:-1]
-                    for episode_rewards in bootstrapped_rewards
-                ]
-            )
+        discounted_returns: List[np.ndarray] = [
+            discounted_cumulative_sums(episode_rewards, self.gamma)[:-1]
+            for episode_rewards in bootstrapped_rewards
+        ]
+        flattened_discounted_returns: Tensor = torch.from_numpy(
+            np.concatenate(discounted_returns)
         ).float()
 
-        observations: Tensor = torch.from_numpy(
+        flattened_observations: Tensor = torch.from_numpy(
             np.concatenate(experience.observations)
         ).float()
-        actions: Tensor = torch.from_numpy(np.concatenate(experience.actions)).float()
-
-        # Calculate advantages
-        advantages: Tensor = torch.from_numpy(
-            np.concatenate(
-                [
-                    gae(
-                        episode_rewards,
-                        self.gamma,
-                        episode_values,
-                        self.gae_lambda,
-                    )
-                    for episode_rewards, episode_values in zip(
-                        bootstrapped_rewards, values_numpy_list
-                    )
-                ]
-            )
+        flattened_actions: Tensor = torch.from_numpy(
+            np.concatenate(experience.actions)
         ).float()
 
-        # Normalize advantage
-        advantages = (advantages - torch.mean(advantages)) / torch.std(advantages)
+        gaes: List[np.ndarray] = [
+            gae(
+                episode_rewards,
+                self.gamma,
+                episode_values,
+                self.gae_lambda,
+            )
+            for episode_rewards, episode_values in zip(
+                bootstrapped_rewards, values_numpy_list
+            )
+        ]
+        flattened_advantages: Tensor = torch.from_numpy(np.concatenate(gaes)).float()
+
+        # Normalize advantages
+        flattened_advantages = (
+            flattened_advantages - torch.mean(flattened_advantages)
+        ) / torch.std(flattened_advantages)
 
         # For logging
         with torch.no_grad():
-            policy_dist: Distribution = self.policy(observations)
+            policy_dist: Distribution = self.policy(flattened_observations)
             policy_loss_before: Tensor = self.compute_policy_loss(
-                observations, actions, advantages
+                flattened_observations, flattened_actions, flattened_advantages
             ).detach()
-            log_probs: Tensor = policy_dist.log_prob(actions)
+            log_probs: Tensor = policy_dist.log_prob(flattened_actions)
             entropies: Tensor = policy_dist.entropy()
 
         # Train the policy
         for i in range(self.num_policy_gradients):
             policy_loss: Tensor = self.compute_policy_loss(
-                observations, actions, advantages
+                flattened_observations, flattened_actions, flattened_advantages
             )
             approximate_kl_divergence: Tensor = self.compute_approximate_kl_divergence(
-                observations, actions
+                flattened_observations, flattened_actions
             ).detach()
             if approximate_kl_divergence > 1.5 * self.max_kl_divergence:
                 logger.info(
@@ -151,13 +149,13 @@ class PPO(OnPolicyAlgorithm):
         # For logging
         with torch.no_grad():
             value_loss_before: Tensor = self.compute_value_loss(
-                observations, discounted_returns
+                flattened_observations, flattened_discounted_returns
             )
 
         # Train value function
         for _ in range(self.num_value_gradients):
             value_loss: Tensor = self.compute_value_loss(
-                observations, discounted_returns
+                flattened_observations, flattened_discounted_returns
             )
             self.value_function.optimizer.zero_grad()
             value_loss.backward()
