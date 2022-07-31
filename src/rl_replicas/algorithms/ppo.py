@@ -35,10 +35,10 @@ class PPO:
     :param value_function: (ValueFunction) Value function.
     :param env: (gym.Env) Environment.
     :param sampler: (Sampler) Sampler.
-    :param clip_range: (float) The limit on the likelihood ratio between policies for clipping in the policy objective.
-    :param max_kl_divergence: (float) The limit on the KL divergence between policies for early stopping.
     :param gamma: (float) The discount factor for the cumulative return.
     :param gae_lambda: (float) The factor for trade-off of bias vs variance for GAE.
+    :param clip_range: (float) The limit on the likelihood ratio between policies for clipping in the policy objective.
+    :param max_kl_divergence: (float) The limit on the KL divergence between policies for early stopping.
     :param num_policy_gradients (int): The number of gradient descent steps to take on policy per epoch.
     :param num_value_gradients (int): The number of gradient descent steps to take on value function per epoch.
     """
@@ -49,10 +49,10 @@ class PPO:
         value_function: ValueFunction,
         env: gym.Env,
         sampler: Sampler,
-        clip_range: float = 0.2,
-        max_kl_divergence: float = 0.01,
         gamma: float = 0.99,
         gae_lambda: float = 0.97,
+        clip_range: float = 0.2,
+        max_kl_divergence: float = 0.01,
         num_policy_gradients: int = 80,
         num_value_gradients: int = 80,
     ) -> None:
@@ -62,11 +62,10 @@ class PPO:
         self.sampler = sampler
         self.gamma = gamma
         self.gae_lambda = gae_lambda
-        self.num_value_gradients = num_value_gradients
-
         self.clip_range = clip_range
-        self.num_policy_gradients = num_policy_gradients
         self.max_kl_divergence = max_kl_divergence
+        self.num_policy_gradients = num_policy_gradients
+        self.num_value_gradients = num_value_gradients
 
         self.old_policy: Policy = copy.deepcopy(self.policy)
 
