@@ -116,5 +116,5 @@ def bootstrap_rewards_with_last_values(
 
 
 def normalize_tensor(vector: Tensor) -> Tensor:
-    normalized_vector = vector - torch.mean(vector) / torch.std(vector)
+    normalized_vector = (vector - torch.mean(vector)) / torch.std(vector)
     return normalized_vector
