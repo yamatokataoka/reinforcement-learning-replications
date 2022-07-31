@@ -18,6 +18,7 @@ from rl_replicas.utils import (
     compute_values_numpy_list,
     discounted_cumulative_sums,
     gae,
+    normalize_tensor,
 )
 from rl_replicas.value_function import ValueFunction
 
@@ -99,11 +100,7 @@ class TRPO(OnPolicyAlgorithm):
             )
         ]
         flattened_advantages: Tensor = torch.from_numpy(np.concatenate(gaes)).float()
-
-        # Normalize advantages
-        flattened_advantages = (
-            flattened_advantages - torch.mean(flattened_advantages)
-        ) / torch.std(flattened_advantages)
+        flattened_advantages = normalize_tensor(flattened_advantages)
 
         def compute_surrogate_loss() -> Tensor:
             policy_dist: Distribution = self.policy(flattened_observations)

@@ -117,3 +117,8 @@ def bootstrap_rewards_with_last_values(
         bootstrapped_rewards.append(episode_bootstrapped_rewards)
 
     return bootstrapped_rewards
+
+
+def normalize_tensor(vector: Tensor) -> Tensor:
+    normalized_vector = vector - torch.mean(vector) / torch.std(vector)
+    return normalized_vector
