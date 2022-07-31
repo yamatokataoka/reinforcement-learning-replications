@@ -13,7 +13,12 @@ from rl_replicas.base_algorithms.on_policy_algorithm import OnPolicyAlgorithm
 from rl_replicas.experience import Experience
 from rl_replicas.policies import Policy
 from rl_replicas.samplers import Sampler
-from rl_replicas.utils import compute_values_numpy_list, discounted_cumulative_sums, gae
+from rl_replicas.utils import (
+    bootstrap_rewards_with_last_values,
+    compute_values_numpy_list,
+    discounted_cumulative_sums,
+    gae,
+)
 from rl_replicas.value_function import ValueFunction
 
 logger = logging.getLogger(__name__)
@@ -73,7 +78,7 @@ class PPO(OnPolicyAlgorithm):
             float(episode_values[-1]) for episode_values in values_numpy_list
         ]
 
-        bootstrapped_rewards: List[List[float]] = self.bootstrap_rewards(
+        bootstrapped_rewards: List[List[float]] = bootstrap_rewards_with_last_values(
             experience.rewards, experience.episode_dones, last_values
         )
 

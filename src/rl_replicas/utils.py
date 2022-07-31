@@ -97,3 +97,23 @@ def compute_values_numpy_list(
                 .numpy()
             )
     return values_numpy_list
+
+
+def bootstrap_rewards_with_last_values(
+    rewards: List[List[float]],
+    episode_dones: List[bool],
+    last_values: List[float],
+) -> List[List[float]]:
+    bootstrapped_rewards: List[List[float]] = []
+
+    for episode_rewards, episode_done, last_value in zip(
+        rewards, episode_dones, last_values
+    ):
+        episode_bootstrapped_rewards: List[float]
+        if episode_done:
+            episode_bootstrapped_rewards = episode_rewards + [0]
+        else:
+            episode_bootstrapped_rewards = episode_rewards + [last_value]
+        bootstrapped_rewards.append(episode_bootstrapped_rewards)
+
+    return bootstrapped_rewards
