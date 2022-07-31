@@ -5,6 +5,8 @@ import scipy.signal
 import torch
 from torch import Tensor
 
+from rl_replicas.value_function import ValueFunction
+
 
 def discounted_cumulative_sums(vector: np.ndarray, discount: float) -> np.ndarray:
     """
@@ -75,3 +77,23 @@ def polyak_average(
     with torch.no_grad():
         for param, target_param in zip(params, target_params):
             target_param.data.copy_((1.0 - tau) * target_param.data + tau * param.data)
+
+
+def compute_values_numpy_list(
+    observations_with_last_observation: List[List[np.ndarray]],
+    value_function: ValueFunction,
+) -> np.ndarray:
+    values_numpy_list: List[np.ndarray] = []
+    with torch.no_grad():
+        for (
+            episode_observations_with_last_observation
+        ) in observations_with_last_observation:
+            episode_observations_with_last_observation_tensor = torch.from_numpy(
+                np.concatenate([episode_observations_with_last_observation])
+            ).float()
+            values_numpy_list.append(
+                value_function(episode_observations_with_last_observation_tensor)
+                .flatten()
+                .numpy()
+            )
+    return values_numpy_list

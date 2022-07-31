@@ -13,7 +13,7 @@ from rl_replicas.base_algorithms.on_policy_algorithm import OnPolicyAlgorithm
 from rl_replicas.experience import Experience
 from rl_replicas.policies import Policy
 from rl_replicas.samplers import Sampler
-from rl_replicas.utils import discounted_cumulative_sums, gae
+from rl_replicas.utils import compute_values_numpy_list, discounted_cumulative_sums, gae
 from rl_replicas.value_function import ValueFunction
 
 logger = logging.getLogger(__name__)
@@ -65,12 +65,12 @@ class PPO(OnPolicyAlgorithm):
         self.old_policy: Policy = copy.deepcopy(self.policy)
 
     def train(self, experience: Experience) -> None:
-        values_tensor_list: List[Tensor] = self.compute_values_tensor_list(
-            experience.observations_with_last_observation
+        values_numpy_list: np.ndarray = compute_values_numpy_list(
+            experience.observations_with_last_observation, self.value_function
         )
 
         last_values: List[float] = [
-            episode_values[-1].detach().item() for episode_values in values_tensor_list
+            float(episode_values[-1]) for episode_values in values_numpy_list
         ]
 
         bootstrapped_rewards: List[List[float]] = self.bootstrap_rewards(
@@ -81,8 +81,8 @@ class PPO(OnPolicyAlgorithm):
         discounted_returns: Tensor = torch.from_numpy(
             np.concatenate(
                 [
-                    discounted_cumulative_sums(one_episode_rewards, self.gamma)[:-1]
-                    for one_episode_rewards in bootstrapped_rewards
+                    discounted_cumulative_sums(episode_rewards, self.gamma)[:-1]
+                    for episode_rewards in bootstrapped_rewards
                 ]
             )
         ).float()
@@ -97,13 +97,13 @@ class PPO(OnPolicyAlgorithm):
             np.concatenate(
                 [
                     gae(
-                        one_episode_rewards,
+                        episode_rewards,
                         self.gamma,
-                        one_episode_values.numpy(),
+                        episode_values,
                         self.gae_lambda,
                     )
-                    for one_episode_rewards, one_episode_values in zip(
-                        bootstrapped_rewards, values_tensor_list
+                    for episode_rewards, episode_values in zip(
+                        bootstrapped_rewards, values_numpy_list
                     )
                 ]
             )
