@@ -13,7 +13,13 @@ from rl_replicas.base_algorithms.on_policy_algorithm import OnPolicyAlgorithm
 from rl_replicas.experience import Experience
 from rl_replicas.policies import Policy
 from rl_replicas.samplers import Sampler
-from rl_replicas.utils import discounted_cumulative_sums, gae
+from rl_replicas.utils import (
+    bootstrap_rewards_with_last_values,
+    compute_values_numpy_list,
+    discounted_cumulative_sums,
+    gae,
+    normalize_tensor,
+)
 from rl_replicas.value_function import ValueFunction
 
 logger = logging.getLogger(__name__)
@@ -65,69 +71,58 @@ class PPO(OnPolicyAlgorithm):
         self.old_policy: Policy = copy.deepcopy(self.policy)
 
     def train(self, experience: Experience) -> None:
-        values_tensor_list: List[Tensor] = self.compute_values_tensor_list(
-            experience.observations_with_last_observation
+        values_numpy_list: np.ndarray = compute_values_numpy_list(
+            experience.observations_with_last_observation, self.value_function
         )
 
         last_values: List[float] = [
-            episode_values[-1].detach().item() for episode_values in values_tensor_list
+            float(episode_values[-1]) for episode_values in values_numpy_list
         ]
 
-        bootstrapped_rewards: List[List[float]] = self.bootstrap_rewards(
+        bootstrapped_rewards: List[List[float]] = bootstrap_rewards_with_last_values(
             experience.rewards, experience.episode_dones, last_values
         )
 
-        # Calculate rewards-to-go over each episode, to be targets for the value function
-        discounted_returns: Tensor = torch.from_numpy(
-            np.concatenate(
-                [
-                    discounted_cumulative_sums(one_episode_rewards, self.gamma)[:-1]
-                    for one_episode_rewards in bootstrapped_rewards
-                ]
-            )
+        discounted_returns: List[np.ndarray] = [
+            discounted_cumulative_sums(episode_rewards, self.gamma)[:-1]
+            for episode_rewards in bootstrapped_rewards
+        ]
+        flattened_discounted_returns: Tensor = torch.from_numpy(
+            np.concatenate(discounted_returns)
         ).float()
 
-        observations: Tensor = torch.from_numpy(
+        flattened_observations: Tensor = torch.from_numpy(
             np.concatenate(experience.observations)
         ).float()
-        actions: Tensor = torch.from_numpy(np.concatenate(experience.actions)).float()
-
-        # Calculate advantages
-        advantages: Tensor = torch.from_numpy(
-            np.concatenate(
-                [
-                    gae(
-                        one_episode_rewards,
-                        self.gamma,
-                        one_episode_values.numpy(),
-                        self.gae_lambda,
-                    )
-                    for one_episode_rewards, one_episode_values in zip(
-                        bootstrapped_rewards, values_tensor_list
-                    )
-                ]
-            )
+        flattened_actions: Tensor = torch.from_numpy(
+            np.concatenate(experience.actions)
         ).float()
 
-        # Normalize advantage
-        advantages = (advantages - torch.mean(advantages)) / torch.std(advantages)
+        gaes: List[np.ndarray] = [
+            gae(episode_rewards, self.gamma, episode_values, self.gae_lambda)
+            for episode_rewards, episode_values in zip(
+                bootstrapped_rewards, values_numpy_list
+            )
+        ]
+        flattened_advantages: Tensor = torch.from_numpy(np.concatenate(gaes)).float()
+        flattened_advantages = normalize_tensor(flattened_advantages)
 
         # For logging
         with torch.no_grad():
-            policy_dist: Distribution = self.policy(observations)
+            policy_dist: Distribution = self.policy(flattened_observations)
             policy_loss_before: Tensor = self.compute_policy_loss(
-                observations, actions, advantages
+                flattened_observations, flattened_actions, flattened_advantages
             ).detach()
-            log_probs: Tensor = policy_dist.log_prob(actions)
+            log_probs: Tensor = policy_dist.log_prob(flattened_actions)
             entropies: Tensor = policy_dist.entropy()
 
         # Train the policy
         for i in range(self.num_policy_gradients):
             policy_loss: Tensor = self.compute_policy_loss(
-                observations, actions, advantages
+                flattened_observations, flattened_actions, flattened_advantages
             )
             approximate_kl_divergence: Tensor = self.compute_approximate_kl_divergence(
-                observations, actions
+                flattened_observations, flattened_actions
             ).detach()
             if approximate_kl_divergence > 1.5 * self.max_kl_divergence:
                 logger.info(
@@ -146,13 +141,13 @@ class PPO(OnPolicyAlgorithm):
         # For logging
         with torch.no_grad():
             value_loss_before: Tensor = self.compute_value_loss(
-                observations, discounted_returns
+                flattened_observations, flattened_discounted_returns
             )
 
         # Train value function
         for _ in range(self.num_value_gradients):
             value_loss: Tensor = self.compute_value_loss(
-                observations, discounted_returns
+                flattened_observations, flattened_discounted_returns
             )
             self.value_function.optimizer.zero_grad()
             value_loss.backward()
@@ -193,44 +188,6 @@ class PPO(OnPolicyAlgorithm):
             value_loss_before,
             self.current_total_steps,
         )
-
-    def compute_values_tensor_list(
-        self, observations_with_last_observation_list: List[List[np.ndarray]]
-    ) -> List[Tensor]:
-        values_tensor_list: List[Tensor] = []
-        with torch.no_grad():
-            for (
-                observations_with_last_observation
-            ) in observations_with_last_observation_list:
-                observations_with_last_observation_tensor = torch.from_numpy(
-                    np.concatenate([observations_with_last_observation])
-                ).float()
-                values_tensor_list.append(
-                    self.value_function(
-                        observations_with_last_observation_tensor
-                    ).flatten()
-                )
-        return values_tensor_list
-
-    def bootstrap_rewards(
-        self,
-        rewards_list: List[List[float]],
-        episode_dones: List[bool],
-        last_values: List[float],
-    ) -> List[List[float]]:
-        bootstrapped_rewards: List[List[float]] = []
-
-        for episode_rewards, episode_done, last_value in zip(
-            rewards_list, episode_dones, last_values
-        ):
-            episode_bootstrapped_rewards: List[float]
-            if episode_done:
-                episode_bootstrapped_rewards = episode_rewards + [0]
-            else:
-                episode_bootstrapped_rewards = episode_rewards + [last_value]
-            bootstrapped_rewards.append(episode_bootstrapped_rewards)
-
-        return bootstrapped_rewards
 
     def compute_policy_loss(
         self, observations: Tensor, actions: Tensor, advantages: Tensor

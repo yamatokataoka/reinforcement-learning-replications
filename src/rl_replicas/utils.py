@@ -3,7 +3,9 @@ from typing import Iterable, List
 import numpy as np
 import scipy.signal
 import torch
-from torch import Tensor
+from torch import Tensor, nn
+
+from rl_replicas.value_function import ValueFunction
 
 
 def discounted_cumulative_sums(vector: np.ndarray, discount: float) -> np.ndarray:
@@ -61,9 +63,7 @@ def unflatten_tensors(
 
 
 def polyak_average(
-    params: Iterable[torch.nn.Parameter],
-    target_params: Iterable[torch.nn.Parameter],
-    tau: float,
+    params: Iterable[nn.Parameter], target_params: Iterable[nn.Parameter], tau: float
 ) -> None:
     """
     Perform Polyak averaging on target_params using params
@@ -75,3 +75,46 @@ def polyak_average(
     with torch.no_grad():
         for param, target_param in zip(params, target_params):
             target_param.data.copy_((1.0 - tau) * target_param.data + tau * param.data)
+
+
+def compute_values_numpy_list(
+    observations_with_last_observation: List[List[np.ndarray]],
+    value_function: ValueFunction,
+) -> np.ndarray:
+    values_numpy_list: List[np.ndarray] = []
+    with torch.no_grad():
+        for (
+            episode_observations_with_last_observation
+        ) in observations_with_last_observation:
+            episode_observations_with_last_observation_tensor = torch.from_numpy(
+                np.concatenate([episode_observations_with_last_observation])
+            ).float()
+            values_numpy_list.append(
+                value_function(episode_observations_with_last_observation_tensor)
+                .flatten()
+                .numpy()
+            )
+    return values_numpy_list
+
+
+def bootstrap_rewards_with_last_values(
+    rewards: List[List[float]], episode_dones: List[bool], last_values: List[float]
+) -> List[List[float]]:
+    bootstrapped_rewards: List[List[float]] = []
+
+    for episode_rewards, episode_done, last_value in zip(
+        rewards, episode_dones, last_values
+    ):
+        episode_bootstrapped_rewards: List[float]
+        if episode_done:
+            episode_bootstrapped_rewards = episode_rewards + [0]
+        else:
+            episode_bootstrapped_rewards = episode_rewards + [last_value]
+        bootstrapped_rewards.append(episode_bootstrapped_rewards)
+
+    return bootstrapped_rewards
+
+
+def normalize_tensor(vector: Tensor) -> Tensor:
+    normalized_vector = vector - torch.mean(vector) / torch.std(vector)
+    return normalized_vector
