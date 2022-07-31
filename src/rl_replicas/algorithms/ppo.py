@@ -99,12 +99,7 @@ class PPO(OnPolicyAlgorithm):
         ).float()
 
         gaes: List[np.ndarray] = [
-            gae(
-                episode_rewards,
-                self.gamma,
-                episode_values,
-                self.gae_lambda,
-            )
+            gae(episode_rewards, self.gamma, episode_values, self.gae_lambda)
             for episode_rewards, episode_values in zip(
                 bootstrapped_rewards, values_numpy_list
             )

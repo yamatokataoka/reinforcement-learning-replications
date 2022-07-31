@@ -3,7 +3,7 @@ from typing import Iterable, List
 import numpy as np
 import scipy.signal
 import torch
-from torch import Tensor
+from torch import Tensor, nn
 
 from rl_replicas.value_function import ValueFunction
 
@@ -63,9 +63,7 @@ def unflatten_tensors(
 
 
 def polyak_average(
-    params: Iterable[torch.nn.Parameter],
-    target_params: Iterable[torch.nn.Parameter],
-    tau: float,
+    params: Iterable[nn.Parameter], target_params: Iterable[nn.Parameter], tau: float
 ) -> None:
     """
     Perform Polyak averaging on target_params using params
@@ -100,9 +98,7 @@ def compute_values_numpy_list(
 
 
 def bootstrap_rewards_with_last_values(
-    rewards: List[List[float]],
-    episode_dones: List[bool],
-    last_values: List[float],
+    rewards: List[List[float]], episode_dones: List[bool], last_values: List[float]
 ) -> List[List[float]]:
     bootstrapped_rewards: List[List[float]] = []
 
