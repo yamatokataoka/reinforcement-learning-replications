@@ -1,10 +1,13 @@
+import copy
 from typing import Iterable, List
 
 import numpy as np
 import scipy.signal
 import torch
+from gym import Space
 from torch import Tensor, nn
 
+from rl_replicas.policies.policy import Policy
 from rl_replicas.value_function import ValueFunction
 
 
@@ -118,3 +121,42 @@ def bootstrap_rewards_with_last_values(
 def normalize_tensor(vector: Tensor) -> Tensor:
     normalized_vector = (vector - torch.mean(vector)) / torch.std(vector)
     return normalized_vector
+
+
+def add_noise_to_get_action(
+    policy: Policy, action_space: Space, action_noise_scale: float
+) -> Policy:
+    copied_policy: Policy = copy.deepcopy(policy)
+    noised_policy: Policy = _NoisedPolicy(
+        copied_policy, action_space, action_noise_scale
+    )
+
+    return noised_policy
+
+
+class _NoisedPolicy(Policy):
+    def __init__(
+        self, base_policy: Policy, action_space: Space, action_noise_scale: float
+    ):
+        super().__init__()
+
+        self.base_policy = base_policy
+        self.action_space = action_space
+        self.action_noise_scale = action_noise_scale
+
+        self.action_limit = action_space.high[0]
+        self.action_size = action_space.shape[0]
+
+    def get_action_tensor(self, observation: Tensor) -> Tensor:
+        action = self.action_limit * self.base_policy.get_action_tensor(observation)
+        action += self.action_noise_scale * torch.randn(self.action_size)
+        action = torch.clip(action, -self.action_limit, self.action_limit)
+
+        return action
+
+    def get_action_numpy(self, observation: np.ndarray) -> np.ndarray:
+        action = self.action_limit * self.base_policy.get_action_numpy(observation)
+        action += self.action_noise_scale * np.random.randn(self.action_size)
+        action = np.clip(action, -self.action_limit, self.action_limit)
+
+        return action
