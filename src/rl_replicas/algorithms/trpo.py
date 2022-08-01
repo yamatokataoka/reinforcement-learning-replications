@@ -126,10 +126,6 @@ class TRPO:
                 "Average Episode Length: {:<8.3g}".format(np.mean(episode_lengths))
             )
 
-            logger.info(
-                "Time:                   {:<8.3g}".format(time.time() - start_time)
-            )
-
             self.writer.add_scalar(
                 "training/average_episode_return",
                 np.mean(episode_returns),
@@ -142,6 +138,10 @@ class TRPO:
             )
 
             self.train(experience)
+
+            logger.info(
+                "Time:                   {:<8.3g}".format(time.time() - start_time)
+            )
 
         self.writer.close()
 

@@ -196,6 +196,9 @@ class TD3:
                     self.current_total_steps,
                 )
 
+            if self.current_total_steps >= num_steps_before_update:
+                self.train(self.replay_buffer, num_train_steps, minibatch_size)
+
             if (
                 num_evaluation_episodes > 0
                 and self.current_total_steps % evaluation_interval == 0
@@ -243,9 +246,6 @@ class TD3:
             logger.info(
                 "Time:                   {:<8.3g}".format(time.time() - start_time)
             )
-
-            if self.current_total_steps >= num_steps_before_update:
-                self.train(self.replay_buffer, num_train_steps, minibatch_size)
 
         self.writer.close()
 
