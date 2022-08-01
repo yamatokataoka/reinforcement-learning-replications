@@ -17,7 +17,7 @@ from rl_replicas.policies import Policy
 from rl_replicas.q_function import QFunction
 from rl_replicas.replay_buffer import ReplayBuffer
 from rl_replicas.samplers import Sampler
-from rl_replicas.utils import polyak_average
+from rl_replicas.utils import add_noise_to_get_action, polyak_average
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +62,9 @@ class DDPG:
         self.tau = tau
         self.action_noise_scale = action_noise_scale
 
+        self.noised_policy = add_noise_to_get_action(
+            self.policy, self.env.action_space, self.action_noise_scale
+        )
         self.evaluation_env = gym.make(env.spec.id)
         self.target_policy = copy.deepcopy(self.policy)
         self.target_q_function = copy.deepcopy(self.q_function)
@@ -113,7 +116,7 @@ class DDPG:
             if self.current_total_steps < num_random_start_steps:
                 experience = self.sampler.sample(batch_size, self.exploration_policy)
             else:
-                experience = self.sampler.sample(batch_size, self.policy)
+                experience = self.sampler.sample(batch_size, self.noised_policy)
 
             self.replay_buffer.add_experience(
                 experience.flattened_observations,
@@ -317,25 +320,6 @@ class DDPG:
         logger.info("Average Q Value:        {:<8.3g}".format(np.mean(all_q_values)))
         logger.info("Max Q Value:            {:<8.3g}".format(np.max(all_q_values)))
         logger.info("Min Q Value:            {:<8.3g}".format(np.min(all_q_values)))
-
-    def select_action_with_noise(
-        self, observation: np.ndarray, action_noise_scale: float
-    ) -> np.ndarray:
-        """
-        Select action(s) with observation(s) and add noise.
-
-        :param observation: (np.ndarray) Observation(s).
-        :param action_noise_scale: (float) The scale of the action noise (std).
-        :return: (np.ndarray) Action(s).
-        """
-        action_limit: float = self.env.action_space.high[0]
-        action_size: int = self.env.action_space.shape[0]
-
-        action = action_limit * self.predict(observation)
-        action += action_noise_scale * np.random.randn(action_size)
-        action = np.clip(action, -action_limit, action_limit)
-
-        return action
 
     def save_model(self, current_epoch: int, model_path: str) -> None:
         """
