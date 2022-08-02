@@ -225,20 +225,17 @@ class TRPO:
 
         self.old_policy.load_state_dict(self.policy.state_dict())
 
-        # For logging
-        with torch.no_grad():
-            value_loss_before: Tensor = self.compute_value_loss(
-                flattened_observations, flattened_discounted_returns
-            )
-
-        # Train the value function
+        # Train value function
+        value_function_losses: List[float] = []
         for _ in range(self.num_value_gradients):
-            value_loss: Tensor = self.compute_value_loss(
+            value_function_loss: Tensor = self.compute_value_function_loss(
                 flattened_observations, flattened_discounted_returns
             )
             self.value_function.optimizer.zero_grad()
-            value_loss.backward()
+            value_function_loss.backward()
             self.value_function.optimizer.step()
+
+            value_function_losses.append(value_function_loss.detach().item())
 
         logger.info("Policy Loss:            {:<8.3g}".format(policy_loss_before))
         logger.info(
@@ -248,7 +245,11 @@ class TRPO:
             "Log Prob STD:           {:<8.3g}".format(torch.std(log_probs_before))
         )
 
-        logger.info("Value Function Loss:    {:<8.3g}".format(value_loss_before))
+        logger.info(
+            "Average Value Function Loss: {:<8.3g}".format(
+                np.mean(value_function_losses)
+            )
+        )
 
         self.writer.add_scalar(
             "policy/loss", policy_loss_before, self.current_total_steps
@@ -263,10 +264,10 @@ class TRPO:
         )
 
         self.writer.add_scalar(
-            "value/loss", value_loss_before, self.current_total_steps
+            "value_function/average_loss", np.mean(value_function_losses), self.current_total_steps
         )
 
-    def compute_value_loss(
+    def compute_value_function_loss(
         self, observations: Tensor, discounted_returns: Tensor
     ) -> Tensor:
         values: Tensor = self.value_function(observations)

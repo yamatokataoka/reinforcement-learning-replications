@@ -298,7 +298,7 @@ class DDPG:
 
         logger.info("Average Policy Loss:    {:<8.3g}".format(np.mean(policy_losses)))
         logger.info(
-            "Average Q Function Loss:{:<8.3g}".format(np.mean(q_function_losses))
+            "Average Q Function Loss: {:<8.3g}".format(np.mean(q_function_losses))
         )
 
         logger.info("Average Q Value:        {:<8.3g}".format(np.mean(all_q_values)))
