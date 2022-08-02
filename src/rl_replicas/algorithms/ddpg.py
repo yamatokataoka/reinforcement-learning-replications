@@ -296,14 +296,23 @@ class DDPG:
                 self.tau,
             )
 
+        logger.info("Average Policy Loss:    {:<8.3g}".format(np.mean(policy_losses)))
+        logger.info(
+            "Average Q Function Loss:{:<8.3g}".format(np.mean(q_function_losses))
+        )
+
+        logger.info("Average Q Value:        {:<8.3g}".format(np.mean(all_q_values)))
+        logger.info("Max Q Value:            {:<8.3g}".format(np.max(all_q_values)))
+        logger.info("Min Q Value:            {:<8.3g}".format(np.min(all_q_values)))
+
         self.writer.add_scalar(
-            "policy/loss",
-            policy_loss,
+            "policy/average_loss",
+            np.mean(policy_losses),
             self.current_total_steps,
         )
         self.writer.add_scalar(
-            "q-function/loss",
-            q_function_loss,
+            "q-function/average_loss",
+            np.mean(q_function_losses),
             self.current_total_steps,
         )
         self.writer.add_scalar(
@@ -311,15 +320,6 @@ class DDPG:
             torch.mean(q_values),
             self.current_total_steps,
         )
-
-        logger.info("Policy Loss:            {:<8.3g}".format(np.mean(policy_losses)))
-        logger.info(
-            "Q Function Loss:        {:<8.3g}".format(np.mean(q_function_losses))
-        )
-
-        logger.info("Average Q Value:        {:<8.3g}".format(np.mean(all_q_values)))
-        logger.info("Max Q Value:            {:<8.3g}".format(np.max(all_q_values)))
-        logger.info("Min Q Value:            {:<8.3g}".format(np.min(all_q_values)))
 
     def save_model(self, current_epoch: int, model_path: str) -> None:
         """

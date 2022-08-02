@@ -185,8 +185,9 @@ class VPG:
         policy_loss: Tensor = -torch.mean(log_probs * flattened_advantages)
 
         # For logging
+        log_probs_before: Tensor = log_probs.detach()
         policy_loss_before: Tensor = policy_loss.detach()
-        entropies: Tensor = policy_dist.entropy().detach()
+        entropies_before: Tensor = policy_dist.entropy().detach()
 
         # Train the policy
         self.policy.optimizer.zero_grad()
@@ -209,8 +210,12 @@ class VPG:
             self.value_function.optimizer.step()
 
         logger.info("Policy Loss:            {:<8.3g}".format(policy_loss_before))
-        logger.info("Avarage Entropy:        {:<8.3g}".format(torch.mean(entropies)))
-        logger.info("Log Prob STD:           {:<8.3g}".format(torch.std(log_probs)))
+        logger.info(
+            "Avarage Entropy:        {:<8.3g}".format(torch.mean(entropies_before))
+        )
+        logger.info(
+            "Log Prob STD:           {:<8.3g}".format(torch.std(log_probs_before))
+        )
 
         logger.info("Value Function Loss:    {:<8.3g}".format(value_loss_before))
 
@@ -219,11 +224,11 @@ class VPG:
         )
         self.writer.add_scalar(
             "policy/avarage_entropy",
-            torch.mean(entropies),
+            torch.mean(entropies_before),
             self.current_total_steps,
         )
         self.writer.add_scalar(
-            "policy/log_prob_std", torch.std(log_probs), self.current_total_steps
+            "policy/log_prob_std", torch.std(log_probs_before), self.current_total_steps
         )
 
         self.writer.add_scalar(
