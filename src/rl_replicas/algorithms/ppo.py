@@ -222,12 +222,6 @@ class PPO:
 
         self.old_policy.load_state_dict(self.policy.state_dict())
 
-        # For logging
-        with torch.no_grad():
-            value_loss_before: Tensor = self.compute_value_loss(
-                flattened_observations, flattened_discounted_returns
-            )
-
         # Train value function
         value_function_losses: List[float] = []
         for _ in range(self.num_value_gradients):
