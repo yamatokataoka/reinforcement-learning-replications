@@ -200,11 +200,12 @@ class PPO:
         log_probs_before: Tensor = policy_dist.log_prob(flattened_actions)
         entropies_before: Tensor = policy_dist.entropy()
 
-        # Train the policy
+        # Train policy
         for i in range(self.num_policy_gradients):
-            policy_loss: Tensor = self.compute_policy_loss(
+            self.train_policy(
                 flattened_observations, flattened_actions, flattened_advantages
             )
+
             approximate_kl_divergence: Tensor = self.compute_approximate_kl_divergence(
                 flattened_observations, flattened_actions
             ).detach()
@@ -215,10 +216,6 @@ class PPO:
                     )
                 )
                 break
-
-            self.policy.optimizer.zero_grad()
-            policy_loss.backward()
-            self.policy.optimizer.step()
 
         self.old_policy.load_state_dict(self.policy.state_dict())
 
@@ -277,6 +274,20 @@ class PPO:
             np.mean(value_function_losses),
             self.current_total_steps,
         )
+
+    def train_policy(
+        self,
+        flattened_observations: Tensor,
+        flattened_actions: Tensor,
+        flattened_advantages: Tensor,
+    ) -> None:
+        policy_loss: Tensor = self.compute_policy_loss(
+            flattened_observations, flattened_actions, flattened_advantages
+        )
+
+        self.policy.optimizer.zero_grad()
+        policy_loss.backward()
+        self.policy.optimizer.step()
 
     def compute_policy_loss(
         self, observations: Tensor, actions: Tensor, advantages: Tensor

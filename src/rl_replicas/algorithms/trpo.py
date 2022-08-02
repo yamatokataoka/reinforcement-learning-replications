@@ -2,7 +2,7 @@ import copy
 import logging
 import os
 import time
-from typing import List
+from typing import Callable, List
 
 import gym
 import numpy as np
@@ -207,21 +207,20 @@ class TRPO:
 
             return torch.mean(kl_constraint)
 
-        policy_loss: Tensor = compute_surrogate_loss()
-
         # For logging
+        policy_loss_before: Tensor = compute_surrogate_loss()
         with torch.no_grad():
             policy_dist_before: Distribution = self.policy(flattened_observations)
         log_probs_before: Tensor = policy_dist_before.log_prob(flattened_actions)
-        policy_loss_before: Tensor = -torch.mean(
-            log_probs_before * flattened_advantages
-        )
         entropies_before: Tensor = policy_dist_before.entropy()
 
-        # Train the policy
-        self.policy.optimizer.zero_grad()
-        policy_loss.backward()
-        self.policy.optimizer.step(compute_surrogate_loss, compute_kl_constraint)
+        self.train_policy(
+            compute_surrogate_loss,
+            compute_kl_constraint,
+            flattened_observations,
+            flattened_actions,
+            flattened_advantages,
+        )
 
         self.old_policy.load_state_dict(self.policy.state_dict())
 
@@ -264,8 +263,24 @@ class TRPO:
         )
 
         self.writer.add_scalar(
-            "value_function/average_loss", np.mean(value_function_losses), self.current_total_steps
+            "value_function/average_loss",
+            np.mean(value_function_losses),
+            self.current_total_steps,
         )
+
+    def train_policy(
+        self,
+        compute_surrogate_loss: Callable,
+        compute_kl_constraint: Callable,
+        flattened_observations: Tensor,
+        flattened_actions: Tensor,
+        flattened_advantages: Tensor,
+    ) -> None:
+        policy_loss: Tensor = compute_surrogate_loss()
+
+        self.policy.optimizer.zero_grad()
+        policy_loss.backward()
+        self.policy.optimizer.step(compute_surrogate_loss, compute_kl_constraint)
 
     def compute_value_function_loss(
         self, observations: Tensor, discounted_returns: Tensor

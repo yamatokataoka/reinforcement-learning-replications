@@ -312,29 +312,8 @@ class TD3:
             self.q_function_2.optimizer.step()
 
             if train_step % self.policy_delay == 0:
-                # Freeze Q-networks
-                for param in self.q_function_1.network.parameters():
-                    param.requires_grad = False
-                for param in self.q_function_2.network.parameters():
-                    param.requires_grad = False
-
-                policy_actions: Tensor = self.policy(observations)
-                policy_q_values: Tensor = self.q_function_1(
-                    observations, policy_actions
-                )
-
-                policy_loss: Tensor = -torch.mean(policy_q_values)
+                policy_loss: Tensor = self.train_policy(observations)
                 policy_losses.append(policy_loss.item())
-
-                self.policy.optimizer.zero_grad()
-                policy_loss.backward()
-                self.policy.optimizer.step()
-
-                # Unfreeze Q-networks
-                for param in self.q_function_1.network.parameters():
-                    param.requires_grad = True
-                for param in self.q_function_2.network.parameters():
-                    param.requires_grad = True
 
                 # Update targets
                 polyak_average(
@@ -393,6 +372,30 @@ class TD3:
             torch.mean(q_values_2),
             self.current_total_steps,
         )
+
+    def train_policy(self, observations: Tensor) -> Tensor:
+        # Freeze Q-networks
+        for param in self.q_function_1.network.parameters():
+            param.requires_grad = False
+        for param in self.q_function_2.network.parameters():
+            param.requires_grad = False
+
+        policy_actions: Tensor = self.policy(observations)
+        policy_q_values: Tensor = self.q_function_1(observations, policy_actions)
+
+        policy_loss: Tensor = -torch.mean(policy_q_values)
+
+        self.policy.optimizer.zero_grad()
+        policy_loss.backward()
+        self.policy.optimizer.step()
+
+        # Unfreeze Q-networks
+        for param in self.q_function_1.network.parameters():
+            param.requires_grad = True
+        for param in self.q_function_2.network.parameters():
+            param.requires_grad = True
+
+        return policy_loss.detach()
 
     def save_model(self, current_epoch: int, model_path: str) -> None:
         """
