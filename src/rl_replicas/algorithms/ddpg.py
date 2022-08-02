@@ -248,7 +248,8 @@ class DDPG:
             next_observations: Tensor = torch.from_numpy(minibatch["next_observations"])
             dones: Tensor = torch.from_numpy(minibatch["dones"]).int()
 
-            q_values: Tensor = self.q_function(observations, actions)
+            with torch.no_grad():
+                q_values: Tensor = self.q_function(observations, actions)
             all_q_values.extend(q_values.tolist())
 
             with torch.no_grad():
@@ -259,12 +260,10 @@ class DDPG:
 
                 targets: Tensor = rewards + self.gamma * (1 - dones) * target_q_values
 
-            q_function_loss: Tensor = F.mse_loss(q_values, targets)
+            q_function_loss: Tensor = self.train_q_function(
+                observations, actions, targets
+            )
             q_function_losses.append(q_function_loss.item())
-
-            self.q_function.optimizer.zero_grad()
-            q_function_loss.backward()
-            self.q_function.optimizer.step()
 
             policy_loss: Tensor = self.train_policy(observations)
             policy_losses.append(policy_loss.item())
@@ -325,6 +324,19 @@ class DDPG:
             param.requires_grad = True
 
         return policy_loss.detach()
+
+    def train_q_function(
+        self, observations: Tensor, actions: Tensor, targets: Tensor
+    ) -> Tensor:
+        q_values: Tensor = self.q_function(observations, actions)
+
+        q_function_loss: Tensor = F.mse_loss(q_values, targets)
+
+        self.q_function.optimizer.zero_grad()
+        q_function_loss.backward()
+        self.q_function.optimizer.step()
+
+        return q_function_loss.detach()
 
     def save_model(self, current_epoch: int, model_path: str) -> None:
         """

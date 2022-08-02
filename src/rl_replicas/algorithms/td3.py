@@ -269,8 +269,9 @@ class TD3:
             next_observations: Tensor = torch.from_numpy(minibatch["next_observations"])
             dones: Tensor = torch.from_numpy(minibatch["dones"]).int()
 
-            q_values_1: Tensor = self.q_function_1(observations, actions)
-            q_values_2: Tensor = self.q_function_2(observations, actions)
+            with torch.no_grad():
+                q_values_1: Tensor = self.q_function_1(observations, actions)
+                q_values_2: Tensor = self.q_function_2(observations, actions)
             all_q_values_1.extend(q_values_1.tolist())
             all_q_values_2.extend(q_values_2.tolist())
 
@@ -298,18 +299,14 @@ class TD3:
 
                 targets: Tensor = rewards + self.gamma * (1 - dones) * target_q_values
 
-            q_function_1_loss: Tensor = F.mse_loss(q_values_1, targets)
-            q_function_2_loss: Tensor = F.mse_loss(q_values_2, targets)
+            q_function_1_loss: Tensor = self.train_q_function(
+                self.q_function_1, observations, actions, targets
+            )
+            q_function_2_loss: Tensor = self.train_q_function(
+                self.q_function_2, observations, actions, targets
+            )
             q_function_1_losses.append(q_function_1_loss.item())
             q_function_2_losses.append(q_function_2_loss.item())
-
-            self.q_function_1.optimizer.zero_grad()
-            q_function_1_loss.backward()
-            self.q_function_1.optimizer.step()
-
-            self.q_function_2.optimizer.zero_grad()
-            q_function_2_loss.backward()
-            self.q_function_2.optimizer.step()
 
             if train_step % self.policy_delay == 0:
                 policy_loss: Tensor = self.train_policy(observations)
@@ -396,6 +393,23 @@ class TD3:
             param.requires_grad = True
 
         return policy_loss.detach()
+
+    def train_q_function(
+        self,
+        q_function: QFunction,
+        observations: Tensor,
+        actions: Tensor,
+        targets: Tensor,
+    ) -> Tensor:
+        q_values: Tensor = q_function(observations, actions)
+
+        q_function_loss: Tensor = F.mse_loss(q_values, targets)
+
+        q_function.optimizer.zero_grad()
+        q_function_loss.backward()
+        q_function.optimizer.step()
+
+        return q_function_loss.detach()
 
     def save_model(self, current_epoch: int, model_path: str) -> None:
         """
