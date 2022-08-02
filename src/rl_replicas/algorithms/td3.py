@@ -196,6 +196,9 @@ class TD3:
                     self.current_total_steps,
                 )
 
+            if self.current_total_steps >= num_steps_before_update:
+                self.train(self.replay_buffer, num_train_steps, minibatch_size)
+
             if (
                 num_evaluation_episodes > 0
                 and self.current_total_steps % evaluation_interval == 0
@@ -243,9 +246,6 @@ class TD3:
             logger.info(
                 "Time:                   {:<8.3g}".format(time.time() - start_time)
             )
-
-            if self.current_total_steps >= num_steps_before_update:
-                self.train(self.replay_buffer, num_train_steps, minibatch_size)
 
         self.writer.close()
 
@@ -352,15 +352,35 @@ class TD3:
                     self.tau,
                 )
 
-                self.writer.add_scalar(
-                    "policy/loss", policy_loss, self.current_total_steps
-                )
+        logger.info("Average Policy Loss:    {:<8.3g}".format(np.mean(policy_losses)))
+        logger.info(
+            "Average Q Function Loss (1): {:<8.3g}".format(np.mean(q_function_1_losses))
+        )
+        logger.info(
+            "Average Q Function Loss (2): {:<8.3g}".format(np.mean(q_function_2_losses))
+        )
+
+        logger.info("Average Q Value (1):    {:<8.3g}".format(np.mean(all_q_values_1)))
+        logger.info("Max Q Value (1):        {:<8.3g}".format(np.max(all_q_values_1)))
+        logger.info("Min Q Value (1):        {:<8.3g}".format(np.min(all_q_values_1)))
+
+        logger.info("Average Q Value (2):    {:<8.3g}".format(np.mean(all_q_values_2)))
+        logger.info("Max Q Value (2):        {:<8.3g}".format(np.max(all_q_values_2)))
+        logger.info("Min Q Value (2):        {:<8.3g}".format(np.min(all_q_values_2)))
 
         self.writer.add_scalar(
-            "q-function_1/loss", q_function_1_loss, self.current_total_steps
+            "policy/average_loss", np.mean(policy_losses), self.current_total_steps
+        )
+
+        self.writer.add_scalar(
+            "q-function_1/average_loss",
+            np.mean(q_function_1_losses),
+            self.current_total_steps,
         )
         self.writer.add_scalar(
-            "q-function_2/loss", q_function_2_loss, self.current_total_steps
+            "q-function_2/average_loss",
+            np.mean(q_function_2_losses),
+            self.current_total_steps,
         )
         self.writer.add_scalar(
             "q-function_1/avarage_q-value",
@@ -372,22 +392,6 @@ class TD3:
             torch.mean(q_values_2),
             self.current_total_steps,
         )
-
-        logger.info("Policy Loss:            {:<8.3g}".format(np.mean(policy_losses)))
-        logger.info(
-            "Q Function Loss (1):    {:<8.3g}".format(np.mean(q_function_1_losses))
-        )
-        logger.info(
-            "Q Function Loss (2):    {:<8.3g}".format(np.mean(q_function_2_losses))
-        )
-
-        logger.info("Average Q Value (1):    {:<8.3g}".format(np.mean(all_q_values_1)))
-        logger.info("Max Q Value (1):        {:<8.3g}".format(np.max(all_q_values_1)))
-        logger.info("Min Q Value (1):        {:<8.3g}".format(np.min(all_q_values_1)))
-
-        logger.info("Average Q Value (2):    {:<8.3g}".format(np.mean(all_q_values_2)))
-        logger.info("Max Q Value (2):        {:<8.3g}".format(np.max(all_q_values_2)))
-        logger.info("Min Q Value (2):        {:<8.3g}".format(np.min(all_q_values_2)))
 
     def save_model(self, current_epoch: int, model_path: str) -> None:
         """

@@ -126,10 +126,6 @@ class TRPO:
                 "Average Episode Length: {:<8.3g}".format(np.mean(episode_lengths))
             )
 
-            logger.info(
-                "Time:                   {:<8.3g}".format(time.time() - start_time)
-            )
-
             self.writer.add_scalar(
                 "training/average_episode_return",
                 np.mean(episode_returns),
@@ -142,6 +138,10 @@ class TRPO:
             )
 
             self.train(experience)
+
+            logger.info(
+                "Time:                   {:<8.3g}".format(time.time() - start_time)
+            )
 
         self.writer.close()
 
@@ -210,11 +210,13 @@ class TRPO:
         policy_loss: Tensor = compute_surrogate_loss()
 
         # For logging
-        policy_loss_before: Tensor = policy_loss.detach()
         with torch.no_grad():
-            policy_dist: Distribution = self.policy(flattened_observations)
-        log_probs: Tensor = policy_dist.log_prob(flattened_actions)
-        entropies: Tensor = policy_dist.entropy()
+            policy_dist_before: Distribution = self.policy(flattened_observations)
+        log_probs_before: Tensor = policy_dist_before.log_prob(flattened_actions)
+        policy_loss_before: Tensor = -torch.mean(
+            log_probs_before * flattened_advantages
+        )
+        entropies_before: Tensor = policy_dist_before.entropy()
 
         # Train the policy
         self.policy.optimizer.zero_grad()
@@ -223,44 +225,49 @@ class TRPO:
 
         self.old_policy.load_state_dict(self.policy.state_dict())
 
-        # For logging
-        with torch.no_grad():
-            value_loss_before: Tensor = self.compute_value_loss(
-                flattened_observations, flattened_discounted_returns
-            )
-
-        # Train the value function
+        # Train value function
+        value_function_losses: List[float] = []
         for _ in range(self.num_value_gradients):
-            value_loss: Tensor = self.compute_value_loss(
+            value_function_loss: Tensor = self.compute_value_function_loss(
                 flattened_observations, flattened_discounted_returns
             )
             self.value_function.optimizer.zero_grad()
-            value_loss.backward()
+            value_function_loss.backward()
             self.value_function.optimizer.step()
 
-        logger.info("Policy Loss:            {:<8.3g}".format(policy_loss_before))
-        logger.info("Avarage Entropy:        {:<8.3g}".format(torch.mean(entropies)))
-        logger.info("Log Prob STD:           {:<8.3g}".format(torch.std(log_probs)))
+            value_function_losses.append(value_function_loss.detach().item())
 
-        logger.info("Value Function Loss:    {:<8.3g}".format(value_loss_before))
+        logger.info("Policy Loss:            {:<8.3g}".format(policy_loss_before))
+        logger.info(
+            "Avarage Entropy:        {:<8.3g}".format(torch.mean(entropies_before))
+        )
+        logger.info(
+            "Log Prob STD:           {:<8.3g}".format(torch.std(log_probs_before))
+        )
+
+        logger.info(
+            "Average Value Function Loss: {:<8.3g}".format(
+                np.mean(value_function_losses)
+            )
+        )
 
         self.writer.add_scalar(
             "policy/loss", policy_loss_before, self.current_total_steps
         )
         self.writer.add_scalar(
             "policy/avarage_entropy",
-            torch.mean(entropies),
+            torch.mean(entropies_before),
             self.current_total_steps,
         )
         self.writer.add_scalar(
-            "policy/log_prob_std", torch.std(log_probs), self.current_total_steps
+            "policy/log_prob_std", torch.std(log_probs_before), self.current_total_steps
         )
 
         self.writer.add_scalar(
-            "value/loss", value_loss_before, self.current_total_steps
+            "value_function/average_loss", np.mean(value_function_losses), self.current_total_steps
         )
 
-    def compute_value_loss(
+    def compute_value_function_loss(
         self, observations: Tensor, discounted_returns: Tensor
     ) -> Tensor:
         values: Tensor = self.value_function(observations)
