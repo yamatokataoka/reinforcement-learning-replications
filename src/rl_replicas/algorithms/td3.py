@@ -336,6 +336,7 @@ class TD3:
                 for param in self.q_function_2.network.parameters():
                     param.requires_grad = True
 
+                # Update targets
                 polyak_average(
                     self.policy.network.parameters(),
                     self.target_policy.network.parameters(),

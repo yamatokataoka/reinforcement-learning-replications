@@ -285,6 +285,7 @@ class DDPG:
             for param in self.q_function.network.parameters():
                 param.requires_grad = True
 
+            # Update targets
             polyak_average(
                 self.policy.network.parameters(),
                 self.target_policy.network.parameters(),
