@@ -222,14 +222,11 @@ class PPO:
         # Train value function
         value_function_losses: List[float] = []
         for _ in range(self.num_value_gradients):
-            value_function_loss: Tensor = self.compute_value_function_loss(
+            value_function_loss: Tensor = self.train_value_function(
                 flattened_observations, flattened_discounted_returns
             )
-            self.value_function.optimizer.zero_grad()
-            value_function_loss.backward()
-            self.value_function.optimizer.step()
 
-            value_function_losses.append(value_function_loss.detach().item())
+            value_function_losses.append(value_function_loss.item())
 
         logger.info("Policy Loss:            {:<8.3g}".format(policy_loss_before))
         logger.info(
@@ -330,6 +327,19 @@ class PPO:
         approximate_kl_divergence: Tensor = old_log_probs - log_probs
 
         return torch.mean(approximate_kl_divergence)
+
+    def train_value_function(
+        self, flattened_observations: Tensor, flattened_discounted_returns: Tensor
+    ) -> Tensor:
+        value_function_loss: Tensor = self.compute_value_function_loss(
+            flattened_observations, flattened_discounted_returns
+        )
+
+        self.value_function.optimizer.zero_grad()
+        value_function_loss.backward()
+        self.value_function.optimizer.step()
+
+        return value_function_loss.detach()
 
     def compute_value_function_loss(
         self, observations: Tensor, discounted_returns: Tensor
