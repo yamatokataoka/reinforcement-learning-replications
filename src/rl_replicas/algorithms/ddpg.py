@@ -248,10 +248,12 @@ class DDPG:
             next_observations: Tensor = torch.from_numpy(minibatch["next_observations"])
             dones: Tensor = torch.from_numpy(minibatch["dones"]).int()
 
+            # For logging
             with torch.no_grad():
                 q_values: Tensor = self.q_function(observations, actions)
             all_q_values.extend(q_values.tolist())
 
+            # Calculate target for Q function
             with torch.no_grad():
                 next_actions: Tensor = self.target_policy(next_observations)
                 target_q_values: Tensor = self.target_q_function(

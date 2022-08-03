@@ -269,12 +269,14 @@ class TD3:
             next_observations: Tensor = torch.from_numpy(minibatch["next_observations"])
             dones: Tensor = torch.from_numpy(minibatch["dones"]).int()
 
+            # For logging
             with torch.no_grad():
                 q_values_1: Tensor = self.q_function_1(observations, actions)
                 q_values_2: Tensor = self.q_function_2(observations, actions)
             all_q_values_1.extend(q_values_1.tolist())
             all_q_values_2.extend(q_values_2.tolist())
 
+            # Calculate target for Q function
             with torch.no_grad():
                 next_actions: Tensor = self.target_policy(next_observations)
                 epsilon: Tensor = self.target_noise_scale * torch.randn_like(
