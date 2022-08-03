@@ -253,14 +253,7 @@ class DDPG:
                 q_values: Tensor = self.q_function(observations, actions)
             all_q_values.extend(q_values.tolist())
 
-            # Calculate target for Q function
-            with torch.no_grad():
-                next_actions: Tensor = self.target_policy(next_observations)
-                target_q_values: Tensor = self.target_q_function(
-                    next_observations, next_actions
-                )
-
-                targets: Tensor = rewards + self.gamma * (1 - dones) * target_q_values
+            targets: Tensor = self.compute_targets(next_observations, rewards, dones)
 
             q_function_loss: Tensor = self.train_q_function(
                 observations, actions, targets
@@ -326,6 +319,19 @@ class DDPG:
             param.requires_grad = True
 
         return policy_loss.detach()
+
+    def compute_targets(
+        self, next_observations: Tensor, rewards: Tensor, dones: Tensor
+    ) -> Tensor:
+        with torch.no_grad():
+            next_actions: Tensor = self.target_policy(next_observations)
+            target_q_values: Tensor = self.target_q_function(
+                next_observations, next_actions
+            )
+
+        targets: Tensor = rewards + self.gamma * (1 - dones) * target_q_values
+
+        return targets
 
     def train_q_function(
         self, observations: Tensor, actions: Tensor, targets: Tensor

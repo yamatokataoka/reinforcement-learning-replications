@@ -276,30 +276,7 @@ class TD3:
             all_q_values_1.extend(q_values_1.tolist())
             all_q_values_2.extend(q_values_2.tolist())
 
-            # Calculate target for Q function
-            with torch.no_grad():
-                next_actions: Tensor = self.target_policy(next_observations)
-                epsilon: Tensor = self.target_noise_scale * torch.randn_like(
-                    next_actions
-                )
-                epsilon = torch.clamp(
-                    epsilon, -self.target_noise_clip, self.target_noise_clip
-                )
-                next_actions = next_actions + epsilon
-                action_limit: float = self.env.action_space.high[0]
-                next_actions = torch.clamp(next_actions, -action_limit, action_limit)
-
-                target_q_values_1: Tensor = self.target_q_function_1(
-                    next_observations, next_actions
-                )
-                target_q_values_2: Tensor = self.target_q_function_2(
-                    next_observations, next_actions
-                )
-                target_q_values: Tensor = torch.min(
-                    target_q_values_1, target_q_values_2
-                )
-
-                targets: Tensor = rewards + self.gamma * (1 - dones) * target_q_values
+            targets: Tensor = self.compute_targets(next_observations, rewards, dones)
 
             q_function_1_loss: Tensor = self.train_q_function(
                 self.q_function_1, observations, actions, targets
@@ -395,6 +372,30 @@ class TD3:
             param.requires_grad = True
 
         return policy_loss.detach()
+
+    def compute_targets(
+        self, next_observations: Tensor, rewards: Tensor, dones: Tensor
+    ) -> Tensor:
+        with torch.no_grad():
+            next_actions: Tensor = self.target_policy(next_observations)
+        epsilon: Tensor = self.target_noise_scale * torch.randn_like(next_actions)
+        epsilon = torch.clamp(epsilon, -self.target_noise_clip, self.target_noise_clip)
+        next_actions = next_actions + epsilon
+        action_limit: float = self.env.action_space.high[0]
+        next_actions = torch.clamp(next_actions, -action_limit, action_limit)
+
+        with torch.no_grad():
+            target_q_values_1: Tensor = self.target_q_function_1(
+                next_observations, next_actions
+            )
+            target_q_values_2: Tensor = self.target_q_function_2(
+                next_observations, next_actions
+            )
+        target_q_values: Tensor = torch.min(target_q_values_1, target_q_values_2)
+
+        targets: Tensor = rewards + self.gamma * (1 - dones) * target_q_values
+
+        return targets
 
     def train_q_function(
         self,
