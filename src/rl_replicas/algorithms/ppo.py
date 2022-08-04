@@ -200,11 +200,12 @@ class PPO:
         log_probs_before: Tensor = policy_dist.log_prob(flattened_actions)
         entropies_before: Tensor = policy_dist.entropy()
 
-        # Train the policy
+        # Train policy
         for i in range(self.num_policy_gradients):
-            policy_loss: Tensor = self.compute_policy_loss(
+            self.train_policy(
                 flattened_observations, flattened_actions, flattened_advantages
             )
+
             approximate_kl_divergence: Tensor = self.compute_approximate_kl_divergence(
                 flattened_observations, flattened_actions
             ).detach()
@@ -216,23 +217,16 @@ class PPO:
                 )
                 break
 
-            self.policy.optimizer.zero_grad()
-            policy_loss.backward()
-            self.policy.optimizer.step()
-
         self.old_policy.load_state_dict(self.policy.state_dict())
 
         # Train value function
         value_function_losses: List[float] = []
         for _ in range(self.num_value_gradients):
-            value_function_loss: Tensor = self.compute_value_function_loss(
+            value_function_loss: Tensor = self.train_value_function(
                 flattened_observations, flattened_discounted_returns
             )
-            self.value_function.optimizer.zero_grad()
-            value_function_loss.backward()
-            self.value_function.optimizer.step()
 
-            value_function_losses.append(value_function_loss.detach().item())
+            value_function_losses.append(value_function_loss.item())
 
         logger.info("Policy Loss:            {:<8.3g}".format(policy_loss_before))
         logger.info(
@@ -278,6 +272,20 @@ class PPO:
             self.current_total_steps,
         )
 
+    def train_policy(
+        self,
+        flattened_observations: Tensor,
+        flattened_actions: Tensor,
+        flattened_advantages: Tensor,
+    ) -> None:
+        policy_loss: Tensor = self.compute_policy_loss(
+            flattened_observations, flattened_actions, flattened_advantages
+        )
+
+        self.policy.optimizer.zero_grad()
+        policy_loss.backward()
+        self.policy.optimizer.step()
+
     def compute_policy_loss(
         self, observations: Tensor, actions: Tensor, advantages: Tensor
     ) -> Tensor:
@@ -319,6 +327,19 @@ class PPO:
         approximate_kl_divergence: Tensor = old_log_probs - log_probs
 
         return torch.mean(approximate_kl_divergence)
+
+    def train_value_function(
+        self, flattened_observations: Tensor, flattened_discounted_returns: Tensor
+    ) -> Tensor:
+        value_function_loss: Tensor = self.compute_value_function_loss(
+            flattened_observations, flattened_discounted_returns
+        )
+
+        self.value_function.optimizer.zero_grad()
+        value_function_loss.backward()
+        self.value_function.optimizer.step()
+
+        return value_function_loss.detach()
 
     def compute_value_function_loss(
         self, observations: Tensor, discounted_returns: Tensor

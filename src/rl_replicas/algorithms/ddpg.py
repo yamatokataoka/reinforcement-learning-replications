@@ -248,43 +248,22 @@ class DDPG:
             next_observations: Tensor = torch.from_numpy(minibatch["next_observations"])
             dones: Tensor = torch.from_numpy(minibatch["dones"]).int()
 
-            q_values: Tensor = self.q_function(observations, actions)
+            # For logging
+            with torch.no_grad():
+                q_values: Tensor = self.q_function(observations, actions)
             all_q_values.extend(q_values.tolist())
 
-            with torch.no_grad():
-                next_actions: Tensor = self.target_policy(next_observations)
-                target_q_values: Tensor = self.target_q_function(
-                    next_observations, next_actions
-                )
+            targets: Tensor = self.compute_targets(next_observations, rewards, dones)
 
-                targets: Tensor = rewards + self.gamma * (1 - dones) * target_q_values
-
-            q_function_loss: Tensor = F.mse_loss(q_values, targets)
+            q_function_loss: Tensor = self.train_q_function(
+                observations, actions, targets
+            )
             q_function_losses.append(q_function_loss.item())
 
-            self.q_function.optimizer.zero_grad()
-            q_function_loss.backward()
-            self.q_function.optimizer.step()
-
-            policy_actions: Tensor = self.policy(observations)
-
-            # Freeze Q-network so you don't waste computational effort
-            for param in self.q_function.network.parameters():
-                param.requires_grad = False
-
-            policy_q_values: Tensor = self.q_function(observations, policy_actions)
-
-            policy_loss: Tensor = -torch.mean(policy_q_values)
+            policy_loss: Tensor = self.train_policy(observations)
             policy_losses.append(policy_loss.item())
 
-            self.policy.optimizer.zero_grad()
-            policy_loss.backward()
-            self.policy.optimizer.step()
-
-            # Unfreeze Q-network
-            for param in self.q_function.network.parameters():
-                param.requires_grad = True
-
+            # Update targets
             polyak_average(
                 self.policy.network.parameters(),
                 self.target_policy.network.parameters(),
@@ -320,6 +299,52 @@ class DDPG:
             torch.mean(q_values),
             self.current_total_steps,
         )
+
+    def train_policy(self, observations: Tensor) -> Tensor:
+        # Freeze Q-network so you don't waste computational effort
+        for param in self.q_function.network.parameters():
+            param.requires_grad = False
+
+        policy_actions: Tensor = self.policy(observations)
+        policy_q_values: Tensor = self.q_function(observations, policy_actions)
+
+        policy_loss: Tensor = -torch.mean(policy_q_values)
+
+        self.policy.optimizer.zero_grad()
+        policy_loss.backward()
+        self.policy.optimizer.step()
+
+        # Unfreeze Q-network
+        for param in self.q_function.network.parameters():
+            param.requires_grad = True
+
+        return policy_loss.detach()
+
+    def compute_targets(
+        self, next_observations: Tensor, rewards: Tensor, dones: Tensor
+    ) -> Tensor:
+        with torch.no_grad():
+            next_actions: Tensor = self.target_policy(next_observations)
+            target_q_values: Tensor = self.target_q_function(
+                next_observations, next_actions
+            )
+
+        targets: Tensor = rewards + self.gamma * (1 - dones) * target_q_values
+
+        return targets
+
+    def train_q_function(
+        self, observations: Tensor, actions: Tensor, targets: Tensor
+    ) -> Tensor:
+        q_values: Tensor = self.q_function(observations, actions)
+
+        q_function_loss: Tensor = F.mse_loss(q_values, targets)
+
+        self.q_function.optimizer.zero_grad()
+        q_function_loss.backward()
+        self.q_function.optimizer.step()
+
+        return q_function_loss.detach()
 
     def save_model(self, current_epoch: int, model_path: str) -> None:
         """
