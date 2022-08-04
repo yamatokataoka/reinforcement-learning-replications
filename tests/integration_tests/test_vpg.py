@@ -1,10 +1,12 @@
 import datetime
+from typing import Dict
 
 import gym
 import torch
 import torch.nn as nn
 
 from rl_replicas.algorithms import VPG
+from rl_replicas.evaluator import Evaluator
 from rl_replicas.networks import MLP
 from rl_replicas.policies import CategoricalPolicy, GaussianPolicy
 from rl_replicas.samplers import BatchSampler
@@ -59,6 +61,11 @@ class TestVPG:
             model_saving=True,
         )
 
+        evaluator: Evaluator = Evaluator(seed_manager)
+        evaluation_result: Dict = evaluator.evaluate(model.policy, env, 1)
+
+        assert round(evaluation_result["episode_returns"][0], 2) == 21.0
+
     def test_vpg_with_pendulum(self) -> None:
         """
         Test VPG with Pendulum environment (continuous action spaces)
@@ -102,3 +109,8 @@ class TestVPG:
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
             model_saving=True,
         )
+
+        evaluator: Evaluator = Evaluator(seed_manager)
+        evaluation_result: Dict = evaluator.evaluate(model.policy, env, 1)
+
+        assert round(evaluation_result["episode_returns"][0], 2) == -867.44

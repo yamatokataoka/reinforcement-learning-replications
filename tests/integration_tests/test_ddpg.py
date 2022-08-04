@@ -1,4 +1,5 @@
 import datetime
+from typing import Dict
 
 import gym
 import torch
@@ -66,3 +67,8 @@ class TestDDPG:
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
             model_saving=True,
         )
+
+        evaluator: Evaluator = Evaluator(seed_manager)
+        evaluation_result: Dict = evaluator.evaluate(model.policy, env, 1)
+
+        assert round(evaluation_result["episode_returns"][0], 2) == -1587.95
