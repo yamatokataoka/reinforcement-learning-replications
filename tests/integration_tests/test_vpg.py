@@ -1,9 +1,11 @@
+import copy
 import datetime
 from typing import Dict
 
 import gym
 import torch
 import torch.nn as nn
+from gym import Env
 
 from rl_replicas.algorithms import VPG
 from rl_replicas.evaluator import Evaluator
@@ -28,6 +30,8 @@ class TestVPG:
 
         env = gym.make("CartPole-v0")
         env.action_space.seed(seed_manager.seed)
+
+        evaluation_env: Env = copy.deepcopy(env)
 
         observation_size: int = env.observation_space.shape[0]
 
@@ -62,7 +66,7 @@ class TestVPG:
         )
 
         evaluator: Evaluator = Evaluator(seed_manager)
-        evaluation_result: Dict = evaluator.evaluate(model.policy, env, 1)
+        evaluation_result: Dict = evaluator.evaluate(model.policy, evaluation_env, 1)
 
         assert round(evaluation_result["episode_returns"][0], 2) == 21.0
 
@@ -75,6 +79,8 @@ class TestVPG:
 
         env = gym.make("Pendulum-v1")
         env.action_space.seed(seed_manager.seed)
+
+        evaluation_env: Env = copy.deepcopy(env)
 
         observation_size: int = env.observation_space.shape[0]
         action_size: int = env.action_space.shape[0]
@@ -111,6 +117,6 @@ class TestVPG:
         )
 
         evaluator: Evaluator = Evaluator(seed_manager)
-        evaluation_result: Dict = evaluator.evaluate(model.policy, env, 1)
+        evaluation_result: Dict = evaluator.evaluate(model.policy, evaluation_env, 1)
 
         assert round(evaluation_result["episode_returns"][0], 2) == -867.44
