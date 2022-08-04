@@ -1,10 +1,14 @@
+import copy
 import datetime
+from typing import Dict
 
 import gym
 import torch
 import torch.nn as nn
+from gym import Env
 
 from rl_replicas.algorithms import PPO
+from rl_replicas.evaluator import Evaluator
 from rl_replicas.networks import MLP
 from rl_replicas.policies import CategoricalPolicy, GaussianPolicy
 from rl_replicas.samplers import BatchSampler
@@ -26,6 +30,8 @@ class TestPPO:
 
         env = gym.make("CartPole-v0")
         env.action_space.seed(seed_manager.seed)
+
+        evaluation_env: Env = copy.deepcopy(env)
 
         observation_size: int = env.observation_space.shape[0]
 
@@ -59,7 +65,10 @@ class TestPPO:
             model_saving=True,
         )
 
-        # TODO: run evaluation against the trained model.
+        evaluator: Evaluator = Evaluator(seed_manager)
+        evaluation_result: Dict = evaluator.evaluate(model.policy, evaluation_env, 1)
+
+        assert round(evaluation_result["episode_returns"][0], 2) == 60.0
 
     def test_ppo_with_pendulum(self) -> None:
         """
@@ -70,6 +79,8 @@ class TestPPO:
 
         env = gym.make("Pendulum-v1")
         env.action_space.seed(seed_manager.seed)
+
+        evaluation_env: Env = copy.deepcopy(env)
 
         observation_size: int = env.observation_space.shape[0]
         action_size: int = env.action_space.shape[0]
@@ -104,3 +115,8 @@ class TestPPO:
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
             model_saving=True,
         )
+
+        evaluator: Evaluator = Evaluator(seed_manager)
+        evaluation_result: Dict = evaluator.evaluate(model.policy, evaluation_env, 1)
+
+        assert round(evaluation_result["episode_returns"][0], 2) == -986.35
