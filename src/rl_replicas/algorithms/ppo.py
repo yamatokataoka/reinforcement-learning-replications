@@ -246,9 +246,7 @@ class PPO:
         )
 
         self.writer.add_scalar(
-            "policy/loss",
-            policy_loss_before,
-            self.current_total_steps,
+            "policy/loss", policy_loss_before, self.current_total_steps
         )
         self.writer.add_scalar(
             "policy/avarage_entropy",
@@ -256,9 +254,7 @@ class PPO:
             self.current_total_steps,
         )
         self.writer.add_scalar(
-            "policy/log_prob_std",
-            torch.std(log_probs_before),
-            self.current_total_steps,
+            "policy/log_prob_std", torch.std(log_probs_before), self.current_total_steps
         )
         self.writer.add_scalar(
             "policy/approximate_kl_divergence",
@@ -302,9 +298,7 @@ class PPO:
 
         # Clipping the constraint
         likelihood_ratio_clip: Tensor = torch.clamp(
-            likelihood_ratio,
-            min=1 - self.clip_range,
-            max=1 + self.clip_range,
+            likelihood_ratio, min=1 - self.clip_range, max=1 + self.clip_range
         )
 
         # Calculate surrotate clip

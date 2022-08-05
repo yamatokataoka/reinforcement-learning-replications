@@ -285,9 +285,7 @@ class DDPG:
         logger.info("Min Q Value:            {:<8.3g}".format(np.min(all_q_values)))
 
         self.writer.add_scalar(
-            "policy/average_loss",
-            np.mean(policy_losses),
-            self.current_total_steps,
+            "policy/average_loss", np.mean(policy_losses), self.current_total_steps
         )
         self.writer.add_scalar(
             "q-function/average_loss",
@@ -295,9 +293,7 @@ class DDPG:
             self.current_total_steps,
         )
         self.writer.add_scalar(
-            "q-function/avarage_q-value",
-            torch.mean(q_values),
-            self.current_total_steps,
+            "q-function/avarage_q-value", torch.mean(q_values), self.current_total_steps
         )
 
     def train_policy(self, observations: Tensor) -> Tensor:

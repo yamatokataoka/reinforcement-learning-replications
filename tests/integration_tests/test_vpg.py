@@ -86,7 +86,7 @@ class TestVPG:
         action_size: int = env.action_space.shape[0]
 
         policy_network: nn.Module = MLP(
-            sizes=[observation_size] + [64, 64] + [action_size],
+            sizes=[observation_size] + [64, 64] + [action_size]
         )
 
         value_function_network: nn.Module = MLP(

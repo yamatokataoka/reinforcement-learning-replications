@@ -44,8 +44,7 @@ class Experience:
         return [
             observations + [last_observation]
             for observations, last_observation in zip(
-                self.observations,
-                self.last_observations,
+                self.observations, self.last_observations
             )
         ]
 
@@ -54,8 +53,7 @@ class Experience:
         return [
             observations[1:] + [last_observation]
             for observations, last_observation in zip(
-                self.observations,
-                self.last_observations,
+                self.observations, self.last_observations
             )
         ]
 
