@@ -10,9 +10,9 @@ import torch
 from torch import Tensor
 from torch.distributions import Distribution, kl
 from torch.nn import functional as F
-from torch.utils.tensorboard import SummaryWriter
 
 from rl_replicas.experience import Experience
+from rl_replicas.metrics_manager import MetricsManager
 from rl_replicas.policies import Policy
 from rl_replicas.samplers import Sampler
 from rl_replicas.utils import (
@@ -81,8 +81,7 @@ class TRPO:
 
         os.makedirs(output_dir, exist_ok=True)
 
-        tensorboard_path: str = os.path.join(output_dir, "tensorboard")
-        self.writer: SummaryWriter = SummaryWriter(tensorboard_path)
+        self.metrics_manager: MetricsManager = MetricsManager(output_dir)
 
         for current_epoch in range(num_epochs):
             experience: Experience = self.sampler.sample(batch_size, self.policy)
@@ -100,50 +99,44 @@ class TRPO:
             self.current_total_steps += sum(experience.episode_lengths)
             self.current_total_episodes += sum(experience.episode_dones)
 
-            logger.info("Epoch: {}".format(current_epoch))
-
-            logger.info(
-                "Total steps:            {:<8.3g}".format(self.current_total_steps)
-            )
-            logger.info(
-                "Total episodes:         {:<8.3g}".format(self.current_total_episodes)
+            self.metrics_manager.record_scalar("epoch", current_epoch)
+            self.metrics_manager.record_scalar("total_steps", self.current_total_steps)
+            self.metrics_manager.record_scalar(
+                "total_episodes", self.current_total_episodes
             )
 
-            logger.info(
-                "Average Episode Return: {:<8.3g}".format(np.mean(episode_returns))
-            )
-            logger.info(
-                "Episode Return STD:     {:<8.3g}".format(np.std(episode_returns))
-            )
-            logger.info(
-                "Max Episode Return:     {:<8.3g}".format(np.max(episode_returns))
-            )
-            logger.info(
-                "Min Episode Return:     {:<8.3g}".format(np.min(episode_returns))
-            )
-
-            logger.info(
-                "Average Episode Length: {:<8.3g}".format(np.mean(episode_lengths))
-            )
-
-            self.writer.add_scalar(
+            self.metrics_manager.record_scalar(
                 "training/average_episode_return",
-                np.mean(episode_returns),
+                float(np.mean(episode_returns)),
                 self.current_total_steps,
+                tensorboard=True,
             )
-            self.writer.add_scalar(
+            self.metrics_manager.record_scalar(
+                "training/episode_return_std", float(np.std(episode_returns))
+            )
+            self.metrics_manager.record_scalar(
+                "training/max_episode_return", float(np.max(episode_returns))
+            )
+            self.metrics_manager.record_scalar(
+                "training/min_episode_return", float(np.min(episode_returns))
+            )
+            self.metrics_manager.record_scalar(
                 "training/average_episode_length",
-                np.mean(episode_lengths),
+                float(np.mean(episode_lengths)),
                 self.current_total_steps,
+                tensorboard=True,
             )
 
             self.train(experience)
 
-            logger.info(
-                "Time:                   {:<8.3g}".format(time.time() - start_time)
+            self.metrics_manager.record_scalar(
+                "training/time", time.time() - start_time
             )
 
-        self.writer.close()
+            # Dump all metrics stored in this epoch
+            self.metrics_manager.dump()
+
+        self.metrics_manager.close()
 
     def train(self, experience: Experience) -> None:
         values_numpy_list: np.ndarray = compute_values_numpy_list(
@@ -233,36 +226,29 @@ class TRPO:
 
             value_function_losses.append(value_function_loss.item())
 
-        logger.info("Policy Loss:            {:<8.3g}".format(policy_loss_before))
-        logger.info(
-            "Avarage Entropy:        {:<8.3g}".format(torch.mean(entropies_before))
+        self.metrics_manager.record_scalar(
+            "policy/loss",
+            policy_loss_before.item(),
+            self.current_total_steps,
+            tensorboard=True,
         )
-        logger.info(
-            "Log Prob STD:           {:<8.3g}".format(torch.std(log_probs_before))
-        )
-
-        logger.info(
-            "Average Value Function Loss: {:<8.3g}".format(
-                np.mean(value_function_losses)
-            )
-        )
-
-        self.writer.add_scalar(
-            "policy/loss", policy_loss_before, self.current_total_steps
-        )
-        self.writer.add_scalar(
+        self.metrics_manager.record_scalar(
             "policy/avarage_entropy",
-            torch.mean(entropies_before),
+            torch.mean(entropies_before).item(),
             self.current_total_steps,
+            tensorboard=True,
         )
-        self.writer.add_scalar(
-            "policy/log_prob_std", torch.std(log_probs_before), self.current_total_steps
+        self.metrics_manager.record_scalar(
+            "policy/log_prob_std",
+            torch.std(log_probs_before).item(),
+            self.current_total_steps,
+            tensorboard=True,
         )
-
-        self.writer.add_scalar(
+        self.metrics_manager.record_scalar(
             "value_function/average_loss",
-            np.mean(value_function_losses),
+            float(np.mean(value_function_losses)),
             self.current_total_steps,
+            tensorboard=True,
         )
 
     def train_policy(
