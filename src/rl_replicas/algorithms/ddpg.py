@@ -174,31 +174,36 @@ class DDPG:
                 num_evaluation_episodes > 0
                 and self.current_total_steps % evaluation_interval == 0
             ):
-                evaluation_results: Dict[str, List] = self.evaluator.evaluate(
+                evaluation_episode_returns: List[float]
+                evaluation_episode_lengths: List[int]
+                (
+                    evaluation_episode_returns,
+                    evaluation_episode_lengths,
+                ) = self.evaluator.evaluate(
                     self.policy, self.evaluation_env, num_evaluation_episodes
                 )
 
                 self.metrics_manager.record_scalar(
                     "evaluation/average_episode_return",
-                    float(np.mean(evaluation_results["episode_returns"])),
+                    float(np.mean(evaluation_episode_returns)),
                     self.current_total_steps,
                     tensorboard=True,
                 )
                 self.metrics_manager.record_scalar(
                     "evaluation/episode_return_std",
-                    float(np.std(evaluation_results["episode_returns"])),
+                    float(np.std(evaluation_episode_returns)),
                 )
                 self.metrics_manager.record_scalar(
                     "evaluation/max_episode_return",
-                    float(np.max(evaluation_results["episode_returns"])),
+                    float(np.max(evaluation_episode_returns)),
                 )
                 self.metrics_manager.record_scalar(
                     "evaluation/min_episode_return",
-                    float(np.min(evaluation_results["episode_returns"])),
+                    float(np.min(evaluation_episode_returns)),
                 )
                 self.metrics_manager.record_scalar(
                     "evaluation/average_episode_length",
-                    float(np.mean(evaluation_results["episode_lengths"])),
+                    float(np.mean(evaluation_episode_lengths)),
                     self.current_total_steps,
                     tensorboard=True,
                 )

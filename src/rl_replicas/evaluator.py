@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import List, Tuple
 
 import gym
 import numpy as np
@@ -13,7 +13,7 @@ class Evaluator:
 
     def evaluate(
         self, policy: Policy, env: gym.Env, num_episodes: int
-    ) -> Dict[str, List]:
+    ) -> Tuple[List[float], List[int]]:
         """
         Evaluate the policy running evaluation episodes.
 
@@ -45,4 +45,4 @@ class Evaluator:
             episode_returns.append(episode_return)
             episode_lengths.append(episode_length)
 
-        return {"episode_returns": episode_returns, "episode_lengths": episode_lengths}
+        return episode_returns, episode_lengths

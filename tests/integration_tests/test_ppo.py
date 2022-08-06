@@ -1,6 +1,6 @@
 import copy
 import datetime
-from typing import Dict
+from typing import List
 
 import gym
 import torch
@@ -66,9 +66,10 @@ class TestPPO:
         )
 
         evaluator: Evaluator = Evaluator(seed_manager)
-        evaluation_result: Dict = evaluator.evaluate(model.policy, evaluation_env, 1)
+        episode_returns: List[float]
+        episode_returns, _ = evaluator.evaluate(model.policy, evaluation_env, 1)
 
-        assert round(evaluation_result["episode_returns"][0], 2) == 60.0
+        assert round(episode_returns[0], 2) == 60.0
 
     def test_ppo_with_pendulum(self) -> None:
         """
@@ -117,6 +118,7 @@ class TestPPO:
         )
 
         evaluator: Evaluator = Evaluator(seed_manager)
-        evaluation_result: Dict = evaluator.evaluate(model.policy, evaluation_env, 1)
+        episode_returns: List[float]
+        episode_returns, _ = evaluator.evaluate(model.policy, evaluation_env, 1)
 
-        assert round(evaluation_result["episode_returns"][0], 2) == -986.35
+        assert round(episode_returns[0], 2) == -986.35

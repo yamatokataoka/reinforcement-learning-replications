@@ -1,6 +1,6 @@
 import copy
 import datetime
-from typing import Dict
+from typing import List
 
 import gym
 import torch
@@ -73,6 +73,7 @@ class TestDDPG:
         )
 
         evaluator: Evaluator = Evaluator(seed_manager)
-        evaluation_result: Dict = evaluator.evaluate(model.policy, evaluation_env, 1)
+        episode_returns: List[float]
+        episode_returns, _ = evaluator.evaluate(model.policy, evaluation_env, 1)
 
-        assert round(evaluation_result["episode_returns"][0], 2) == -1587.95
+        assert round(episode_returns[0], 2) == -1587.95
