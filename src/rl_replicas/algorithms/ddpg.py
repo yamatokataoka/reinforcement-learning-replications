@@ -9,10 +9,10 @@ import numpy as np
 import torch
 from torch import Tensor
 from torch.nn import functional as F
-from torch.utils.tensorboard import SummaryWriter
 
 from rl_replicas.evaluator import Evaluator
 from rl_replicas.experience import Experience
+from rl_replicas.metrics_manager import MetricsManager
 from rl_replicas.policies import Policy
 from rl_replicas.q_function import QFunction
 from rl_replicas.replay_buffer import ReplayBuffer
@@ -108,8 +108,7 @@ class DDPG:
 
         os.makedirs(output_dir, exist_ok=True)
 
-        tensorboard_path: str = os.path.join(output_dir, "tensorboard")
-        self.writer: SummaryWriter = SummaryWriter(tensorboard_path)
+        self.metrics_manager: MetricsManager = MetricsManager(output_dir)
 
         for current_epoch in range(num_epochs):
             experience: Experience
@@ -139,42 +138,33 @@ class DDPG:
             self.current_total_steps += sum(experience.episode_lengths)
             self.current_total_episodes += sum(experience.flattened_dones)
 
-            logger.info("Epoch: {}".format(current_epoch))
-
-            logger.info(
-                "Total steps:            {:<8.3g}".format(self.current_total_steps)
-            )
-            logger.info(
-                "Total episodes:         {:<8.3g}".format(self.current_total_episodes)
+            self.metrics_manager.record_scalar("epoch", current_epoch)
+            self.metrics_manager.record_scalar("total_steps", self.current_total_steps)
+            self.metrics_manager.record_scalar(
+                "total_episodes", self.current_total_episodes
             )
 
             if len(episode_lengths) > 0:
-                logger.info(
-                    "Average Episode Return: {:<8.3g}".format(np.mean(episode_returns))
-                )
-                logger.info(
-                    "Episode Return STD:     {:<8.3g}".format(np.std(episode_returns))
-                )
-                logger.info(
-                    "Max Episode Return:     {:<8.3g}".format(np.max(episode_returns))
-                )
-                logger.info(
-                    "Min Episode Return:     {:<8.3g}".format(np.min(episode_returns))
-                )
-
-                logger.info(
-                    "Average Episode Length: {:<8.3g}".format(np.mean(episode_lengths))
-                )
-
-                self.writer.add_scalar(
+                self.metrics_manager.record_scalar(
                     "training/average_episode_return",
-                    np.mean(episode_returns),
+                    float(np.mean(episode_returns)),
                     self.current_total_steps,
+                    tensorboard=True,
                 )
-                self.writer.add_scalar(
+                self.metrics_manager.record_scalar(
+                    "training/episode_return_std", float(np.std(episode_returns))
+                )
+                self.metrics_manager.record_scalar(
+                    "training/max_episode_return", float(np.max(episode_returns))
+                )
+                self.metrics_manager.record_scalar(
+                    "training/min_episode_return", float(np.min(episode_returns))
+                )
+                self.metrics_manager.record_scalar(
                     "training/average_episode_length",
-                    np.mean(episode_lengths),
+                    float(np.mean(episode_lengths)),
                     self.current_total_steps,
+                    tensorboard=True,
                 )
 
             if self.current_total_steps >= num_steps_before_update:
@@ -187,48 +177,40 @@ class DDPG:
                 evaluation_results: Dict[str, List] = self.evaluator.evaluate(
                     self.policy, self.evaluation_env, num_evaluation_episodes
                 )
-                logger.info(
-                    "Average Evaluation Episode Return: {:<8.3g}".format(
-                        np.mean(evaluation_results["episode_returns"])
-                    )
-                )
-                logger.info(
-                    "Evaluation Episode Return STD:     {:<8.3g}".format(
-                        np.std(evaluation_results["episode_returns"])
-                    )
-                )
-                logger.info(
-                    "Max Evaluation Episode Return:     {:<8.3g}".format(
-                        np.max(evaluation_results["episode_returns"])
-                    )
-                )
-                logger.info(
-                    "Min Evaluation Episode Return:     {:<8.3g}".format(
-                        np.min(evaluation_results["episode_returns"])
-                    )
-                )
-                logger.info(
-                    "Average Evaluation Episode Length: {:<8.3g}".format(
-                        np.mean(evaluation_results["episode_lengths"])
-                    )
-                )
 
-                self.writer.add_scalar(
+                self.metrics_manager.record_scalar(
                     "evaluation/average_episode_return",
-                    np.mean(evaluation_results["episode_returns"]),
+                    float(np.mean(evaluation_results["episode_returns"])),
                     self.current_total_steps,
+                    tensorboard=True,
                 )
-                self.writer.add_scalar(
+                self.metrics_manager.record_scalar(
+                    "evaluation/episode_return_std",
+                    float(np.std(evaluation_results["episode_returns"])),
+                )
+                self.metrics_manager.record_scalar(
+                    "evaluation/max_episode_return",
+                    float(np.max(evaluation_results["episode_returns"])),
+                )
+                self.metrics_manager.record_scalar(
+                    "evaluation/min_episode_return",
+                    float(np.min(evaluation_results["episode_returns"])),
+                )
+                self.metrics_manager.record_scalar(
                     "evaluation/average_episode_length",
-                    np.mean(evaluation_results["episode_lengths"]),
+                    float(np.mean(evaluation_results["episode_lengths"])),
                     self.current_total_steps,
+                    tensorboard=True,
                 )
 
-            logger.info(
-                "Time:                   {:<8.3g}".format(time.time() - start_time)
+            self.metrics_manager.record_scalar(
+                "training/time", time.time() - start_time
             )
 
-        self.writer.close()
+            # Dump all metrics stored in this epoch
+            self.metrics_manager.dump()
+
+        self.metrics_manager.close()
 
     def train(
         self, replay_buffer: ReplayBuffer, num_train_steps: int, minibatch_size: int
@@ -275,25 +257,29 @@ class DDPG:
                 self.tau,
             )
 
-        logger.info("Average Policy Loss:    {:<8.3g}".format(np.mean(policy_losses)))
-        logger.info(
-            "Average Q Function Loss: {:<8.3g}".format(np.mean(q_function_losses))
-        )
-
-        logger.info("Average Q Value:        {:<8.3g}".format(np.mean(all_q_values)))
-        logger.info("Max Q Value:            {:<8.3g}".format(np.max(all_q_values)))
-        logger.info("Min Q Value:            {:<8.3g}".format(np.min(all_q_values)))
-
-        self.writer.add_scalar(
-            "policy/average_loss", np.mean(policy_losses), self.current_total_steps
-        )
-        self.writer.add_scalar(
-            "q-function/average_loss",
-            np.mean(q_function_losses),
+        self.metrics_manager.record_scalar(
+            "policy/average_loss",
+            float(np.mean(policy_losses)),
             self.current_total_steps,
+            tensorboard=True,
         )
-        self.writer.add_scalar(
-            "q-function/avarage_q-value", torch.mean(q_values), self.current_total_steps
+        self.metrics_manager.record_scalar(
+            "q-function/average_loss",
+            float(np.mean(q_function_losses)),
+            self.current_total_steps,
+            tensorboard=True,
+        )
+        self.metrics_manager.record_scalar(
+            "q-function/avarage_q-value",
+            float(np.mean(all_q_values)),
+            self.current_total_steps,
+            tensorboard=True,
+        )
+        self.metrics_manager.record_scalar(
+            "q-function/max_q-value", float(np.max(all_q_values))
+        )
+        self.metrics_manager.record_scalar(
+            "q-function/min_q-value", float(np.min(all_q_values))
         )
 
     def train_policy(self, observations: Tensor) -> Tensor:
