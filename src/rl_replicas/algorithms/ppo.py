@@ -73,16 +73,16 @@ class PPO:
         self,
         num_epochs: int = 50,
         batch_size: int = 4000,
+        model_saving_interval: int = 4000,
         output_dir: str = ".",
-        model_saving: bool = False,
     ) -> None:
         """
         Learn the model
 
         :param num_epochs: (int) The number of epochs to run and train.
         :param batch_size: (int) The number of steps to run per epoch.
+        :param model_saving_interval: (int) The interval steps between model saving.
         :param output_dir: (str) The output directory.
-        :param model_saving: (bool) Whether or not to save trained model (Save and overwrite at each end of epoch).
         """
         start_time: float = time.time()
         self.current_total_steps: int = 0
@@ -94,13 +94,6 @@ class PPO:
 
         for current_epoch in range(num_epochs):
             experience: Experience = self.sampler.sample(batch_size, self.policy)
-
-            if model_saving:
-                os.makedirs(output_dir, exist_ok=True)
-                model_path: str = os.path.join(output_dir, "model.pt")
-
-                logger.debug("Save model")
-                self.save_model(current_epoch, model_path)
 
             episode_returns: List[float] = experience.episode_returns
             episode_lengths: List[int] = experience.episode_lengths
@@ -137,6 +130,12 @@ class PPO:
             )
 
             self.train(experience)
+
+            if self.current_total_steps % model_saving_interval == 0:
+                model_path: str = os.path.join(output_dir, "model.pt")
+
+                logger.debug("Save model")
+                self.save_model(current_epoch, model_path)
 
             self.metrics_manager.record_scalar(
                 "training/time", time.time() - start_time

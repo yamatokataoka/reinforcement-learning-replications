@@ -84,8 +84,8 @@ class DDPG:
         num_train_steps: int = 50,
         num_evaluation_episodes: int = 5,
         evaluation_interval: int = 4000,
+        model_saving_interval: int = 4000,
         output_dir: str = ".",
-        model_saving: bool = False,
     ) -> None:
         """
         Learn the model
@@ -99,8 +99,8 @@ class DDPG:
         :param num_train_steps: (int) The number of training steps on each epoch.
         :param num_evaluation_episodes: (int) The number of evaluation episodes.
         :param evaluation_interval: (int) The interval steps between evaluation.
+        :param model_saving_interval: (int) The interval steps between model saving.
         :param output_dir: (str) The output directory.
-        :param model_saving: (bool) Whether or not to save the trained model (overwrite at each end of epoch).
         """
         start_time: float = time.time()
         self.current_total_steps: int = 0
@@ -124,13 +124,6 @@ class DDPG:
                 experience.flattened_next_observations,
                 experience.flattened_dones,
             )
-
-            if model_saving:
-                os.makedirs(output_dir, exist_ok=True)
-                model_path: str = os.path.join(output_dir, "model.pt")
-
-                logger.debug("Save model")
-                self.save_model(current_epoch, model_path)
 
             episode_returns: List[float] = experience.episode_returns
             episode_lengths: List[int] = experience.episode_lengths
@@ -207,6 +200,12 @@ class DDPG:
                     self.current_total_steps,
                     tensorboard=True,
                 )
+
+            if self.current_total_steps % model_saving_interval == 0:
+                model_path: str = os.path.join(output_dir, "model.pt")
+
+                logger.debug("Save model")
+                self.save_model(current_epoch, model_path)
 
             self.metrics_manager.record_scalar(
                 "training/time", time.time() - start_time
