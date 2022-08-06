@@ -221,7 +221,6 @@ class TD3:
                 )
 
             if model_saving:
-                os.makedirs(output_dir, exist_ok=True)
                 model_path: str = os.path.join(output_dir, "model.pt")
 
                 logger.debug("Save model")
