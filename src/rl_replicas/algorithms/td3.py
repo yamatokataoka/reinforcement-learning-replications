@@ -144,13 +144,6 @@ class TD3:
                 experience.flattened_dones,
             )
 
-            if model_saving:
-                os.makedirs(output_dir, exist_ok=True)
-                model_path: str = os.path.join(output_dir, "model.pt")
-
-                logger.debug("Save model")
-                self.save_model(current_epoch, model_path)
-
             episode_returns: List[float] = experience.episode_returns
             episode_lengths: List[int] = experience.episode_lengths
 
@@ -226,6 +219,13 @@ class TD3:
                     self.current_total_steps,
                     tensorboard=True,
                 )
+
+            if model_saving:
+                os.makedirs(output_dir, exist_ok=True)
+                model_path: str = os.path.join(output_dir, "model.pt")
+
+                logger.debug("Save model")
+                self.save_model(current_epoch, model_path)
 
             self.metrics_manager.record_scalar(
                 "training/time", time.time() - start_time
