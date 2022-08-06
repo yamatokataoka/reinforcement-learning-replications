@@ -65,7 +65,6 @@ class TestTRPO:
             num_epochs=3,
             output_dir="/tmp/rl_replicas_tests/trpo-"
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
-            model_saving=True,
         )
 
         evaluator: Evaluator = Evaluator(seed_manager)
@@ -119,7 +118,6 @@ class TestTRPO:
             num_epochs=3,
             output_dir="/tmp/rl_replicas_tests/trpo-"
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
-            model_saving=True,
         )
 
         evaluator: Evaluator = Evaluator(seed_manager)

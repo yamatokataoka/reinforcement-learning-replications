@@ -61,16 +61,16 @@ class VPG:
         self,
         num_epochs: int = 50,
         batch_size: int = 4000,
+        model_saving_interval: int = 4000,
         output_dir: str = ".",
-        model_saving: bool = False,
     ) -> None:
         """
         Learn the model
 
         :param num_epochs: (int) The number of epochs to run and train.
         :param batch_size: (int) The number of steps to run per epoch.
+        :param model_saving_interval: (int) The interval epochs between model saving.
         :param output_dir: (str) The output directory.
-        :param model_saving: (bool) Whether or not to save trained model (Save and overwrite at each end of epoch).
         """
         start_time: float = time.time()
         self.current_total_steps: int = 0
@@ -119,7 +119,7 @@ class VPG:
 
             self.train(experience)
 
-            if model_saving:
+            if self.current_total_steps % model_saving_interval == 0:
                 model_path: str = os.path.join(output_dir, "model.pt")
 
                 logger.debug("Save model")

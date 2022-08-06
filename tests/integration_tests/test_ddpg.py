@@ -67,9 +67,9 @@ class TestDDPG:
         model.learn(
             num_epochs=30,
             evaluation_interval=500,
+            model_saving_interval=500,
             output_dir="/tmp/rl_replicas_tests/ddpg-"
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
-            model_saving=True,
         )
 
         evaluator: Evaluator = Evaluator(seed_manager)
