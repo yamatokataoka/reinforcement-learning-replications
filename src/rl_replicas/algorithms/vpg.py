@@ -80,7 +80,7 @@ class VPG:
 
         self.metrics_manager: MetricsManager = MetricsManager(output_dir)
 
-        for current_epoch in range(num_epochs):
+        for current_epoch in range(1, num_epochs + 1):
             experience: Experience = self.sampler.sample(batch_size, self.policy)
 
             episode_returns: List[float] = experience.episode_returns

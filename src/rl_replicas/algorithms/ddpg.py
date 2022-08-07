@@ -110,7 +110,7 @@ class DDPG:
 
         self.metrics_manager: MetricsManager = MetricsManager(output_dir)
 
-        for current_epoch in range(num_epochs):
+        for current_epoch in range(1, num_epochs + 1):
             experience: Experience
             if self.current_total_steps < num_random_start_steps:
                 experience = self.sampler.sample(batch_size, self.exploration_policy)
