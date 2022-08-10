@@ -228,10 +228,12 @@ class DDPG:
                 minibatch_size
             )
 
-            observations: Tensor = torch.from_numpy(minibatch["observations"])
-            actions: Tensor = torch.from_numpy(minibatch["actions"])
+            observations: Tensor = torch.from_numpy(minibatch["observations"]).float()
+            actions: Tensor = torch.from_numpy(minibatch["actions"]).float()
             rewards: Tensor = torch.from_numpy(minibatch["rewards"]).float()
-            next_observations: Tensor = torch.from_numpy(minibatch["next_observations"])
+            next_observations: Tensor = torch.from_numpy(
+                minibatch["next_observations"]
+            ).float()
             dones: Tensor = torch.from_numpy(minibatch["dones"]).int()
 
             # For logging
