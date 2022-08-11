@@ -71,7 +71,7 @@ def run_td3(environment_name: str, seed: int) -> None:
     with open(os.path.join(output_dir, "experiment.log"), "w") as f:
         with redirect_stdout(f):
             model.learn(
-                num_epochs=60000,
+                num_epochs=20000,
                 evaluation_interval=10000,
                 model_saving_interval=10000,
                 output_dir=output_dir,
