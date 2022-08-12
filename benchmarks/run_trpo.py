@@ -15,7 +15,7 @@ from rl_replicas.seed_manager import SeedManager
 from rl_replicas.value_function import ValueFunction
 
 
-def run_trpo(environment_name: str, seed: int) -> None:
+def run_trpo(environment_name: str, seed: int, output_dir: str) -> None:
     seed_manager: SeedManager = SeedManager(seed)
     seed_manager.set_seed_for_libraries()
 
@@ -42,14 +42,16 @@ def run_trpo(environment_name: str, seed: int) -> None:
         BatchSampler(env, seed_manager),
     )
 
-    output_dir: str = "benchmarks/trpo/{}/seed-{}".format(environment_name, seed)
-    os.makedirs(output_dir, exist_ok=True)
+    experiment_dir: str = os.path.join(
+        output_dir, "trpo/{}/seed-{}".format(environment_name, seed)
+    )
+    os.makedirs(experiment_dir, exist_ok=True)
 
-    with open(os.path.join(output_dir, "experiment.log"), "w") as f:
+    with open(os.path.join(experiment_dir, "experiment.log"), "w") as f:
         with redirect_stdout(f):
             model.learn(
                 num_epochs=750,
-                output_dir=output_dir,
+                output_dir=experiment_dir,
             )
 
 
@@ -57,7 +59,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--environment_name", type=str)
     parser.add_argument("--seed", type=int)
+    parser.add_argument("--output_dir", type=str)
 
     args = parser.parse_args()
 
-    run_trpo(args.environment_name, args.seed)
+    run_trpo(args.environment_name, args.seed, args.output_dir)

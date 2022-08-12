@@ -19,7 +19,10 @@ class AlgorithmNames(Enum):
 
 
 def run_benchmarks(
-    algorithm_names: List[str], environment_names: List[str], seeds: List[int]
+    algorithm_names: List[str],
+    environment_names: List[str],
+    seeds: List[int],
+    output_dir: str,
 ) -> None:
     all_envs = envs.registry.values()
     env_ids = [env_spec.id for env_spec in all_envs]
@@ -47,8 +50,8 @@ def run_benchmarks(
                 run = run_td3
 
             for seed in seeds:
-                print(run, environment_name, seed)
-                run(environment_name, seed)
+                print(run, environment_name, seed, output_dir)
+                run(environment_name, seed, output_dir)
 
 
 if __name__ == "__main__":
@@ -56,7 +59,10 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--algorithm_names", nargs="+", type=str)
     parser.add_argument("-e", "--environment_names", nargs="+", type=str)
     parser.add_argument("-s", "--seeds", nargs="+", type=int)
+    parser.add_argument("-o", "--output_dir", type=str)
 
     args = parser.parse_args()
 
-    run_benchmarks(args.algorithm_names, args.environment_names, args.seeds)
+    run_benchmarks(
+        args.algorithm_names, args.environment_names, args.seeds, args.output_dir
+    )
