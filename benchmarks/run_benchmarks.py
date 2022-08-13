@@ -56,10 +56,10 @@ def run_benchmarks(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-a", "--algorithm_names", nargs="+", type=str)
-    parser.add_argument("-e", "--environment_names", nargs="+", type=str)
-    parser.add_argument("-s", "--seeds", nargs="+", type=int)
-    parser.add_argument("-o", "--output_dir", type=str)
+    parser.add_argument("-a", "--algorithm_names", nargs="+", type=str, required=True)
+    parser.add_argument("-e", "--environment_names", nargs="+", type=str, required=True)
+    parser.add_argument("-s", "--seeds", nargs="+", type=int, required=True)
+    parser.add_argument("-o", "--output_dir", type=str, required=True)
 
     args = parser.parse_args()
 
