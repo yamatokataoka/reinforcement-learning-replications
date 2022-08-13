@@ -15,6 +15,8 @@ from rl_replicas.replay_buffer import ReplayBuffer
 from rl_replicas.samplers import BatchSampler
 from rl_replicas.seed_manager import SeedManager
 
+ALGORITHM_NAME: str = "ddpg"
+
 
 def run_ddpg(environment_name: str, seed: int, output_dir: str) -> None:
     seed_manager: SeedManager = SeedManager(seed)
@@ -54,12 +56,15 @@ def run_ddpg(environment_name: str, seed: int, output_dir: str) -> None:
     )
 
     experiment_dir: str = os.path.join(
-        output_dir, "ddpg/{}/seed-{}".format(environment_name, seed)
+        output_dir, f"{ALGORITHM_NAME}/{environment_name}/seed-{seed}"
     )
     os.makedirs(experiment_dir, exist_ok=True)
 
     with open(os.path.join(experiment_dir, "experiment.log"), "w") as f:
         with redirect_stdout(f):
+            print(f"algorithm: {ALGORITHM_NAME}")
+            print(f"environment_name: {environment_name}")
+            print(f"seed: {seed}")
             model.learn(
                 num_epochs=20000,
                 evaluation_interval=10000,

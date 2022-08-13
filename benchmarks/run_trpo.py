@@ -14,6 +14,8 @@ from rl_replicas.samplers import BatchSampler
 from rl_replicas.seed_manager import SeedManager
 from rl_replicas.value_function import ValueFunction
 
+ALGORITHM_NAME: str = "trpo"
+
 
 def run_trpo(environment_name: str, seed: int, output_dir: str) -> None:
     seed_manager: SeedManager = SeedManager(seed)
@@ -43,12 +45,15 @@ def run_trpo(environment_name: str, seed: int, output_dir: str) -> None:
     )
 
     experiment_dir: str = os.path.join(
-        output_dir, "trpo/{}/seed-{}".format(environment_name, seed)
+        output_dir, f"{ALGORITHM_NAME}/{environment_name}/seed-{seed}"
     )
     os.makedirs(experiment_dir, exist_ok=True)
 
     with open(os.path.join(experiment_dir, "experiment.log"), "w") as f:
         with redirect_stdout(f):
+            print(f"algorithm: {ALGORITHM_NAME}")
+            print(f"environment_name: {environment_name}")
+            print(f"seed: {seed}")
             model.learn(
                 num_epochs=750,
                 output_dir=experiment_dir,
