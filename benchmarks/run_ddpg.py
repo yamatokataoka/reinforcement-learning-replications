@@ -56,7 +56,7 @@ def run_ddpg(environment_name: str, seed: int, output_dir: str) -> None:
     )
 
     experiment_dir: str = os.path.join(
-        output_dir, f"{ALGORITHM_NAME}/{environment_name}/seed-{seed}"
+        output_dir, f"{environment_name}/{ALGORITHM_NAME}/seed-{seed}"
     )
     os.makedirs(experiment_dir, exist_ok=True)
 
