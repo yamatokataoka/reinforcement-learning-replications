@@ -148,14 +148,14 @@ class _NoisedPolicy(Policy):
         self.action_size = action_space.shape[0]
 
     def get_action_tensor(self, observation: Tensor) -> Tensor:
-        action = self.action_limit * self.base_policy.get_action_tensor(observation)
+        action = self.base_policy.get_action_tensor(observation)
         action += self.action_noise_scale * torch.randn(self.action_size)
         action = torch.clip(action, -self.action_limit, self.action_limit)
 
         return action
 
     def get_action_numpy(self, observation: np.ndarray) -> np.ndarray:
-        action = self.action_limit * self.base_policy.get_action_numpy(observation)
+        action = self.base_policy.get_action_numpy(observation)
         action += self.action_noise_scale * np.random.randn(self.action_size)
         action = np.clip(action, -self.action_limit, self.action_limit)
 
