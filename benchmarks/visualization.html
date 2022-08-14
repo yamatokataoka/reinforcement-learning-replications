@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.6.1/d3.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Benchmarks Visualization</h1>
+  <p>
+    This page provides a quick visualization of the training runs for all algorithms.
+  </p>
+  <hr />
+  <select id="envSelect" onchange="showChart(this)"></select>
+  <div
+    id="chartContainer"
+    style="position: relative; height: 40vh; width: 70vw;"
+  >
+  <canvas id="chartCanvas"></chart>
+</div>
+
+  <script>
+    const envs = [
+      "Ant-v4",
+      "HalfCheetah-v4",
+      "Hopper-v4",
+      "Swimmer-v4",
+      "Walker2d-v4"
+    ];
+
+    function makeChart(benchmarks, env) {
+      benchmarksByAlgorithm = d3.group(benchmarks, (d) => d.algorithm);
+
+      const chartColor = d3
+        .scaleOrdinal()
+        .domain(benchmarksByAlgorithm.keys())
+        .range(d3.schemeSet1);
+
+      let data = { datasets: [] };
+      let fillValue = 2;
+      for (let algorithmName of benchmarksByAlgorithm.keys()) {
+        datasetForAlgorithm = [
+          {
+            label: algorithmName,
+            data: benchmarksByAlgorithm.get(algorithmName),
+            parsing: {
+              yAxisKey: "mean_return"
+            },
+            borderColor: chartColor(algorithmName),
+            backgroundColor: chartColor(algorithmName)
+          },
+          {
+            label: `${algorithmName} upper_return`,
+            data: benchmarksByAlgorithm.get(algorithmName),
+            parsing: {
+              yAxisKey: "upper_return"
+            },
+            borderWidth: 0,
+            backgroundColor: d3
+              .color(chartColor(algorithmName))
+              .copy({ opacity: 0.3 })
+              .toString(),
+            fill: fillValue
+          },
+          {
+            label: `${algorithmName} lower_return`,
+            data: benchmarksByAlgorithm.get(algorithmName),
+            parsing: {
+              yAxisKey: "lower_return"
+            },
+            borderWidth: 0,
+            backgroundColor: d3
+              .color(chartColor(algorithmName))
+              .copy({ opacity: 0.3 })
+              .toString(),
+            fill: fillValue
+          }
+        ];
+        fillValue += 3;
+
+        data.datasets.push.apply(data.datasets, datasetForAlgorithm);
+      }
+
+      function legendClickHandler(e, legendItem, legend) {
+        const index = legendItem.datasetIndex;
+        const ci = legend.chart;
+        if (ci.isDatasetVisible(index)) {
+          ci.hide(index);
+          // Hide corresponding area chart
+          ci.hide(index + 1);
+          ci.hide(index + 2);
+          legendItem.hidden = true;
+        } else {
+          ci.show(index);
+          // Show corresponding area chart
+          ci.show(index + 1);
+          ci.show(index + 2);
+          legendItem.hidden = false;
+        }
+      }
+
+      const config = {
+        type: "line",
+        data: data,
+        options: {
+          pointRadius: 0,
+          scales: {
+            x: {
+              type: "linear",
+              ticks: {
+                stepSize: 100000
+              }
+            }
+          },
+          parsing: {
+            xAxisKey: "step"
+          },
+          plugins: {
+            legend: {
+              position: "right",
+              align: "start",
+              onClick: legendClickHandler,
+              labels: {
+                filter: function (item, chart) {
+                  return !(
+                    item.text.includes("lower") || item.text.includes("upper")
+                  );
+                }
+              }
+            },
+            title: {
+                display: true,
+                text: env
+            }
+          }
+        }
+      };
+      ctx = document.getElementById("chartCanvas").getContext("2d");
+      if (window.chart) {
+        window.chart.destroy();
+      }
+      window.chart = new Chart(ctx, config);
+    }
+
+    function showChart(elem) {
+      const selectedEnv = elem.value;
+      const dataSource = "csv/" + selectedEnv + ".csv";
+
+      d3.csv(dataSource).then(function(d) {
+        makeChart(d, selectedEnv)
+      });
+    }
+
+    window.onload = function () {
+      console.log("Document loaded.");
+      // Add options to drop down.
+      let envSelect = document.getElementById("envSelect");
+      for (let env of envs) {
+        let option = document.createElement("option");
+        option.value = env;
+        option.innerHTML = env;
+        envSelect.appendChild(option);
+      }
+
+      showChart(document.querySelector(`option[value=${envs[0]}]`));
+    };
+  </script>
+</body>

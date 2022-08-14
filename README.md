@@ -16,19 +16,15 @@ Reinforcement Learning Replications is a set of Pytorch implementations of reinf
 
 ## Benchmarks
 
-The Reinforcement Learning Replications is benchmarked in two environments from the OpenAI Gym: CartPole-v0 and LunarLander-v2.
+You can check the benchmark result [here](https://yamatokataoka.github.io/reinforcement-learning-replications/benchmarks/visualization.html).
 
-All experiments were run for 3 random seeds each. Graphs show the each experiment (solid line) on TensorBoard.
+This benchmark is conducted based on [the Benchmarks for Spinning Up Implementations](https://spinningup.openai.com/en/latest/spinningup/bench.html).
 
-|               CartPole-v0              |                LunarLander-v2                |
-|:--------------------------------------:|:--------------------------------------------:|
-| ![CartPole-v0](https://raw.githubusercontent.com/yamatokataoka/reinforcement-learning-replications/master/docs/CartPole-v0.gif) | ![LunarLander-v2](https://raw.githubusercontent.com/yamatokataoka/reinforcement-learning-replications/master/docs/LunarLander-v2.gif) |
+All experiments were run for 3 random seeds each. All the details such as tensorboard and experiment logs, training scripts and trained models are stored in the [benchmarks](https://github.com/yamatokataoka/reinforcement-learning-replications/tree/main/benchmarks) folder.
 
-### Vanilla Policy Gradient
+## Example Code
 
-##### Example Code
-
-You can run each benchmark experiment changing `seed` and `env_name` to reproduce the results.
+Here is the code to run the training of VPG on CartPole-v0 environment.
 
 ```python
 import datetime
@@ -46,10 +42,10 @@ from rl_replicas.value_function import ValueFunction
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, format="")
 
-env_name = "CartPole-v0"  # CartPole-v0 or LunarLander-v2
+env_name = "CartPole-v0"
 output_dir = "./runs/vpg/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 num_epochs = 200
-seed = 0  # from 0 to 2
+seed = 0
 
 network_hidden_sizes = [64, 64]
 policy_learning_rate = 3e-4
@@ -81,20 +77,6 @@ model: VPG = VPG(policy, value_function, env, seed=seed)
 model.learn(num_epochs=num_epochs, output_dir=output_dir, tensorboard=True, model_saving=True)
 
 ```
-
-
-#### CartPole-v0
-
-Sample result and trained model stored at `./runs/vpg/CartPole-v0`.
-
-![CartPole-v0 with VPG](https://raw.githubusercontent.com/yamatokataoka/reinforcement-learning-replications/master/docs/vpg/CartPole-v0_3seeds.png)
-
-#### LunarLander-v2
-
-Sample result and trained model stored at `./runs/vpg/LunarLander-v2`.
-
-![CartPole-v0 with VPG](https://raw.githubusercontent.com/yamatokataoka/reinforcement-learning-replications/master/docs/vpg/LunarLander-v2_3seeds.png)
-
 
 ## Contributing
 
