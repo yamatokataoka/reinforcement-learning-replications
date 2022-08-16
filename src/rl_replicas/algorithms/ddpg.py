@@ -34,7 +34,7 @@ class DDPG:
     :param replay_buffer: (ReplayBuffer) Replay buffer.
     :param evaluator: (Evaluator) Evaluator.
     :param gamma: (float) The discount factor for the cumulative return.
-    :param tau: (float) The interpolation factor in polyak averaging for target networks.
+    :param polyak_rho: (float) The interpolation factor in polyak averaging for target networks.
     :param action_noise_scale: (float) The scale of the noise (std).
     """
 
@@ -48,7 +48,7 @@ class DDPG:
         replay_buffer: ReplayBuffer,
         evaluator: Evaluator,
         gamma: float = 0.99,
-        tau: float = 0.005,
+        polyak_rho: float = 0.995,
         action_noise_scale: float = 0.1,
     ) -> None:
         self.policy = policy
@@ -59,7 +59,7 @@ class DDPG:
         self.replay_buffer = replay_buffer
         self.evaluator = evaluator
         self.gamma = gamma
-        self.tau = tau
+        self.polyak_rho = polyak_rho
         self.action_noise_scale = action_noise_scale
 
         self.noised_policy = add_noise_to_get_action(
@@ -253,12 +253,12 @@ class DDPG:
             polyak_average(
                 self.policy.network.parameters(),
                 self.target_policy.network.parameters(),
-                self.tau,
+                self.polyak_rho,
             )
             polyak_average(
                 self.q_function.network.parameters(),
                 self.target_q_function.network.parameters(),
-                self.tau,
+                self.polyak_rho,
             )
 
         self.metrics_manager.record_scalar(

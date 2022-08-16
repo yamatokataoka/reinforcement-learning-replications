@@ -35,7 +35,7 @@ class TD3:
     :param replay_buffer: (ReplayBuffer) Replay buffer.
     :param evaluator: (Evaluator) Evaluator.
     :param gamma: (float) The discount factor for the cumulative return.
-    :param tau: (float) The interpolation factor in polyak averaging for target networks.
+    :param polyak_rho: (float) The interpolation factor in polyak averaging for target networks.
     :param action_noise_scale: (float) The scale of the noise (std) for the policy to explore better.
     :param target_noise_scale: (float) The scale of the smoothing noise (std) for the target policy to exploit harder.
     :param target_noise_clip: (float) The limit for absolute value of the target policy smoothing noise.
@@ -54,7 +54,7 @@ class TD3:
         replay_buffer: ReplayBuffer,
         evaluator: Evaluator,
         gamma: float = 0.99,
-        tau: float = 0.005,
+        polyak_rho: float = 0.995,
         action_noise_scale: float = 0.1,
         target_noise_scale: float = 0.2,
         target_noise_clip: float = 0.5,
@@ -69,7 +69,7 @@ class TD3:
         self.replay_buffer = replay_buffer
         self.evaluator = evaluator
         self.gamma = gamma
-        self.tau = tau
+        self.polyak_rho = polyak_rho
         self.action_noise_scale = action_noise_scale
 
         self.noised_policy = add_noise_to_get_action(
@@ -281,17 +281,17 @@ class TD3:
                 polyak_average(
                     self.policy.network.parameters(),
                     self.target_policy.network.parameters(),
-                    self.tau,
+                    self.polyak_rho,
                 )
                 polyak_average(
                     self.q_function_1.network.parameters(),
                     self.target_q_function_1.network.parameters(),
-                    self.tau,
+                    self.polyak_rho,
                 )
                 polyak_average(
                     self.q_function_2.network.parameters(),
                     self.target_q_function_2.network.parameters(),
-                    self.tau,
+                    self.polyak_rho,
                 )
 
         self.metrics_manager.record_scalar(

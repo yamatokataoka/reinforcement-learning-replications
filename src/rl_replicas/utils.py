@@ -66,18 +66,21 @@ def unflatten_tensors(
 
 
 def polyak_average(
-    params: Iterable[nn.Parameter], target_params: Iterable[nn.Parameter], tau: float
+    params: Iterable[nn.Parameter], target_params: Iterable[nn.Parameter], rho: float
 ) -> None:
     """
     Perform Polyak averaging on target_params using params
 
     :param params: (Iterable[torch.nn.Parameter]) The parameters to use to update the target params.
     :param target_params: (Iterable[torch.nn.Parameter]) The parameters to update.
-    :param tau: (float) The soft update coefficient ("Polyak update", between 0 and 1).
+    :param rho: (float) The coefficient for polyak averaging (between 0 and 1).
     """
     with torch.no_grad():
         for param, target_param in zip(params, target_params):
-            target_param.data.copy_((1.0 - tau) * target_param.data + tau * param.data)
+            target_param.data.copy_(
+                torch.tensor(rho) * target_param.data
+                + torch.tensor(1.0 - rho) * param.data
+            )
 
 
 def compute_values_numpy_list(
