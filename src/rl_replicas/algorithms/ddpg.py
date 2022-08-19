@@ -34,7 +34,7 @@ class DDPG:
     :param replay_buffer: (ReplayBuffer) Replay buffer.
     :param evaluator: (Evaluator) Evaluator.
     :param gamma: (float) The discount factor for the cumulative return.
-    :param tau: (float) The interpolation factor in polyak averaging for target networks.
+    :param polyak_rho: (float) The interpolation factor in polyak averaging for target networks.
     :param action_noise_scale: (float) The scale of the noise (std).
     """
 
@@ -48,7 +48,7 @@ class DDPG:
         replay_buffer: ReplayBuffer,
         evaluator: Evaluator,
         gamma: float = 0.99,
-        tau: float = 0.005,
+        polyak_rho: float = 0.995,
         action_noise_scale: float = 0.1,
     ) -> None:
         self.policy = policy
@@ -59,7 +59,7 @@ class DDPG:
         self.replay_buffer = replay_buffer
         self.evaluator = evaluator
         self.gamma = gamma
-        self.tau = tau
+        self.polyak_rho = polyak_rho
         self.action_noise_scale = action_noise_scale
 
         self.noised_policy = add_noise_to_get_action(
@@ -79,7 +79,7 @@ class DDPG:
         num_epochs: int = 2000,
         batch_size: int = 50,
         minibatch_size: int = 100,
-        num_random_start_steps: int = 10000,
+        num_start_steps: int = 10000,
         num_steps_before_update: int = 1000,
         num_train_steps: int = 50,
         num_evaluation_episodes: int = 5,
@@ -93,8 +93,7 @@ class DDPG:
         :param num_epochs: (int) The number of epochs to run and train.
         :param batch_size: (int) The number of steps to run per epoch.
         ;param minibatch_size: (int) The minibatch size for SGD.
-        :param num_random_start_steps: (int) The number of steps for uniform-random action selection for exploration
-            at the beginning.
+        :param num_start_steps: (int) The number of steps for exploration action selection at the beginning.
         :param num_steps_before_update: (int) The number of steps to perform before policy is updated.
         :param num_train_steps: (int) The number of training steps on each epoch.
         :param num_evaluation_episodes: (int) The number of evaluation episodes.
@@ -112,7 +111,7 @@ class DDPG:
 
         for current_epoch in range(1, num_epochs + 1):
             experience: Experience
-            if self.current_total_steps < num_random_start_steps:
+            if self.current_total_steps < num_start_steps:
                 experience = self.sampler.sample(batch_size, self.exploration_policy)
             else:
                 experience = self.sampler.sample(batch_size, self.noised_policy)
@@ -139,22 +138,22 @@ class DDPG:
 
             if len(episode_lengths) > 0:
                 self.metrics_manager.record_scalar(
-                    "training/average_episode_return",
+                    "sampling/average_episode_return",
                     float(np.mean(episode_returns)),
                     self.current_total_steps,
                     tensorboard=True,
                 )
                 self.metrics_manager.record_scalar(
-                    "training/episode_return_std", float(np.std(episode_returns))
+                    "sampling/episode_return_std", float(np.std(episode_returns))
                 )
                 self.metrics_manager.record_scalar(
-                    "training/max_episode_return", float(np.max(episode_returns))
+                    "sampling/max_episode_return", float(np.max(episode_returns))
                 )
                 self.metrics_manager.record_scalar(
-                    "training/min_episode_return", float(np.min(episode_returns))
+                    "sampling/min_episode_return", float(np.min(episode_returns))
                 )
                 self.metrics_manager.record_scalar(
-                    "training/average_episode_length",
+                    "sampling/average_episode_length",
                     float(np.mean(episode_lengths)),
                     self.current_total_steps,
                     tensorboard=True,
@@ -207,9 +206,7 @@ class DDPG:
                 logger.debug("Save model")
                 self.save_model(current_epoch, model_path)
 
-            self.metrics_manager.record_scalar(
-                "training/time", time.time() - start_time
-            )
+            self.metrics_manager.record_scalar("time", time.time() - start_time)
 
             # Dump all metrics stored in this epoch
             self.metrics_manager.dump()
@@ -255,12 +252,12 @@ class DDPG:
             polyak_average(
                 self.policy.network.parameters(),
                 self.target_policy.network.parameters(),
-                self.tau,
+                self.polyak_rho,
             )
             polyak_average(
                 self.q_function.network.parameters(),
                 self.target_q_function.network.parameters(),
-                self.tau,
+                self.polyak_rho,
             )
 
         self.metrics_manager.record_scalar(

@@ -7,8 +7,6 @@ from torch import Tensor
 from torch.optim import Optimizer
 from typing_extensions import TypedDict
 
-from rl_replicas.utils import unflatten_tensors
-
 logger = logging.getLogger(__name__)
 
 State = TypedDict(
@@ -162,7 +160,7 @@ class ConjugateGradientOptimizer(Optimizer):
             :param vector (Tensor): The vector to be multiplied with Hessian.
             :return: (Tensor) The product of Hessian of function f and v.
             """
-            unflatten_vector: Tensor = unflatten_tensors(vector, param_shapes)
+            unflatten_vector: Tensor = self.unflatten_tensors(vector, param_shapes)
 
             assert len(hessian_target_vector_grads) == len(unflatten_vector)
             grad_vector_product_list: List[Tensor] = []
@@ -231,7 +229,9 @@ class ConjugateGradientOptimizer(Optimizer):
         loss_before: Tensor = loss_function()
 
         param_shapes: List[torch.Size] = [p.shape or torch.Size([1]) for p in params]
-        descent_step_list: List[Tensor] = unflatten_tensors(descent_step, param_shapes)
+        descent_step_list: List[Tensor] = self.unflatten_tensors(
+            descent_step, param_shapes
+        )
         assert len(descent_step_list) == len(params)
 
         for ratio in ratio_list:
@@ -266,3 +266,21 @@ class ConjugateGradientOptimizer(Optimizer):
 
             for previous_param, param in zip(previous_params, params):
                 param.data = previous_param.data
+
+    def unflatten_tensors(
+        self, flattened: np.ndarray, tensor_shapes: List[torch.Size]
+    ) -> List[Tensor]:
+        """
+        Unflatten a flattened tensors into a list of tensors
+
+        :param flattened: (np.ndarray) Flattened tensors.
+        :param tensor_shapes: (List[torch.Size]) Tensor shapes.
+        :return: (List[np.ndarray]) Unflattened list of tensors.
+        """
+        tensor_sizes = list(map(np.prod, tensor_shapes))
+        indices = np.cumsum(tensor_sizes)[:-1]
+
+        return [
+            np.reshape(pair[0], pair[1])
+            for pair in zip(np.split(flattened, indices), tensor_shapes)
+        ]

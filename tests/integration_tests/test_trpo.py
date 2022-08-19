@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 from gym import Env
 from gym.spaces import Box, Discrete
+from pytest import approx
 
 from rl_replicas.algorithms import TRPO
 from rl_replicas.evaluator import Evaluator
@@ -39,6 +40,8 @@ class TestTRPO:
 
         model.learn(
             num_epochs=3,
+            batch_size=100,
+            model_saving_interval=100,
             output_dir="/tmp/rl_replicas_tests/trpo-"
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
         )
@@ -47,7 +50,7 @@ class TestTRPO:
         episode_returns: List[float]
         episode_returns, _ = evaluator.evaluate(model.policy, evaluation_env, 1)
 
-        assert round(episode_returns[0], 2) == 23.0
+        assert episode_returns[0] == approx(21.0, 0.01)
 
     def test_trpo_with_pendulum(self) -> None:
         """
@@ -65,6 +68,8 @@ class TestTRPO:
 
         model.learn(
             num_epochs=3,
+            batch_size=100,
+            model_saving_interval=100,
             output_dir="/tmp/rl_replicas_tests/trpo-"
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
         )
@@ -73,7 +78,7 @@ class TestTRPO:
         episode_returns: List[float]
         episode_returns, _ = evaluator.evaluate(model.policy, evaluation_env, 1)
 
-        assert round(episode_returns[0], 2) == -1008.26
+        assert episode_returns[0] == approx(-1496.463, 0.01)
 
     def create_trpo(self, env: Env, seed_manager: SeedManager) -> TRPO:
         observation_size: int = env.observation_space.shape[0]

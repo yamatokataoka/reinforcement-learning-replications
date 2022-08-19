@@ -1,4 +1,3 @@
-import copy
 from typing import Iterable, List
 
 import numpy as np
@@ -46,38 +45,22 @@ def gae(
     return gaes
 
 
-def unflatten_tensors(
-    flattened: np.ndarray, tensor_shapes: List[torch.Size]
-) -> List[Tensor]:
-    """
-    Unflatten a flattened tensors into a list of tensors
-
-    :param flattened: (np.ndarray) Flattened tensors.
-    :param tensor_shapes: (List[torch.Size]) Tensor shapes.
-    :return: (List[np.ndarray]) Unflattened list of tensors.
-    """
-    tensor_sizes = list(map(np.prod, tensor_shapes))
-    indices = np.cumsum(tensor_sizes)[:-1]
-
-    return [
-        np.reshape(pair[0], pair[1])
-        for pair in zip(np.split(flattened, indices), tensor_shapes)
-    ]
-
-
 def polyak_average(
-    params: Iterable[nn.Parameter], target_params: Iterable[nn.Parameter], tau: float
+    params: Iterable[nn.Parameter], target_params: Iterable[nn.Parameter], rho: float
 ) -> None:
     """
     Perform Polyak averaging on target_params using params
 
     :param params: (Iterable[torch.nn.Parameter]) The parameters to use to update the target params.
     :param target_params: (Iterable[torch.nn.Parameter]) The parameters to update.
-    :param tau: (float) The soft update coefficient ("Polyak update", between 0 and 1).
+    :param rho: (float) The coefficient for polyak averaging (between 0 and 1).
     """
     with torch.no_grad():
         for param, target_param in zip(params, target_params):
-            target_param.data.copy_((1.0 - tau) * target_param.data + tau * param.data)
+            target_param.data.copy_(
+                torch.tensor(rho) * target_param.data
+                + torch.tensor(1.0 - rho) * param.data
+            )
 
 
 def compute_values_numpy_list(
@@ -126,10 +109,7 @@ def normalize_tensor(vector: Tensor) -> Tensor:
 def add_noise_to_get_action(
     policy: Policy, action_space: Space, action_noise_scale: float
 ) -> Policy:
-    copied_policy: Policy = copy.deepcopy(policy)
-    noised_policy: Policy = _NoisedPolicy(
-        copied_policy, action_space, action_noise_scale
-    )
+    noised_policy: Policy = _NoisedPolicy(policy, action_space, action_noise_scale)
 
     return noised_policy
 
@@ -148,14 +128,14 @@ class _NoisedPolicy(Policy):
         self.action_size = action_space.shape[0]
 
     def get_action_tensor(self, observation: Tensor) -> Tensor:
-        action = self.action_limit * self.base_policy.get_action_tensor(observation)
+        action = self.base_policy.get_action_tensor(observation)
         action += self.action_noise_scale * torch.randn(self.action_size)
         action = torch.clip(action, -self.action_limit, self.action_limit)
 
         return action
 
     def get_action_numpy(self, observation: np.ndarray) -> np.ndarray:
-        action = self.action_limit * self.base_policy.get_action_numpy(observation)
+        action = self.base_policy.get_action_numpy(observation)
         action += self.action_noise_scale * np.random.randn(self.action_size)
         action = np.clip(action, -self.action_limit, self.action_limit)
 

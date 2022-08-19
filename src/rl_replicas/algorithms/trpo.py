@@ -99,22 +99,22 @@ class TRPO:
             )
 
             self.metrics_manager.record_scalar(
-                "training/average_episode_return",
+                "sampling/average_episode_return",
                 float(np.mean(episode_returns)),
                 self.current_total_steps,
                 tensorboard=True,
             )
             self.metrics_manager.record_scalar(
-                "training/episode_return_std", float(np.std(episode_returns))
+                "sampling/episode_return_std", float(np.std(episode_returns))
             )
             self.metrics_manager.record_scalar(
-                "training/max_episode_return", float(np.max(episode_returns))
+                "sampling/max_episode_return", float(np.max(episode_returns))
             )
             self.metrics_manager.record_scalar(
-                "training/min_episode_return", float(np.min(episode_returns))
+                "sampling/min_episode_return", float(np.min(episode_returns))
             )
             self.metrics_manager.record_scalar(
-                "training/average_episode_length",
+                "sampling/average_episode_length",
                 float(np.mean(episode_lengths)),
                 self.current_total_steps,
                 tensorboard=True,
@@ -128,9 +128,7 @@ class TRPO:
                 logger.debug("Save model")
                 self.save_model(current_epoch, model_path)
 
-            self.metrics_manager.record_scalar(
-                "training/time", time.time() - start_time
-            )
+            self.metrics_manager.record_scalar("time", time.time() - start_time)
 
             # Dump all metrics stored in this epoch
             self.metrics_manager.dump()
