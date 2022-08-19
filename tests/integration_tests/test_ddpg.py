@@ -6,6 +6,7 @@ import gym
 import torch
 import torch.nn as nn
 from gym import Env
+from pytest import approx
 
 from rl_replicas.algorithms import DDPG
 from rl_replicas.evaluator import Evaluator
@@ -65,9 +66,11 @@ class TestDDPG:
         )
 
         model.learn(
-            num_epochs=30,
-            evaluation_interval=500,
-            model_saving_interval=500,
+            num_epochs=6,
+            num_start_steps=100,
+            num_steps_before_update=200,
+            evaluation_interval=100,
+            model_saving_interval=100,
             output_dir="/tmp/rl_replicas_tests/ddpg-"
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
         )
@@ -76,4 +79,4 @@ class TestDDPG:
         episode_returns: List[float]
         episode_returns, _ = evaluator.evaluate(model.policy, evaluation_env, 1)
 
-        assert round(episode_returns[0], 2) == -1587.95
+        assert episode_returns[0] == approx(-1597.741, 0.01)

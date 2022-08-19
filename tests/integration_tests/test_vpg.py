@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 from gym import Env
 from gym.spaces import Box, Discrete
+from pytest import approx
 
 from rl_replicas.algorithms import VPG
 from rl_replicas.evaluator import Evaluator
@@ -38,6 +39,8 @@ class TestVPG:
 
         model.learn(
             num_epochs=3,
+            batch_size=100,
+            model_saving_interval=100,
             output_dir="/tmp/rl_replicas_tests/vpg-"
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
         )
@@ -46,7 +49,7 @@ class TestVPG:
         episode_returns: List[float]
         episode_returns, _ = evaluator.evaluate(model.policy, evaluation_env, 1)
 
-        assert round(episode_returns[0], 2) == 21.0
+        assert episode_returns[0] == approx(18.0, 0.01)
 
     def test_vpg_with_pendulum(self) -> None:
         """
@@ -64,6 +67,8 @@ class TestVPG:
 
         model.learn(
             num_epochs=3,
+            batch_size=100,
+            model_saving_interval=100,
             output_dir="/tmp/rl_replicas_tests/vpg-"
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
         )
@@ -72,7 +77,7 @@ class TestVPG:
         episode_returns: List[float]
         episode_returns, _ = evaluator.evaluate(model.policy, evaluation_env, 1)
 
-        assert round(episode_returns[0], 2) == -867.44
+        assert episode_returns[0] == approx(-1021.275, 0.01)
 
     def create_vpg(self, env: Env, seed_manager: SeedManager) -> VPG:
         observation_size: int = env.observation_space.shape[0]
