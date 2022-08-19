@@ -98,7 +98,7 @@ class TD3:
         num_epochs: int = 2000,
         batch_size: int = 50,
         minibatch_size: int = 100,
-        num_random_start_steps: int = 10000,
+        num_start_steps: int = 10000,
         num_steps_before_update: int = 1000,
         num_train_steps: int = 50,
         num_evaluation_episodes: int = 5,
@@ -112,8 +112,7 @@ class TD3:
         :param num_epochs: (int) The number of epochs to run and train.
         :param batch_size: (int) The number of steps to run per epoch.
         ;param minibatch_size: (int) The minibatch size for SGD.
-        :param num_random_start_steps: (int) The number of steps for uniform-random action selection for exploration
-            at the beginning.
+        :param num_start_steps: (int) The number of steps for exploration action selection at the beginning.
         :param num_steps_before_update: (int) The number of steps to perform before policy is updated.
         :param num_train_steps: (int) The number of training steps on each epoch.
         :param num_evaluation_episodes: (int) The number of evaluation episodes.
@@ -131,7 +130,7 @@ class TD3:
 
         for current_epoch in range(1, num_epochs + 1):
             experience: Experience
-            if self.current_total_steps < num_random_start_steps:
+            if self.current_total_steps < num_start_steps:
                 experience = self.sampler.sample(batch_size, self.exploration_policy)
             else:
                 experience = self.sampler.sample(batch_size, self.noised_policy)
