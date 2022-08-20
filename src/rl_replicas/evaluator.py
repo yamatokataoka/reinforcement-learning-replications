@@ -4,12 +4,11 @@ import gym
 import numpy as np
 
 from rl_replicas.policies import Policy
-from rl_replicas.seed_manager import SeedManager
 
 
 class Evaluator:
-    def __init__(self, seed_manager: SeedManager):
-        self.seed_manager = seed_manager
+    def __init__(self, seed: int):
+        self.seed = seed
 
     def evaluate(
         self, policy: Policy, env: gym.Env, num_episodes: int
@@ -24,7 +23,7 @@ class Evaluator:
         episode_returns: List[float] = []
         episode_lengths: List[int] = []
 
-        observation: np.ndarray = env.reset(seed=self.seed_manager.seed)
+        observation: np.ndarray = env.reset(seed=self.seed)
 
         for _ in range(num_episodes):
             done: bool = False

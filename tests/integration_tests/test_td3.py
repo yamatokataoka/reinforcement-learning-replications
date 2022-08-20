@@ -74,7 +74,7 @@ class TestTD3:
             env,
             BatchSampler(env, seed_manager.seed, is_continuous=True),
             ReplayBuffer(int(1e6)),
-            Evaluator(seed_manager),
+            Evaluator(seed_manager.seed),
         )
 
         model.learn(
@@ -87,7 +87,7 @@ class TestTD3:
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
         )
 
-        evaluator: Evaluator = Evaluator(seed_manager)
+        evaluator: Evaluator = Evaluator(seed_manager.seed)
         episode_returns: List[float]
         episode_returns, _ = evaluator.evaluate(model.policy, evaluation_env, 1)
 

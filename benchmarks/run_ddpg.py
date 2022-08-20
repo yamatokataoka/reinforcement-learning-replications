@@ -52,7 +52,7 @@ def run_ddpg(environment_name: str, seed: int, output_dir: str) -> None:
         env,
         BatchSampler(env, seed_manager.seed, is_continuous=True),
         ReplayBuffer(int(1e6)),
-        Evaluator(seed_manager),
+        Evaluator(seed_manager.seed),
     )
 
     experiment_dir: str = os.path.join(
