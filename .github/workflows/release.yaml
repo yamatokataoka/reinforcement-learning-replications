@@ -34,3 +34,14 @@ jobs:
         with:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}
+
+      - name: Get version
+        run: echo "VERSION=$(cat VERSION)" >> $GITHUB_ENV
+
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          body: ${{ github.event.pull_request.body }}
+          tag_name: ${{ env.VERSION }}
+          draft: false
+          prerelease: false
