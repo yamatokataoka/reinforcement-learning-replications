@@ -7,7 +7,6 @@ import numpy as np
 from rl_replicas.experience import Experience
 from rl_replicas.policies import Policy
 from rl_replicas.samplers import Sampler
-from rl_replicas.seed_manager import SeedManager
 
 logger = logging.getLogger(__name__)
 
@@ -16,20 +15,29 @@ class BatchSampler(Sampler):
     """
     Batch sampler
 
-    :param algorithm: (int) RL algorithm.
-    :param env: (int) Environment.
+    :param env: (gym.Env) Environment.
+    :param seed: (int) Seed.
+    :param is_continuous: (bool) If true, observation is retained and
+        it samples experiences continuously across sample function calls.
     """
 
     def __init__(
-        self, env: gym.Env, seed_manager: SeedManager, is_continuous: bool = False
+        self, env: gym.Env, seed: Optional[int] = None, is_continuous: bool = False
     ):
         self.env = env
-        self.seed_manager = seed_manager
+        self.seed = seed
         self.is_continuous = is_continuous
 
         self.observation: Optional[np.ndarray] = None
 
     def sample(self, num_samples: int, policy: Policy) -> Experience:
+        """
+        Sample experience
+
+        :param num_samples: (int) The number of samples to collect.
+        :param policy: (int) Policy.
+        :return: (Experience) Sampled experience.
+        """
         experience: Experience = Experience()
 
         # Variables on each episode
@@ -42,7 +50,7 @@ class BatchSampler(Sampler):
 
         if self.observation is None:
             # Reset env for the first function call
-            self.observation = self.env.reset(seed=self.seed_manager.seed)
+            self.observation = self.env.reset(seed=self.seed)
         elif not self.is_continuous:
             self.observation = self.env.reset()
 

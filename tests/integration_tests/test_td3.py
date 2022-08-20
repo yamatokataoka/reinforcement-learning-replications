@@ -15,7 +15,6 @@ from rl_replicas.policies import DeterministicPolicy, RandomPolicy
 from rl_replicas.q_function import QFunction
 from rl_replicas.replay_buffer import ReplayBuffer
 from rl_replicas.samplers import BatchSampler
-from rl_replicas.seed_manager import SeedManager
 
 
 class TestTD3:
@@ -23,15 +22,12 @@ class TestTD3:
     Integration test for TD3
     """
 
-    def test_td3_with_pendulum(self) -> None:
+    def test_td3_with_pendulum(self, seed: int) -> None:
         """
         Test TD3 with Pendulum environment (continuous action spaces)
         """
-        seed_manager: SeedManager = SeedManager(0)
-        seed_manager.set_seed_for_libraries()
-
         env = gym.make("Pendulum-v1")
-        env.action_space.seed(seed_manager.seed)
+        env.action_space.seed(seed)
 
         evaluation_env: Env = copy.deepcopy(env)
 
@@ -72,9 +68,9 @@ class TestTD3:
                 ),
             ),
             env,
-            BatchSampler(env, seed_manager, is_continuous=True),
+            BatchSampler(env, seed, is_continuous=True),
             ReplayBuffer(int(1e6)),
-            Evaluator(seed_manager),
+            Evaluator(seed),
         )
 
         model.learn(
@@ -87,7 +83,7 @@ class TestTD3:
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
         )
 
-        evaluator: Evaluator = Evaluator(seed_manager)
+        evaluator: Evaluator = Evaluator(seed)
         episode_returns: List[float]
         episode_returns, _ = evaluator.evaluate(model.policy, evaluation_env, 1)
 

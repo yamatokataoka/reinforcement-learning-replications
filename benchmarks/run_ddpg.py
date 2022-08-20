@@ -13,17 +13,16 @@ from rl_replicas.policies import DeterministicPolicy, RandomPolicy
 from rl_replicas.q_function import QFunction
 from rl_replicas.replay_buffer import ReplayBuffer
 from rl_replicas.samplers import BatchSampler
-from rl_replicas.seed_manager import SeedManager
+from rl_replicas.utils import set_seed_for_libraries
 
 ALGORITHM_NAME: str = "ddpg"
 
 
 def run_ddpg(environment_name: str, seed: int, output_dir: str) -> None:
-    seed_manager: SeedManager = SeedManager(seed)
-    seed_manager.set_seed_for_libraries()
+    set_seed_for_libraries(seed)
 
     env = gym.make(environment_name)
-    env.action_space.seed(seed_manager.seed)
+    env.action_space.seed(seed)
 
     observation_size: int = env.observation_space.shape[0]
     action_size: int = env.action_space.shape[0]
@@ -50,9 +49,9 @@ def run_ddpg(environment_name: str, seed: int, output_dir: str) -> None:
             optimizer=torch.optim.Adam(q_function_network.parameters(), lr=1e-3),
         ),
         env,
-        BatchSampler(env, seed_manager, is_continuous=True),
+        BatchSampler(env, seed, is_continuous=True),
         ReplayBuffer(int(1e6)),
-        Evaluator(seed_manager),
+        Evaluator(seed),
     )
 
     experiment_dir: str = os.path.join(

@@ -15,7 +15,6 @@ from rl_replicas.networks import MLP
 from rl_replicas.optimizers import ConjugateGradientOptimizer
 from rl_replicas.policies import CategoricalPolicy, GaussianPolicy, Policy
 from rl_replicas.samplers import BatchSampler
-from rl_replicas.seed_manager import SeedManager
 from rl_replicas.value_function import ValueFunction
 
 
@@ -24,19 +23,16 @@ class TestTRPO:
     Integration test for TRPO
     """
 
-    def test_trpo_with_cartpole(self) -> None:
+    def test_trpo_with_cartpole(self, seed: int) -> None:
         """
         Test TRPO with CartPole environment (discrete action spaces)
         """
-        seed_manager: SeedManager = SeedManager(0)
-        seed_manager.set_seed_for_libraries()
-
         env = gym.make("CartPole-v0")
-        env.action_space.seed(seed_manager.seed)
+        env.action_space.seed(seed)
 
         evaluation_env: Env = copy.deepcopy(env)
 
-        model: TRPO = self.create_trpo(env, seed_manager)
+        model: TRPO = self.create_trpo(env, seed)
 
         model.learn(
             num_epochs=3,
@@ -46,25 +42,22 @@ class TestTRPO:
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
         )
 
-        evaluator: Evaluator = Evaluator(seed_manager)
+        evaluator: Evaluator = Evaluator(seed)
         episode_returns: List[float]
         episode_returns, _ = evaluator.evaluate(model.policy, evaluation_env, 1)
 
         assert episode_returns[0] == approx(21.0, 0.01)
 
-    def test_trpo_with_pendulum(self) -> None:
+    def test_trpo_with_pendulum(self, seed: int) -> None:
         """
         Test TRPO with Pendulum environment (continuous action spaces)
         """
-        seed_manager: SeedManager = SeedManager(0)
-        seed_manager.set_seed_for_libraries()
-
         env = gym.make("Pendulum-v1")
-        env.action_space.seed(seed_manager.seed)
+        env.action_space.seed(seed)
 
         evaluation_env: Env = copy.deepcopy(env)
 
-        model: TRPO = self.create_trpo(env, seed_manager)
+        model: TRPO = self.create_trpo(env, seed)
 
         model.learn(
             num_epochs=3,
@@ -74,13 +67,13 @@ class TestTRPO:
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
         )
 
-        evaluator: Evaluator = Evaluator(seed_manager)
+        evaluator: Evaluator = Evaluator(seed)
         episode_returns: List[float]
         episode_returns, _ = evaluator.evaluate(model.policy, evaluation_env, 1)
 
         assert episode_returns[0] == approx(-1496.463, 0.01)
 
-    def create_trpo(self, env: Env, seed_manager: SeedManager) -> TRPO:
+    def create_trpo(self, env: Env, seed: int) -> TRPO:
         observation_size: int = env.observation_space.shape[0]
         action_size: int
         if isinstance(env.action_space, Discrete):
@@ -122,7 +115,7 @@ class TestTRPO:
                 ),
             ),
             env,
-            BatchSampler(env, seed_manager),
+            BatchSampler(env, seed),
         )
 
         return model

@@ -9,7 +9,6 @@ from pytest import fixture
 from rl_replicas.experience import Experience
 from rl_replicas.policies import Policy, RandomPolicy
 from rl_replicas.samplers import BatchSampler, Sampler
-from rl_replicas.seed_manager import SeedManager
 
 ExpectedExperience = namedtuple(
     "ExpectedExperience",
@@ -26,29 +25,20 @@ ExpectedExperience = namedtuple(
 
 class TestSamplers:
     @fixture
-    def seed_manager(self) -> SeedManager:
-        seed_manager: SeedManager = SeedManager(0)
-        seed_manager.set_seed_for_libraries()
-
-        return seed_manager
-
-    @fixture
     def env(self) -> gym.Env:
         env = gym.make("CartPole-v0")
         return env
 
     @fixture
-    def expected_experience(
-        self, seed_manager: SeedManager, env: gym.Env
-    ) -> ExpectedExperience:
-        env.action_space.seed(seed_manager.seed)
+    def expected_experience(self, seed: int, env: gym.Env) -> ExpectedExperience:
+        env.action_space.seed(seed)
         num_samples: int = 1000
 
         expected_experience: ExpectedExperience = ExpectedExperience(
             [], [], [], [], [], []
         )
 
-        observation = env.reset(seed=seed_manager.seed)
+        observation = env.reset(seed=seed)
 
         for current_step in range(num_samples):
             expected_experience.observations.append(observation)
@@ -77,11 +67,11 @@ class TestSamplers:
         return expected_experience
 
     def test_sample(
-        self, seed_manager: SeedManager, env: gym.Env, expected_experience: Experience
+        self, seed: int, env: gym.Env, expected_experience: Experience
     ) -> None:
-        env.action_space.seed(seed_manager.seed)
+        env.action_space.seed(seed)
 
-        sampler: Sampler = BatchSampler(env, seed_manager)
+        sampler: Sampler = BatchSampler(env, seed)
         policy: Policy = RandomPolicy(env.action_space)
 
         experience: Experience = sampler.sample(1000, policy)
@@ -98,11 +88,11 @@ class TestSamplers:
         assert_array_equal(experience.flattened_dones, expected_experience.dones)
 
     def test_sample_continuous(
-        self, seed_manager: SeedManager, env: gym.Env, expected_experience: Experience
+        self, seed: int, env: gym.Env, expected_experience: Experience
     ) -> None:
-        env.action_space.seed(seed_manager.seed)
+        env.action_space.seed(seed)
 
-        sampler: Sampler = BatchSampler(env, seed_manager, is_continuous=True)
+        sampler: Sampler = BatchSampler(env, seed, is_continuous=True)
         policy: Policy = RandomPolicy(env.action_space)
 
         observations: List[np.ndarray] = []
