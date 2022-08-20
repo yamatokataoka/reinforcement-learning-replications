@@ -83,7 +83,7 @@ All contributions are welcome.
 
 ### Release Flow
 
-1. A release branch with a version
+1. A release branch named `release`
 1. A pull request from the release branch to the main branch (`master`)
 
 Once the pull request is ready,

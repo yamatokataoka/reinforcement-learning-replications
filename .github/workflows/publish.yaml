@@ -1,13 +1,16 @@
-name: Publish to PyPI
+name: Release
 
 on:
-  release:
+  pull_request:
+    branches:
+      - release
     types:
-      - published
+      - closed
 
 jobs:
-  publish:
-    name: Publish to PyPI
+  release:
+    name: Release
+    if: github.event.pull_request.merged
     runs-on: ubuntu-latest
 
     steps:
@@ -16,7 +19,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.7'
+          python-version: "3.7"
 
       - name: Install dependencies
         run: |
