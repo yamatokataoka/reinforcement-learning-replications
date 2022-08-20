@@ -15,8 +15,10 @@ class BatchSampler(Sampler):
     """
     Batch sampler
 
-    :param algorithm: (int) RL algorithm.
-    :param env: (int) Environment.
+    :param env: (gym.Env) Environment.
+    :param seed: (int) Seed.
+    :param is_continuous: (bool) If true, observation is retained and
+        it samples experiences continuously across sample function calls.
     """
 
     def __init__(
@@ -29,6 +31,13 @@ class BatchSampler(Sampler):
         self.observation: Optional[np.ndarray] = None
 
     def sample(self, num_samples: int, policy: Policy) -> Experience:
+        """
+        Sample experience
+
+        :param num_samples: (int) The number of samples to collect.
+        :param policy: (int) Policy.
+        :return: (Experience) Sampled experience.
+        """
         experience: Experience = Experience()
 
         # Variables on each episode

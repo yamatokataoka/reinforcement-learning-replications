@@ -7,6 +7,12 @@ from rl_replicas.policies import Policy
 
 
 class Evaluator:
+    """
+    Evaluator
+
+    :param seed: (int) Seed.
+    """
+
     def __init__(self, seed: Optional[int] = None):
         self.seed = seed
 
