@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import gym
 import numpy as np
@@ -7,7 +7,7 @@ from rl_replicas.policies import Policy
 
 
 class Evaluator:
-    def __init__(self, seed: int):
+    def __init__(self, seed: Optional[int] = None):
         self.seed = seed
 
     def evaluate(

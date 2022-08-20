@@ -19,7 +19,9 @@ class BatchSampler(Sampler):
     :param env: (int) Environment.
     """
 
-    def __init__(self, env: gym.Env, seed: int, is_continuous: bool = False):
+    def __init__(
+        self, env: gym.Env, seed: Optional[int] = None, is_continuous: bool = False
+    ):
         self.env = env
         self.seed = seed
         self.is_continuous = is_continuous
