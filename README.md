@@ -24,27 +24,22 @@ All experiments were run for 3 random seeds each. All the details such as tensor
 
 ## Example Code
 
-Here is the code to run the training of VPG on CartPole-v0 environment.
+Here is the code of training PPO on CartPole-v1 environment. You can run with [this Google Colab notebook](https://colab.research.google.com/drive/18MRw1FcDS4b_t3HAgfvyxBCi_1Z4lD__#scrollTo=A5GI_PJSchBn).
 
 ```python
-import datetime
-import logging
-import sys
-
 import gym
 import torch
 import torch.nn as nn
 
-from rl_replicas.algorithms import VPG
+from rl_replicas.algorithms import PPO
 from rl_replicas.networks import MLP
 from rl_replicas.policies import CategoricalPolicy
+from rl_replicas.samplers import BatchSampler
 from rl_replicas.value_function import ValueFunction
 
-logging.basicConfig(level=logging.INFO, stream=sys.stdout, format="")
-
-env_name = "CartPole-v0"
-output_dir = "./runs/vpg/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-num_epochs = 200
+env_name = "CartPole-v1"
+output_dir = "/content/ppo"
+num_epochs = 80
 seed = 0
 
 network_hidden_sizes = [64, 64]
@@ -52,29 +47,33 @@ policy_learning_rate = 3e-4
 value_function_learning_rate = 1e-3
 
 env = gym.make(env_name)
+env.action_space.seed(seed)
+
+observation_size: int = env.observation_space.shape[0]
+action_size: int = env.action_space.n
 
 policy_network: nn.Module = MLP(
-    sizes=[env.observation_space.shape[0]] + network_hidden_sizes + [env.action_space.n]
-)
-
-policy: CategoricalPolicy = CategoricalPolicy(
-    network=policy_network,
-    optimizer=torch.optim.Adam(policy_network.parameters(), lr=policy_learning_rate)
+    sizes=[observation_size] + network_hidden_sizes + [action_size]
 )
 
 value_function_network: nn.Module = MLP(
-    sizes=[env.observation_space.shape[0]] + network_hidden_sizes + [1]
+    sizes=[observation_size] + network_hidden_sizes + [1]
 )
-value_function: ValueFunction = ValueFunction(
-    network=value_function_network,
-    optimizer=torch.optim.Adam(
-        value_function_network.parameters(), lr=value_function_learning_rate
+
+model: PPO = PPO(
+    CategoricalPolicy(
+        network=policy_network,
+        optimizer=torch.optim.Adam(policy_network.parameters(), lr=3e-4),
     ),
+    ValueFunction(
+        network=value_function_network,
+        optimizer=torch.optim.Adam(value_function_network.parameters(), lr=1e-3),
+    ),
+    env,
+    BatchSampler(env, seed),
 )
 
-model: VPG = VPG(policy, value_function, env, seed=seed)
-
-model.learn(num_epochs=num_epochs, output_dir=output_dir, tensorboard=True, model_saving=True)
+model.learn(num_epochs=num_epochs, output_dir=output_dir)
 
 ```
 
