@@ -27,10 +27,7 @@ jobs:
           python -m pip install --upgrade build tox
 
       - name: Check styles
-        run: python -m tox fix,check
-
-      - name: Test
-        run: python -m tox test
+        run: python -m tox -e fix,check
 
       - name: Build
         run: python -m build --sdist --wheel --outdir dist/ .
