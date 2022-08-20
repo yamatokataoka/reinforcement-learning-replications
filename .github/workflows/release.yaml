@@ -24,7 +24,13 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install --upgrade build
+          python -m pip install --upgrade build tox
+
+      - name: Check styles
+        run: python -m tox check
+
+      - name: Test
+        run: python -m tox test
 
       - name: Build
         run: python -m build --sdist --wheel --outdir dist/ .
