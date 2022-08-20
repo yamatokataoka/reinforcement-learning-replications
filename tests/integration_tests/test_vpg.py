@@ -26,7 +26,7 @@ class TestVPG:
         """
         Test VPG with CartPole environment (discrete action spaces)
         """
-        env = gym.make("CartPole-v0")
+        env = gym.make("CartPole-v1")
         env.action_space.seed(seed)
 
         evaluation_env: Env = copy.deepcopy(env)

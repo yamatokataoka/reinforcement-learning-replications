@@ -26,7 +26,7 @@ ExpectedExperience = namedtuple(
 class TestSamplers:
     @fixture
     def env(self) -> gym.Env:
-        env = gym.make("CartPole-v0")
+        env = gym.make("CartPole-v1")
         return env
 
     @fixture
