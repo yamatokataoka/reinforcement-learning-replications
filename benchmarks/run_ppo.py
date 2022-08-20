@@ -40,7 +40,7 @@ def run_ppo(environment_name: str, seed: int, output_dir: str) -> None:
             optimizer=torch.optim.Adam(value_function_network.parameters(), lr=1e-3),
         ),
         env,
-        BatchSampler(env, seed_manager),
+        BatchSampler(env, seed_manager.seed),
     )
 
     experiment_dir: str = os.path.join(

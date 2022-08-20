@@ -81,7 +81,7 @@ class TestSamplers:
     ) -> None:
         env.action_space.seed(seed_manager.seed)
 
-        sampler: Sampler = BatchSampler(env, seed_manager)
+        sampler: Sampler = BatchSampler(env, seed_manager.seed)
         policy: Policy = RandomPolicy(env.action_space)
 
         experience: Experience = sampler.sample(1000, policy)
@@ -102,7 +102,7 @@ class TestSamplers:
     ) -> None:
         env.action_space.seed(seed_manager.seed)
 
-        sampler: Sampler = BatchSampler(env, seed_manager, is_continuous=True)
+        sampler: Sampler = BatchSampler(env, seed_manager.seed, is_continuous=True)
         policy: Policy = RandomPolicy(env.action_space)
 
         observations: List[np.ndarray] = []

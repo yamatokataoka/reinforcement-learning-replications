@@ -72,7 +72,7 @@ class TestTD3:
                 ),
             ),
             env,
-            BatchSampler(env, seed_manager, is_continuous=True),
+            BatchSampler(env, seed_manager.seed, is_continuous=True),
             ReplayBuffer(int(1e6)),
             Evaluator(seed_manager),
         )

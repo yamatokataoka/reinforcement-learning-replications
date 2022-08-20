@@ -1,5 +1,4 @@
 import random
-from typing import Optional
 
 import numpy as np
 import torch
@@ -12,7 +11,7 @@ class SeedManager:
     :param seed: (int) Seed.
     """
 
-    def __init__(self, seed: Optional[int] = None):
+    def __init__(self, seed: int):
         self.seed = seed
 
     def set_seed_for_libraries(self) -> None:

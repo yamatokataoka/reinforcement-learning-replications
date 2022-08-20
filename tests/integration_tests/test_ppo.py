@@ -122,7 +122,7 @@ class TestPPO:
                 ),
             ),
             env,
-            BatchSampler(env, seed_manager),
+            BatchSampler(env, seed_manager.seed),
         )
 
         return model

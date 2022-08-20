@@ -7,7 +7,6 @@ import numpy as np
 from rl_replicas.experience import Experience
 from rl_replicas.policies import Policy
 from rl_replicas.samplers import Sampler
-from rl_replicas.seed_manager import SeedManager
 
 logger = logging.getLogger(__name__)
 
@@ -20,11 +19,9 @@ class BatchSampler(Sampler):
     :param env: (int) Environment.
     """
 
-    def __init__(
-        self, env: gym.Env, seed_manager: SeedManager, is_continuous: bool = False
-    ):
+    def __init__(self, env: gym.Env, seed: int, is_continuous: bool = False):
         self.env = env
-        self.seed_manager = seed_manager
+        self.seed = seed
         self.is_continuous = is_continuous
 
         self.observation: Optional[np.ndarray] = None
@@ -42,7 +39,7 @@ class BatchSampler(Sampler):
 
         if self.observation is None:
             # Reset env for the first function call
-            self.observation = self.env.reset(seed=self.seed_manager.seed)
+            self.observation = self.env.reset(seed=self.seed)
         elif not self.is_continuous:
             self.observation = self.env.reset()
 
