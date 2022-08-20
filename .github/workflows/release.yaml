@@ -10,7 +10,7 @@ on:
 jobs:
   release:
     name: Release
-    if: contains(github.event.pull_request.labels.*.name, "release") && github.event.pull_request.merged
+    if: contains(github.event.pull_request.labels.*.name, 'release') && github.event.pull_request.merged
     runs-on: ubuntu-latest
 
     steps:
