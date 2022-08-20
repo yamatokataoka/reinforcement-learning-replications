@@ -1,3 +1,4 @@
+import random
 from typing import Iterable, List
 
 import numpy as np
@@ -140,3 +141,14 @@ class _NoisedPolicy(Policy):
         action = np.clip(action, -self.action_limit, self.action_limit)
 
         return action
+
+
+def set_seed_for_libraries(seed: int) -> None:
+    """
+    Set seed for random, numpy and torch.
+    """
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False

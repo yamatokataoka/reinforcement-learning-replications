@@ -11,18 +11,17 @@ from rl_replicas.networks import MLP
 from rl_replicas.optimizers import ConjugateGradientOptimizer
 from rl_replicas.policies import GaussianPolicy
 from rl_replicas.samplers import BatchSampler
-from rl_replicas.seed_manager import SeedManager
+from rl_replicas.utils import set_seed_for_libraries
 from rl_replicas.value_function import ValueFunction
 
 ALGORITHM_NAME: str = "trpo"
 
 
 def run_trpo(environment_name: str, seed: int, output_dir: str) -> None:
-    seed_manager: SeedManager = SeedManager(seed)
-    seed_manager.set_seed_for_libraries()
+    set_seed_for_libraries(seed)
 
     env = gym.make(environment_name)
-    env.action_space.seed(seed_manager.seed)
+    env.action_space.seed(seed)
 
     observation_size: int = env.observation_space.shape[0]
     action_size: int = env.action_space.shape[0]
@@ -41,7 +40,7 @@ def run_trpo(environment_name: str, seed: int, output_dir: str) -> None:
             optimizer=torch.optim.Adam(value_function_network.parameters(), lr=1e-3),
         ),
         env,
-        BatchSampler(env, seed_manager.seed),
+        BatchSampler(env, seed),
     )
 
     experiment_dir: str = os.path.join(
