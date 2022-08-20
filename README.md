@@ -83,8 +83,9 @@ All contributions are welcome.
 
 ### Release Flow
 
-1. A release branch named `release`
-1. Bump up the version in `VERSION`
-1. A pull request from the release branch to the main branch (`main`)
-1. Chnage logs in the body of the pull request
+1. Create a release branch.
+1. A pull request from the release branch to the `main` branch has the following:
+   - Change logs in the body.
+   - The `release` label.
+   - Commit that bumps up the version in `VERSION`.
 1. Once the pull request is ready, merge the pull request. The CI will upload the package and create the release.
