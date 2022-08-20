@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  pull_request:
+    branches:
+      - release
+    types:
+      - closed
+
+jobs:
+  release:
+    name: Release
+    if: github.event.pull_request.merged
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.7"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade build tox
+
+      - name: Check styles
+        run: python -m tox fix,check
+
+      - name: Test
+        run: python -m tox test
+
+      - name: Build
+        run: python -m build --sdist --wheel --outdir dist/ .
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_TOKEN }}
+
+      - name: Get version
+        run: echo "VERSION=$(cat VERSION)" >> $GITHUB_ENV
+
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          body: ${{ github.event.pull_request.body }}
+          tag_name: ${{ env.VERSION }}
+          draft: false
+          prerelease: false
