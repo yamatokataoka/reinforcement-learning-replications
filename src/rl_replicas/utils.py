@@ -1,3 +1,4 @@
+import copy
 import random
 from typing import Iterable, List
 
@@ -110,7 +111,8 @@ def normalize_tensor(vector: Tensor) -> Tensor:
 def add_noise_to_get_action(
     policy: Policy, action_space: Space, action_noise_scale: float
 ) -> Policy:
-    noised_policy: Policy = _NoisedPolicy(policy, action_space, action_noise_scale)
+    copied_policy: Policy = copy.deepcopy(policy)
+    noised_policy: Policy = _NoisedPolicy(copied_policy, action_space, action_noise_scale)
 
     return noised_policy
 
