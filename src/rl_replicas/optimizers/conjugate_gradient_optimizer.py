@@ -101,6 +101,8 @@ class ConjugateGradientOptimizer(Optimizer):
             )
         )
 
+        print(f"step_size: {step_size}")
+
         if np.isnan(step_size):
             step_size = 1.0
 
