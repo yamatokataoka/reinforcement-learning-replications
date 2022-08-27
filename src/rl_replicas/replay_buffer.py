@@ -24,6 +24,11 @@ class ReplayBuffer:
         self.dones: List[bool] = []
 
     def add_experience(self, experience: Experience) -> None:
+        """
+        Add experience
+
+        :param experience: (Experience) Experience.
+        """
         self.observations.extend(experience.flattened_observations)
         self.actions.extend(experience.flattened_actions)
         self.rewards.extend(experience.flattened_rewards)
@@ -44,6 +49,12 @@ class ReplayBuffer:
             self.current_size -= num_exceeded_experinece
 
     def sample_minibatch(self, minibatch_size: int = 32) -> Dict[str, np.ndarray]:
+        """
+        Sample minibatch
+
+        :param minibatch_size: (int) The number of transitions to be sampled.
+        :return: (Dict[str, np.ndarray]) Sampled transitions.
+        """
         indices = np.random.randint(0, self.current_size, minibatch_size)
 
         sampled_observations: np.ndarray = np.vstack(
