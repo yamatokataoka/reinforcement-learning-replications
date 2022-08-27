@@ -3,6 +3,8 @@ from typing import Dict, List
 
 import numpy as np
 
+from rl_replicas.experience import Experience
+
 
 class ReplayBuffer:
     """
@@ -21,21 +23,14 @@ class ReplayBuffer:
         self.next_observations: List[np.ndarray] = []
         self.dones: List[bool] = []
 
-    def add_experience(
-        self,
-        observations: List[np.ndarray],
-        actions: List[np.ndarray],
-        rewards: List[float],
-        next_observations: List[np.ndarray],
-        dones: List[bool],
-    ) -> None:
-        self.observations.extend(observations)
-        self.actions.extend(actions)
-        self.rewards.extend(rewards)
-        self.next_observations.extend(next_observations)
-        self.dones.extend(dones)
+    def add_experience(self, experience: Experience) -> None:
+        self.observations.extend(experience.flattened_observations)
+        self.actions.extend(experience.flattened_actions)
+        self.rewards.extend(experience.flattened_rewards)
+        self.next_observations.extend(experience.flattened_next_observations)
+        self.dones.extend(experience.flattened_dones)
 
-        self.current_size += len(observations)
+        self.current_size += len(experience.flattened_observations)
 
         if self.current_size > self.buffer_size:
             num_exceeded_experinece: int = self.current_size - self.buffer_size

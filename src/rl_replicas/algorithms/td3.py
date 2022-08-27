@@ -135,13 +135,7 @@ class TD3:
             else:
                 experience = self.sampler.sample(batch_size, self.noised_policy)
 
-            self.replay_buffer.add_experience(
-                experience.flattened_observations,
-                experience.flattened_actions,
-                experience.flattened_rewards,
-                experience.flattened_next_observations,
-                experience.flattened_dones,
-            )
+            self.replay_buffer.add_experience(experience)
 
             episode_returns: List[float] = experience.episode_returns
             episode_lengths: List[int] = experience.episode_lengths
