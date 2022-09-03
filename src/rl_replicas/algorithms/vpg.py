@@ -16,7 +16,7 @@ from rl_replicas.policies import Policy
 from rl_replicas.samplers import Sampler
 from rl_replicas.utils import (
     bootstrap_rewards_with_last_values,
-    compute_values_numpy_list,
+    compute_values,
     discounted_cumulative_sums,
     gae,
     normalize_tensor,
@@ -133,12 +133,12 @@ class VPG:
         self.metrics_manager.close()
 
     def train(self, experience: Experience) -> None:
-        values_numpy_list: np.ndarray = compute_values_numpy_list(
+        values: List[np.ndarray] = compute_values(
             experience.observations_with_last_observation, self.value_function
         )
 
         last_values: List[float] = [
-            float(episode_values[-1]) for episode_values in values_numpy_list
+            float(episode_values[-1]) for episode_values in values
         ]
 
         bootstrapped_rewards: List[List[float]] = bootstrap_rewards_with_last_values(
@@ -162,9 +162,7 @@ class VPG:
 
         gaes: List[np.ndarray] = [
             gae(episode_rewards, self.gamma, episode_values, self.gae_lambda)
-            for episode_rewards, episode_values in zip(
-                bootstrapped_rewards, values_numpy_list
-            )
+            for episode_rewards, episode_values in zip(bootstrapped_rewards, values)
         ]
         flattened_advantages: Tensor = torch.from_numpy(np.concatenate(gaes)).float()
         flattened_advantages = normalize_tensor(flattened_advantages)
