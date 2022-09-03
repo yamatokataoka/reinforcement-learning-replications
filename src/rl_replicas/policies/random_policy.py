@@ -18,10 +18,10 @@ class RandomPolicy(Policy):
 
     def get_action_tensor(self, observation: Tensor) -> Tensor:
         _ = observation  # Don't use observation
-        action = self.action_space.sample()
+        action: np.ndarray = np.asarray(self.action_space.sample())
         return torch.from_numpy(action)
 
     def get_action_numpy(self, observation: np.ndarray) -> np.ndarray:
         _ = observation  # Don't use observation
-        action = self.action_space.sample()
+        action: np.ndarray = np.asarray(self.action_space.sample())
         return action
