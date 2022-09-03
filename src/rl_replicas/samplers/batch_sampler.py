@@ -55,6 +55,7 @@ class BatchSampler(Sampler):
             self.observation = self.env.reset()
 
         for current_step in range(num_samples):
+            assert self.observation is not None
             episode_observations.append(self.observation)
 
             action: np.ndarray = policy.get_action_numpy(self.observation)
@@ -79,6 +80,7 @@ class BatchSampler(Sampler):
                         )
                     )
 
+                assert self.observation is not None
                 episode_last_observation: np.ndarray = self.observation
 
                 experience.observations.append(episode_observations)
