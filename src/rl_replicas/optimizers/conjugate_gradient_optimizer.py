@@ -160,13 +160,13 @@ class ConjugateGradientOptimizer(Optimizer):
             :param vector (Tensor): The vector to be multiplied with Hessian.
             :return: (Tensor) The product of Hessian of function f and v.
             """
-            unflatten_vector_list: List[Tensor] = self.unflatten_tensor(
+            unflattened_vector_list: List[Tensor] = self.unflatten_tensor(
                 vector, param_shapes
             )
 
-            assert len(hessian_target_vector_grads) == len(unflatten_vector_list)
+            assert len(hessian_target_vector_grads) == len(unflattened_vector_list)
             grad_vector_product_list: List[Tensor] = []
-            for g, x in zip(hessian_target_vector_grads, unflatten_vector_list):
+            for g, x in zip(hessian_target_vector_grads, unflattened_vector_list):
                 single_grad_vector_product = torch.sum(g * x)
                 grad_vector_product_list.append(single_grad_vector_product)
 
@@ -231,14 +231,14 @@ class ConjugateGradientOptimizer(Optimizer):
         loss_before: Tensor = loss_function()
 
         param_shapes: List[torch.Size] = [p.shape or torch.Size([1]) for p in params]
-        descent_step_list: List[Tensor] = self.unflatten_tensor(
+        unflattened_descent_step_list: List[Tensor] = self.unflatten_tensor(
             torch.as_tensor(descent_step), param_shapes
         )
-        assert len(descent_step_list) == len(params)
+        assert len(unflattened_descent_step_list) == len(params)
 
         for ratio in ratio_list:
             for step, previous_param, param in zip(
-                descent_step_list, previous_params, params
+                unflattened_descent_step_list, previous_params, params
             ):
                 step = ratio * step
                 new_param = previous_param.data - step
