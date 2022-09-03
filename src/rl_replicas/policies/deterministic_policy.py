@@ -42,4 +42,4 @@ class DeterministicPolicy(Policy):
         with torch.no_grad():
             action: Tensor = self.forward(observation_tensor)
 
-        return action.detach().numpy()
+        return np.asarray(action.detach().numpy())

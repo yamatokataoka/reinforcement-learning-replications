@@ -38,4 +38,4 @@ class StochasticPolicy(Policy):
 
         action: Tensor = distribution.sample()
 
-        return action.detach().numpy()
+        return np.asarray(action.detach().numpy())

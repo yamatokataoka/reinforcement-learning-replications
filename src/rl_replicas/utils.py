@@ -25,7 +25,9 @@ def discounted_cumulative_sums(vector: np.ndarray, discount: float) -> np.ndarra
           x1 + discount * x2,
           x2]
     """
-    return scipy.signal.lfilter([1], [1, -discount], vector[::-1], axis=0)[::-1]
+    return np.asarray(
+        list(scipy.signal.lfilter([1], [1, -discount], vector[::-1], axis=0)[::-1])
+    )
 
 
 def gae(
@@ -64,30 +66,32 @@ def polyak_average(
             )
 
 
-def compute_values_numpy_list(
+def compute_values(
     observations_with_last_observation: List[List[np.ndarray]],
     value_function: ValueFunction,
-) -> np.ndarray:
-    values_numpy_list: List[np.ndarray] = []
+) -> List[np.ndarray]:
+    values: List[np.ndarray] = []
     with torch.no_grad():
         for (
             episode_observations_with_last_observation
         ) in observations_with_last_observation:
-            episode_observations_with_last_observation_tensor = torch.from_numpy(
-                np.concatenate([episode_observations_with_last_observation])
-            ).float()
-            values_numpy_list.append(
+            episode_observations_with_last_observation_tensor: Tensor = (
+                torch.from_numpy(
+                    np.stack(episode_observations_with_last_observation)
+                ).float()
+            )
+            values.append(
                 value_function(episode_observations_with_last_observation_tensor)
                 .flatten()
                 .numpy()
             )
-    return values_numpy_list
+    return values
 
 
 def bootstrap_rewards_with_last_values(
     rewards: List[List[float]], episode_dones: List[bool], last_values: List[float]
-) -> List[List[float]]:
-    bootstrapped_rewards: List[List[float]] = []
+) -> List[np.ndarray]:
+    bootstrapped_rewards: List[np.ndarray] = []
 
     for episode_rewards, episode_done, last_value in zip(
         rewards, episode_dones, last_values
@@ -97,7 +101,7 @@ def bootstrap_rewards_with_last_values(
             episode_bootstrapped_rewards = episode_rewards + [0]
         else:
             episode_bootstrapped_rewards = episode_rewards + [last_value]
-        bootstrapped_rewards.append(episode_bootstrapped_rewards)
+        bootstrapped_rewards.append(np.asarray(episode_bootstrapped_rewards))
 
     return bootstrapped_rewards
 
