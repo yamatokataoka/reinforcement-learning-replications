@@ -144,7 +144,7 @@ class TRPO:
             float(episode_values[-1]) for episode_values in values
         ]
 
-        bootstrapped_rewards: List[List[float]] = bootstrap_rewards_with_last_values(
+        bootstrapped_rewards: List[np.ndarray] = bootstrap_rewards_with_last_values(
             experience.rewards, experience.episode_dones, last_values
         )
 
