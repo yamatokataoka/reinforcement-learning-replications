@@ -2,7 +2,7 @@ import argparse
 from enum import Enum
 from typing import Callable, List
 
-from gym import envs
+from gymnasium import envs
 from run_ddpg import run_ddpg
 from run_ppo import run_ppo
 from run_td3 import run_td3

@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from gym import Space
+from gymnasium import Space
 from torch import Tensor
 
 from rl_replicas.policies import Policy

@@ -2,11 +2,11 @@ import copy
 import datetime
 from typing import List
 
-import gym
+import gymnasium as gym
 import torch
 import torch.nn as nn
-from gym import Env
-from gym.spaces import Box, Discrete
+from gymnasium import Env
+from gymnasium.spaces import Box, Discrete
 from pytest import approx
 
 from rl_replicas.algorithms import TRPO
@@ -46,7 +46,7 @@ class TestTRPO:
         episode_returns: List[float]
         episode_returns, _ = evaluator.evaluate(model.policy, evaluation_env, 1)
 
-        assert episode_returns[0] == approx(21.0, 0.01)
+        assert episode_returns[0] == approx(16.0, 0.01)
 
     def test_trpo_with_pendulum(self, seed: int) -> None:
         """

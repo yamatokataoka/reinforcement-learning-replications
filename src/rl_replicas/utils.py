@@ -4,7 +4,7 @@ from typing import Iterable, List
 import numpy as np
 import scipy.signal
 import torch
-from gym import Space
+from gymnasium import Space
 from torch import Tensor, nn
 
 from rl_replicas.policies.policy import Policy
