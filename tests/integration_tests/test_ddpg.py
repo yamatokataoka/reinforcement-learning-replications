@@ -2,10 +2,10 @@ import copy
 import datetime
 from typing import List
 
-import gym
+import gymnasium as gym
 import torch
 import torch.nn as nn
-from gym import Env
+from gymnasium import Env
 from pytest import approx
 
 from rl_replicas.algorithms import DDPG

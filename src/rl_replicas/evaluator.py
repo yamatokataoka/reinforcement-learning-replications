@@ -1,6 +1,6 @@
 from typing import List, Optional, Tuple
 
-import gym
+import gymnasium as gym
 import numpy as np
 
 from rl_replicas.policies import Policy
@@ -29,7 +29,7 @@ class Evaluator:
         episode_returns: List[float] = []
         episode_lengths: List[int] = []
 
-        observation: np.ndarray = env.reset(seed=self.seed)
+        observation, _ = env.reset(seed=self.seed)
 
         for _ in range(num_episodes):
             done: bool = False
@@ -40,12 +40,13 @@ class Evaluator:
                 action: np.ndarray = policy.get_action_numpy(observation)
 
                 reward: float
-                observation, reward, done, _ = env.step(action)
+                observation, reward, terminated, truncated, _ = env.step(action)
+                done = terminated or truncated
 
                 episode_return += reward
                 episode_length += 1
 
-            observation = env.reset()
+            observation, _ = env.reset()
 
             episode_returns.append(episode_return)
             episode_lengths.append(episode_length)

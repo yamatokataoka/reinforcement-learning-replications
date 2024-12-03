@@ -2,7 +2,7 @@ import argparse
 import os
 from contextlib import redirect_stdout
 
-import gym
+import gymnasium as gym
 import torch
 from torch import nn
 

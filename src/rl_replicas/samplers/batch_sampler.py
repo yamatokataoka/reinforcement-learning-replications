@@ -1,7 +1,7 @@
 import logging
 from typing import List, Optional
 
-import gym
+import gymnasium as gym
 import numpy as np
 
 from rl_replicas.experience import Experience
@@ -50,9 +50,9 @@ class BatchSampler(Sampler):
 
         if self.observation is None:
             # Reset env for the first function call
-            self.observation = self.env.reset(seed=self.seed)
+            self.observation, _ = self.env.reset(seed=self.seed)
         elif not self.is_continuous:
-            self.observation = self.env.reset()
+            self.observation, _ = self.env.reset()
 
         for current_step in range(num_samples):
             assert self.observation is not None
@@ -63,7 +63,8 @@ class BatchSampler(Sampler):
 
             reward: float
             episode_done: bool
-            self.observation, reward, episode_done, _ = self.env.step(action)
+            self.observation, reward, terminated, truncated, _ = self.env.step(action)
+            episode_done = terminated or truncated
 
             episode_return += reward
             episode_rewards.append(reward)
@@ -93,7 +94,7 @@ class BatchSampler(Sampler):
                 experience.episode_lengths.append(episode_length)
 
                 if episode_done:
-                    self.observation = self.env.reset()
+                    self.observation, _ = self.env.reset()
 
                 episode_return, episode_length = 0.0, 0
                 (

@@ -1,7 +1,7 @@
 from collections import namedtuple
 from typing import List
 
-import gym
+import gymnasium as gym
 import numpy as np
 from numpy.testing import assert_array_equal
 from pytest import fixture
@@ -38,7 +38,7 @@ class TestSamplers:
             [], [], [], [], [], []
         )
 
-        observation = env.reset(seed=seed)
+        observation, _ = env.reset(seed=seed)
 
         for current_step in range(num_samples):
             expected_experience.observations.append(observation)
@@ -48,7 +48,8 @@ class TestSamplers:
 
             reward: float
             episode_done: bool
-            observation, reward, episode_done, _ = env.step(action)
+            observation, reward, terminated, truncated, _ = env.step(action)
+            episode_done = terminated or truncated
 
             expected_experience.next_observations.append(observation)
 
@@ -62,7 +63,7 @@ class TestSamplers:
                 expected_experience.last_observations.append(last_observation)
 
                 if episode_done:
-                    observation = env.reset()
+                    observation, _ = env.reset()
 
         return expected_experience
 

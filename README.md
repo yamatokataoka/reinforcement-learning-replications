@@ -27,7 +27,7 @@ All experiments were run for 3 random seeds each. All the details such as tensor
 Here is the code of training PPO on CartPole-v1 environment. You can run with [this Google Colab notebook](https://colab.research.google.com/drive/18MRw1FcDS4b_t3HAgfvyxBCi_1Z4lD__#scrollTo=A5GI_PJSchBn).
 
 ```python
-import gym
+import gymnasium as gym
 import torch
 import torch.nn as nn
 

@@ -11,6 +11,10 @@ dist/
 
 .tox/
 
+.venv/
+
+.pytest_cache
+
 # vi
 *.swp
 
@@ -19,3 +23,4 @@ dist/
 
 # Mac
 .DS_Store
+
