@@ -3,11 +3,11 @@ import datetime
 from typing import List
 
 import gymnasium as gym
+import numpy as np
 import torch
 import torch.nn as nn
 from gymnasium import Env
 from gymnasium.spaces import Box, Discrete
-from pytest import approx
 
 from rl_replicas.algorithms import TRPO
 from rl_replicas.evaluator import Evaluator
@@ -35,8 +35,8 @@ class TestTRPO:
         model: TRPO = self.create_trpo(env, seed)
 
         model.learn(
-            num_epochs=3,
-            batch_size=100,
+            num_epochs=5,
+            batch_size=500,
             model_saving_interval=100,
             output_dir="/tmp/rl_replicas_tests/trpo-"
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
@@ -44,9 +44,9 @@ class TestTRPO:
 
         evaluator: Evaluator = Evaluator(seed)
         episode_returns: List[float]
-        episode_returns, _ = evaluator.evaluate(model.policy, evaluation_env, 1)
+        episode_returns, _ = evaluator.evaluate(model.policy, evaluation_env, 3)
 
-        assert episode_returns[0] == approx(16.0, 0.01)
+        assert np.mean(episode_returns) > 50
 
     def test_trpo_with_pendulum(self, seed: int) -> None:
         """
@@ -60,8 +60,8 @@ class TestTRPO:
         model: TRPO = self.create_trpo(env, seed)
 
         model.learn(
-            num_epochs=3,
-            batch_size=100,
+            num_epochs=5,
+            batch_size=500,
             model_saving_interval=100,
             output_dir="/tmp/rl_replicas_tests/trpo-"
             + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
@@ -69,9 +69,9 @@ class TestTRPO:
 
         evaluator: Evaluator = Evaluator(seed)
         episode_returns: List[float]
-        episode_returns, _ = evaluator.evaluate(model.policy, evaluation_env, 1)
+        episode_returns, _ = evaluator.evaluate(model.policy, evaluation_env, 3)
 
-        assert episode_returns[0] == approx(-1496.463, 0.01)
+        assert np.mean(episode_returns) > -1300
 
     def create_trpo(self, env: Env, seed: int) -> TRPO:
         observation_size: int = env.observation_space.shape[0]
