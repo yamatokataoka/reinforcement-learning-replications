@@ -67,8 +67,7 @@ class TestDDPG:
             num_steps_before_update=200,
             evaluation_interval=100,
             model_saving_interval=100,
-            output_dir="/tmp/rl_replicas_tests/ddpg-"
-            + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
+            output_dir="/tmp/rl_replicas_tests/ddpg-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
         )
 
         evaluator: Evaluator = Evaluator(seed)

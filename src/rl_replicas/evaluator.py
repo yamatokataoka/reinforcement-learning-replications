@@ -16,9 +16,7 @@ class Evaluator:
     def __init__(self, seed: Optional[int] = None):
         self.seed = seed
 
-    def evaluate(
-        self, policy: Policy, env: gym.Env, num_episodes: int
-    ) -> Tuple[List[float], List[int]]:
+    def evaluate(self, policy: Policy, env: gym.Env, num_episodes: int) -> Tuple[List[float], List[int]]:
         """
         Evaluate the policy running evaluation episodes.
 

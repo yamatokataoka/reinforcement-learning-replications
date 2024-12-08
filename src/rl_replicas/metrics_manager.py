@@ -18,9 +18,7 @@ class MetricsManager:
     def __init__(self, log_dir: str = "."):
         self.log_dir = log_dir
 
-        self.tensorboard_writer = SummaryWriter(
-            os.path.join(self.log_dir, "tensorboard")
-        )
+        self.tensorboard_writer = SummaryWriter(os.path.join(self.log_dir, "tensorboard"))
 
     def record_scalar(
         self,

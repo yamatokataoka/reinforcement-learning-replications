@@ -7,13 +7,13 @@ dist/
 
 .ipynb_checkpoints
 
-.mypy_cache
-
 .tox/
-
 .venv/
 
-.pytest_cache
+.pytest_cache/
+
+.ruff_cache/
+.mypy_cache/
 
 # vi
 *.swp

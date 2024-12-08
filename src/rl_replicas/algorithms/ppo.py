@@ -103,9 +103,7 @@ class PPO:
 
             self.metrics_manager.record_scalar("epoch", current_epoch)
             self.metrics_manager.record_scalar("total_steps", self.current_total_steps)
-            self.metrics_manager.record_scalar(
-                "total_episodes", self.current_total_episodes
-            )
+            self.metrics_manager.record_scalar("total_episodes", self.current_total_episodes)
 
             self.metrics_manager.record_scalar(
                 "sampling/average_episode_return",
@@ -113,15 +111,9 @@ class PPO:
                 self.current_total_steps,
                 tensorboard=True,
             )
-            self.metrics_manager.record_scalar(
-                "sampling/episode_return_std", float(np.std(episode_returns))
-            )
-            self.metrics_manager.record_scalar(
-                "sampling/max_episode_return", float(np.max(episode_returns))
-            )
-            self.metrics_manager.record_scalar(
-                "sampling/min_episode_return", float(np.min(episode_returns))
-            )
+            self.metrics_manager.record_scalar("sampling/episode_return_std", float(np.std(episode_returns)))
+            self.metrics_manager.record_scalar("sampling/max_episode_return", float(np.max(episode_returns)))
+            self.metrics_manager.record_scalar("sampling/min_episode_return", float(np.min(episode_returns)))
             self.metrics_manager.record_scalar(
                 "sampling/average_episode_length",
                 float(np.mean(episode_lengths)),
@@ -145,32 +137,21 @@ class PPO:
         self.metrics_manager.close()
 
     def train(self, experience: Experience) -> None:
-        values: List[np.ndarray] = compute_values(
-            experience.observations_with_last_observation, self.value_function
-        )
+        values: List[np.ndarray] = compute_values(experience.observations_with_last_observation, self.value_function)
 
-        last_values: List[float] = [
-            float(episode_values[-1]) for episode_values in values
-        ]
+        last_values: List[float] = [float(episode_values[-1]) for episode_values in values]
 
         bootstrapped_rewards: List[np.ndarray] = bootstrap_rewards_with_last_values(
             experience.rewards, experience.episode_dones, last_values
         )
 
         discounted_returns: List[np.ndarray] = [
-            discounted_cumulative_sums(episode_rewards, self.gamma)[:-1]
-            for episode_rewards in bootstrapped_rewards
+            discounted_cumulative_sums(episode_rewards, self.gamma)[:-1] for episode_rewards in bootstrapped_rewards
         ]
-        flattened_discounted_returns: Tensor = torch.from_numpy(
-            np.concatenate(discounted_returns)
-        ).float()
+        flattened_discounted_returns: Tensor = torch.from_numpy(np.concatenate(discounted_returns)).float()
 
-        flattened_observations: Tensor = torch.from_numpy(
-            np.concatenate(experience.observations)
-        ).float()
-        flattened_actions: Tensor = torch.from_numpy(
-            np.concatenate(experience.actions)
-        ).float()
+        flattened_observations: Tensor = torch.from_numpy(np.concatenate(experience.observations)).float()
+        flattened_actions: Tensor = torch.from_numpy(np.concatenate(experience.actions)).float()
 
         gaes: List[np.ndarray] = [
             gae(episode_rewards, self.gamma, episode_values, self.gae_lambda)
@@ -190,19 +171,13 @@ class PPO:
 
         # Train policy
         for i in range(self.num_policy_gradients):
-            self.train_policy(
-                flattened_observations, flattened_actions, flattened_advantages
-            )
+            self.train_policy(flattened_observations, flattened_actions, flattened_advantages)
 
             approximate_kl_divergence: Tensor = self.compute_approximate_kl_divergence(
                 flattened_observations, flattened_actions
             ).detach()
             if approximate_kl_divergence > 1.5 * self.max_kl_divergence:
-                logger.info(
-                    "Early stopping at update {} due to reaching max KL divergence.".format(
-                        i
-                    )
-                )
+                logger.info("Early stopping at update {} due to reaching max KL divergence.".format(i))
                 break
 
         self.old_policy.load_state_dict(self.policy.state_dict())
@@ -253,17 +228,13 @@ class PPO:
         flattened_actions: Tensor,
         flattened_advantages: Tensor,
     ) -> None:
-        policy_loss: Tensor = self.compute_policy_loss(
-            flattened_observations, flattened_actions, flattened_advantages
-        )
+        policy_loss: Tensor = self.compute_policy_loss(flattened_observations, flattened_actions, flattened_advantages)
 
         self.policy.optimizer.zero_grad()
         policy_loss.backward()
         self.policy.optimizer.step()
 
-    def compute_policy_loss(
-        self, observations: Tensor, actions: Tensor, advantages: Tensor
-    ) -> Tensor:
+    def compute_policy_loss(self, observations: Tensor, actions: Tensor, advantages: Tensor) -> Tensor:
         policy_dist: Distribution = self.policy(observations)
         log_probs: Tensor = policy_dist.log_prob(actions)
 
@@ -276,9 +247,7 @@ class PPO:
         surrogate: Tensor = likelihood_ratio * advantages
 
         # Clipping the constraint
-        likelihood_ratio_clip: Tensor = torch.clamp(
-            likelihood_ratio, min=1 - self.clip_range, max=1 + self.clip_range
-        )
+        likelihood_ratio_clip: Tensor = torch.clamp(likelihood_ratio, min=1 - self.clip_range, max=1 + self.clip_range)
 
         # Calculate surrotate clip
         surrogate_clip: Tensor = likelihood_ratio_clip * advantages
@@ -287,9 +256,7 @@ class PPO:
 
         return policy_loss
 
-    def compute_approximate_kl_divergence(
-        self, observations: Tensor, actions: Tensor
-    ) -> Tensor:
+    def compute_approximate_kl_divergence(self, observations: Tensor, actions: Tensor) -> Tensor:
         with torch.no_grad():
             policy_dist: Distribution = self.policy(observations)
             log_probs: Tensor = policy_dist.log_prob(actions)
@@ -301,9 +268,7 @@ class PPO:
 
         return torch.mean(approximate_kl_divergence)
 
-    def train_value_function(
-        self, flattened_observations: Tensor, flattened_discounted_returns: Tensor
-    ) -> Tensor:
+    def train_value_function(self, flattened_observations: Tensor, flattened_discounted_returns: Tensor) -> Tensor:
         value_function_loss: Tensor = self.compute_value_function_loss(
             flattened_observations, flattened_discounted_returns
         )
@@ -314,9 +279,7 @@ class PPO:
 
         return value_function_loss.detach()
 
-    def compute_value_function_loss(
-        self, observations: Tensor, discounted_returns: Tensor
-    ) -> Tensor:
+    def compute_value_function_loss(self, observations: Tensor, discounted_returns: Tensor) -> Tensor:
         values: Tensor = self.value_function(observations)
         squeezed_values: Tensor = torch.squeeze(values, -1)
         value_loss: Tensor = F.mse_loss(squeezed_values, discounted_returns)

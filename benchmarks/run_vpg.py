@@ -42,9 +42,7 @@ def run_vpg(environment_name: str, seed: int, output_dir: str) -> None:
         BatchSampler(env, seed),
     )
 
-    experiment_dir: str = os.path.join(
-        output_dir, f"{environment_name}/{ALGORITHM_NAME}/seed-{seed}"
-    )
+    experiment_dir: str = os.path.join(output_dir, f"{environment_name}/{ALGORITHM_NAME}/seed-{seed}")
     os.makedirs(experiment_dir, exist_ok=True)
 
     with open(os.path.join(experiment_dir, "experiment.log"), "w") as f:

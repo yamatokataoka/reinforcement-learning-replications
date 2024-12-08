@@ -43,18 +43,14 @@ class Experience:
     def observations_with_last_observation(self) -> List[List[np.ndarray]]:
         return [
             observations + [last_observation]
-            for observations, last_observation in zip(
-                self.observations, self.last_observations
-            )
+            for observations, last_observation in zip(self.observations, self.last_observations)
         ]
 
     @property
     def next_observations(self) -> List[List[np.ndarray]]:
         return [
             observations[1:] + [last_observation]
-            for observations, last_observation in zip(
-                self.observations, self.last_observations
-            )
+            for observations, last_observation in zip(self.observations, self.last_observations)
         ]
 
     @property
@@ -64,26 +60,16 @@ class Experience:
     @property
     def flattened_observations(self) -> List[np.ndarray]:
         return [
-            observation
-            for observations_per_episode in self.observations
-            for observation in observations_per_episode
+            observation for observations_per_episode in self.observations for observation in observations_per_episode
         ]
 
     @property
     def flattened_actions(self) -> List[np.ndarray]:
-        return [
-            action
-            for actions_per_episode in self.actions
-            for action in actions_per_episode
-        ]
+        return [action for actions_per_episode in self.actions for action in actions_per_episode]
 
     @property
     def flattened_rewards(self) -> List[float]:
-        return [
-            reward
-            for rewards_per_episode in self.rewards
-            for reward in rewards_per_episode
-        ]
+        return [reward for rewards_per_episode in self.rewards for reward in rewards_per_episode]
 
     @property
     def flattened_next_observations(self) -> List[np.ndarray]:

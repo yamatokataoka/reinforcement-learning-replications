@@ -37,8 +37,7 @@ class TestVPG:
             num_epochs=3,
             batch_size=100,
             model_saving_interval=100,
-            output_dir="/tmp/rl_replicas_tests/vpg-"
-            + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
+            output_dir="/tmp/rl_replicas_tests/vpg-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
         )
 
         evaluator: Evaluator = Evaluator(seed)
@@ -62,8 +61,7 @@ class TestVPG:
             num_epochs=3,
             batch_size=100,
             model_saving_interval=100,
-            output_dir="/tmp/rl_replicas_tests/vpg-"
-            + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
+            output_dir="/tmp/rl_replicas_tests/vpg-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
         )
 
         evaluator: Evaluator = Evaluator(seed)
@@ -80,29 +78,21 @@ class TestVPG:
         elif isinstance(env.action_space, Box):
             action_size = env.action_space.shape[0]
 
-        policy_network: nn.Module = MLP(
-            sizes=[observation_size] + [64, 64] + [action_size]
-        )
+        policy_network: nn.Module = MLP(sizes=[observation_size] + [64, 64] + [action_size])
 
-        value_function_network: nn.Module = MLP(
-            sizes=[observation_size] + [64, 64] + [1]
-        )
+        value_function_network: nn.Module = MLP(sizes=[observation_size] + [64, 64] + [1])
 
         learning_rate: float = 3e-4
         policy: Policy
         if isinstance(env.action_space, Discrete):
             policy = CategoricalPolicy(
                 network=policy_network,
-                optimizer=torch.optim.Adam(
-                    policy_network.parameters(), lr=learning_rate
-                ),
+                optimizer=torch.optim.Adam(policy_network.parameters(), lr=learning_rate),
             )
         elif isinstance(env.action_space, Box):
             policy = GaussianPolicy(
                 network=policy_network,
-                optimizer=torch.optim.Adam(
-                    policy_network.parameters(), lr=learning_rate
-                ),
+                optimizer=torch.optim.Adam(policy_network.parameters(), lr=learning_rate),
                 log_std=nn.Parameter(-0.5 * torch.ones(action_size)),
             )
 
@@ -110,9 +100,7 @@ class TestVPG:
             policy,
             ValueFunction(
                 network=value_function_network,
-                optimizer=torch.optim.Adam(
-                    value_function_network.parameters(), lr=1e-3
-                ),
+                optimizer=torch.optim.Adam(value_function_network.parameters(), lr=1e-3),
             ),
             env,
             BatchSampler(env, seed),

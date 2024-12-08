@@ -36,20 +36,12 @@ def main(input_dir: Path, output_dir: Path) -> None:
 
         tfevent_paths: List[Path] = list(subdir.rglob("events.out.tfevents.*"))
 
-        tfevents_df: pd.DataFrame = convert_tensorboards(
-            tfevent_paths, RETURN_TAGS[algorithm_name]
-        )
+        tfevents_df: pd.DataFrame = convert_tensorboards(tfevent_paths, RETURN_TAGS[algorithm_name])
 
         mean_df = (
-            tfevents_df.groupby("step", as_index=False)["return"]
-            .mean()
-            .rename(columns={"return": "mean_return"})
+            tfevents_df.groupby("step", as_index=False)["return"].mean().rename(columns={"return": "mean_return"})
         )
-        std_df = (
-            tfevents_df.groupby("step", as_index=False)["return"]
-            .std()
-            .rename(columns={"return": "return_std"})
-        )
+        std_df = tfevents_df.groupby("step", as_index=False)["return"].std().rename(columns={"return": "return_std"})
 
         smopthed_mean_series = mean_df["mean_return"].rolling(10, min_periods=1).mean()
         smopthed_std_series = std_df["return_std"].rolling(10, min_periods=1).mean()

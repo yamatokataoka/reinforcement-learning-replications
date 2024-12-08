@@ -94,9 +94,7 @@ class TRPO:
 
             self.metrics_manager.record_scalar("epoch", current_epoch)
             self.metrics_manager.record_scalar("total_steps", self.current_total_steps)
-            self.metrics_manager.record_scalar(
-                "total_episodes", self.current_total_episodes
-            )
+            self.metrics_manager.record_scalar("total_episodes", self.current_total_episodes)
 
             self.metrics_manager.record_scalar(
                 "sampling/average_episode_return",
@@ -104,15 +102,9 @@ class TRPO:
                 self.current_total_steps,
                 tensorboard=True,
             )
-            self.metrics_manager.record_scalar(
-                "sampling/episode_return_std", float(np.std(episode_returns))
-            )
-            self.metrics_manager.record_scalar(
-                "sampling/max_episode_return", float(np.max(episode_returns))
-            )
-            self.metrics_manager.record_scalar(
-                "sampling/min_episode_return", float(np.min(episode_returns))
-            )
+            self.metrics_manager.record_scalar("sampling/episode_return_std", float(np.std(episode_returns)))
+            self.metrics_manager.record_scalar("sampling/max_episode_return", float(np.max(episode_returns)))
+            self.metrics_manager.record_scalar("sampling/min_episode_return", float(np.min(episode_returns)))
             self.metrics_manager.record_scalar(
                 "sampling/average_episode_length",
                 float(np.mean(episode_lengths)),
@@ -136,32 +128,21 @@ class TRPO:
         self.metrics_manager.close()
 
     def train(self, experience: Experience) -> None:
-        values: List[np.ndarray] = compute_values(
-            experience.observations_with_last_observation, self.value_function
-        )
+        values: List[np.ndarray] = compute_values(experience.observations_with_last_observation, self.value_function)
 
-        last_values: List[float] = [
-            float(episode_values[-1]) for episode_values in values
-        ]
+        last_values: List[float] = [float(episode_values[-1]) for episode_values in values]
 
         bootstrapped_rewards: List[np.ndarray] = bootstrap_rewards_with_last_values(
             experience.rewards, experience.episode_dones, last_values
         )
 
         discounted_returns: List[np.ndarray] = [
-            discounted_cumulative_sums(episode_rewards, self.gamma)[:-1]
-            for episode_rewards in bootstrapped_rewards
+            discounted_cumulative_sums(episode_rewards, self.gamma)[:-1] for episode_rewards in bootstrapped_rewards
         ]
-        flattened_discounted_returns: Tensor = torch.from_numpy(
-            np.concatenate(discounted_returns)
-        ).float()
+        flattened_discounted_returns: Tensor = torch.from_numpy(np.concatenate(discounted_returns)).float()
 
-        flattened_observations: Tensor = torch.from_numpy(
-            np.concatenate(experience.observations)
-        ).float()
-        flattened_actions: Tensor = torch.from_numpy(
-            np.concatenate(experience.actions)
-        ).float()
+        flattened_observations: Tensor = torch.from_numpy(np.concatenate(experience.observations)).float()
+        flattened_actions: Tensor = torch.from_numpy(np.concatenate(experience.actions)).float()
 
         gaes: List[np.ndarray] = [
             gae(episode_rewards, self.gamma, episode_values, self.gae_lambda)
@@ -179,9 +160,7 @@ class TRPO:
                 old_log_probs: Tensor = old_policy_dist.log_prob(flattened_actions)
 
             likelihood_ratio: Tensor = torch.exp(log_probs - old_log_probs)
-            surrogate_loss: Tensor = -torch.mean(
-                likelihood_ratio * flattened_advantages
-            )
+            surrogate_loss: Tensor = -torch.mean(likelihood_ratio * flattened_advantages)
 
             return surrogate_loss
 
@@ -260,9 +239,7 @@ class TRPO:
         policy_loss.backward()
         self.policy.optimizer.step(compute_surrogate_loss, compute_kl_constraint)
 
-    def train_value_function(
-        self, flattened_observations: Tensor, flattened_discounted_returns: Tensor
-    ) -> Tensor:
+    def train_value_function(self, flattened_observations: Tensor, flattened_discounted_returns: Tensor) -> Tensor:
         value_function_loss: Tensor = self.compute_value_function_loss(
             flattened_observations, flattened_discounted_returns
         )
@@ -273,9 +250,7 @@ class TRPO:
 
         return value_function_loss.detach()
 
-    def compute_value_function_loss(
-        self, observations: Tensor, discounted_returns: Tensor
-    ) -> Tensor:
+    def compute_value_function_loss(self, observations: Tensor, discounted_returns: Tensor) -> Tensor:
         values: Tensor = self.value_function(observations)
         squeezed_values: Tensor = torch.squeeze(values, -1)
         value_loss: Tensor = F.mse_loss(squeezed_values, discounted_returns)

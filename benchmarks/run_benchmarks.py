@@ -29,10 +29,7 @@ def run_benchmarks(
     if not all(environment_name in env_ids for environment_name in environment_names):
         raise ValueError("Invalid environment name")
 
-    if not all(
-        algorithm_name in [member.value for member in AlgorithmNames]
-        for algorithm_name in algorithm_names
-    ):
+    if not all(algorithm_name in [member.value for member in AlgorithmNames] for algorithm_name in algorithm_names):
         raise ValueError("Invalid algorithm name")
 
     for environment_name in environment_names:
@@ -63,6 +60,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    run_benchmarks(
-        args.algorithm_names, args.environment_names, args.seeds, args.output_dir
-    )
+    run_benchmarks(args.algorithm_names, args.environment_names, args.seeds, args.output_dir)

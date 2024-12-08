@@ -42,12 +42,8 @@ class TestTD3:
 
         q_function_learning_rate: float = 1e-3
         q_function_network_sizes = [observation_size + action_size] + [256, 256] + [1]
-        q_function_1_network: nn.Module = MLP(
-            sizes=q_function_network_sizes, activation_function=nn.ReLU
-        )
-        q_function_2_network: nn.Module = MLP(
-            sizes=q_function_network_sizes, activation_function=nn.ReLU
-        )
+        q_function_1_network: nn.Module = MLP(sizes=q_function_network_sizes, activation_function=nn.ReLU)
+        q_function_2_network: nn.Module = MLP(sizes=q_function_network_sizes, activation_function=nn.ReLU)
 
         model: TD3 = TD3(
             DeterministicPolicy(
@@ -57,15 +53,11 @@ class TestTD3:
             RandomPolicy(env.action_space),
             QFunction(
                 network=q_function_1_network,
-                optimizer=torch.optim.Adam(
-                    q_function_1_network.parameters(), lr=q_function_learning_rate
-                ),
+                optimizer=torch.optim.Adam(q_function_1_network.parameters(), lr=q_function_learning_rate),
             ),
             QFunction(
                 network=q_function_2_network,
-                optimizer=torch.optim.Adam(
-                    q_function_2_network.parameters(), lr=q_function_learning_rate
-                ),
+                optimizer=torch.optim.Adam(q_function_2_network.parameters(), lr=q_function_learning_rate),
             ),
             env,
             BatchSampler(env, seed, is_continuous=True),
@@ -79,8 +71,7 @@ class TestTD3:
             num_steps_before_update=200,
             evaluation_interval=100,
             model_saving_interval=100,
-            output_dir="/tmp/rl_replicas_tests/td3-"
-            + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
+            output_dir="/tmp/rl_replicas_tests/td3-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
         )
 
         evaluator: Evaluator = Evaluator(seed)
