@@ -25,14 +25,10 @@ def discounted_cumulative_sums(vector: np.ndarray, discount: float) -> np.ndarra
           x1 + discount * x2,
           x2]
     """
-    return np.asarray(
-        list(scipy.signal.lfilter([1], [1, -discount], vector[::-1], axis=0)[::-1])
-    )
+    return np.asarray(list(scipy.signal.lfilter([1], [1, -discount], vector[::-1], axis=0)[::-1]))
 
 
-def gae(
-    rewards: np.ndarray, gamma: float, values: np.ndarray, gae_lambda: float
-) -> np.ndarray:
+def gae(rewards: np.ndarray, gamma: float, values: np.ndarray, gae_lambda: float) -> np.ndarray:
     """
     Compute Generalized Advantage Estimation (GAE)
 
@@ -48,9 +44,7 @@ def gae(
     return gaes
 
 
-def polyak_average(
-    params: Iterable[nn.Parameter], target_params: Iterable[nn.Parameter], rho: float
-) -> None:
+def polyak_average(params: Iterable[nn.Parameter], target_params: Iterable[nn.Parameter], rho: float) -> None:
     """
     Perform Polyak averaging on target_params using params
 
@@ -60,10 +54,7 @@ def polyak_average(
     """
     with torch.no_grad():
         for param, target_param in zip(params, target_params):
-            target_param.data.copy_(
-                torch.tensor(rho) * target_param.data
-                + torch.tensor(1.0 - rho) * param.data
-            )
+            target_param.data.copy_(torch.tensor(rho) * target_param.data + torch.tensor(1.0 - rho) * param.data)
 
 
 def compute_values(
@@ -72,19 +63,11 @@ def compute_values(
 ) -> List[np.ndarray]:
     values: List[np.ndarray] = []
     with torch.no_grad():
-        for (
-            episode_observations_with_last_observation
-        ) in observations_with_last_observation:
-            episode_observations_with_last_observation_tensor: Tensor = (
-                torch.from_numpy(
-                    np.stack(episode_observations_with_last_observation)
-                ).float()
-            )
-            values.append(
-                value_function(episode_observations_with_last_observation_tensor)
-                .flatten()
-                .numpy()
-            )
+        for episode_observations_with_last_observation in observations_with_last_observation:
+            episode_observations_with_last_observation_tensor: Tensor = torch.from_numpy(
+                np.stack(episode_observations_with_last_observation)
+            ).float()
+            values.append(value_function(episode_observations_with_last_observation_tensor).flatten().numpy())
     return values
 
 
@@ -93,9 +76,7 @@ def bootstrap_rewards_with_last_values(
 ) -> List[np.ndarray]:
     bootstrapped_rewards: List[np.ndarray] = []
 
-    for episode_rewards, episode_done, last_value in zip(
-        rewards, episode_dones, last_values
-    ):
+    for episode_rewards, episode_done, last_value in zip(rewards, episode_dones, last_values):
         episode_bootstrapped_rewards: List[float]
         if episode_done:
             episode_bootstrapped_rewards = episode_rewards + [0]
@@ -111,18 +92,14 @@ def normalize_tensor(vector: Tensor) -> Tensor:
     return normalized_vector
 
 
-def add_noise_to_get_action(
-    policy: Policy, action_space: Space, action_noise_scale: float
-) -> Policy:
+def add_noise_to_get_action(policy: Policy, action_space: Space, action_noise_scale: float) -> Policy:
     noised_policy: Policy = _NoisedPolicy(policy, action_space, action_noise_scale)
 
     return noised_policy
 
 
 class _NoisedPolicy(Policy):
-    def __init__(
-        self, base_policy: Policy, action_space: Space, action_noise_scale: float
-    ):
+    def __init__(self, base_policy: Policy, action_space: Space, action_noise_scale: float):
         super().__init__()
 
         self.base_policy = base_policy

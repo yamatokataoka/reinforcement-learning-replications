@@ -34,9 +34,7 @@ class TestSamplers:
         env.action_space.seed(seed)
         num_samples: int = 1000
 
-        expected_experience: ExpectedExperience = ExpectedExperience(
-            [], [], [], [], [], []
-        )
+        expected_experience: ExpectedExperience = ExpectedExperience([], [], [], [], [], [])
 
         observation, _ = env.reset(seed=seed)
 
@@ -67,9 +65,7 @@ class TestSamplers:
 
         return expected_experience
 
-    def test_sample(
-        self, seed: int, env: gym.Env, expected_experience: Experience
-    ) -> None:
+    def test_sample(self, seed: int, env: gym.Env, expected_experience: Experience) -> None:
         env.action_space.seed(seed)
 
         sampler: Sampler = BatchSampler(env, seed)
@@ -83,14 +79,10 @@ class TestSamplers:
         )
         assert_array_equal(experience.flattened_actions, expected_experience.actions)
         assert_array_equal(experience.flattened_rewards, expected_experience.rewards)
-        assert_array_equal(
-            experience.last_observations, expected_experience.last_observations
-        )
+        assert_array_equal(experience.last_observations, expected_experience.last_observations)
         assert_array_equal(experience.flattened_dones, expected_experience.dones)
 
-    def test_sample_continuous(
-        self, seed: int, env: gym.Env, expected_experience: Experience
-    ) -> None:
+    def test_sample_continuous(self, seed: int, env: gym.Env, expected_experience: Experience) -> None:
         env.action_space.seed(seed)
 
         sampler: Sampler = BatchSampler(env, seed, is_continuous=True)

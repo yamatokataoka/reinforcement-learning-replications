@@ -74,14 +74,10 @@ class ConjugateGradientOptimizer(Optimizer):
         flat_loss_grads: Tensor = torch.cat(grads)
 
         # Build Hessian-vector-product function
-        hessian_vector_product_function = self._build_hessian_vector_product(
-            kl_divergence_function, params
-        )
+        hessian_vector_product_function = self._build_hessian_vector_product(kl_divergence_function, params)
 
         # Compute step direction
-        step_direction = self._conjugate_gradient(
-            hessian_vector_product_function, flat_loss_grads
-        )
+        step_direction = self._conjugate_gradient(hessian_vector_product_function, flat_loss_grads)
 
         # Replace nan with 0.0
         step_direction[step_direction.ne(step_direction)] = 0.0
@@ -90,15 +86,7 @@ class ConjugateGradientOptimizer(Optimizer):
         step_size = np.sqrt(
             2.0
             * self.max_constraint
-            * (
-                1.0
-                / (
-                    torch.dot(
-                        step_direction, hessian_vector_product_function(step_direction)
-                    )
-                    + 1e-8
-                )
-            )
+            * (1.0 / (torch.dot(step_direction, hessian_vector_product_function(step_direction)) + 1e-8))
         )
 
         if np.isnan(step_size):
@@ -107,9 +95,7 @@ class ConjugateGradientOptimizer(Optimizer):
         descent_step = step_size * step_direction
 
         # Update parameters using backtracking line search
-        self._backtracking_line_search(
-            params, descent_step, loss_function, kl_divergence_function
-        )
+        self._backtracking_line_search(params, descent_step, loss_function, kl_divergence_function)
 
     @property
     def state(self) -> State:
@@ -160,9 +146,7 @@ class ConjugateGradientOptimizer(Optimizer):
             :param vector (Tensor): The vector to be multiplied with Hessian.
             :return: (Tensor) The product of Hessian of function f and v.
             """
-            unflattened_vector_list: List[Tensor] = self.unflatten_tensor(
-                vector, param_shapes
-            )
+            unflattened_vector_list: List[Tensor] = self.unflatten_tensor(vector, param_shapes)
 
             assert len(hessian_target_vector_grads) == len(unflattened_vector_list)
             grad_vector_product_list: List[Tensor] = []
@@ -172,9 +156,7 @@ class ConjugateGradientOptimizer(Optimizer):
 
             grad_vector_product = torch.sum(torch.stack(grad_vector_product_list))
 
-            hvp: List[Tensor] = list(
-                torch.autograd.grad(grad_vector_product, params, retain_graph=True)
-            )
+            hvp: List[Tensor] = list(torch.autograd.grad(grad_vector_product, params, retain_graph=True))
             for i, (hx, p) in enumerate(zip(hvp, params)):
                 if hx is None:
                     hvp[i] = torch.zeros_like(p)
@@ -237,9 +219,7 @@ class ConjugateGradientOptimizer(Optimizer):
         assert len(unflattened_descent_step_list) == len(params)
 
         for ratio in ratio_list:
-            for step, previous_param, param in zip(
-                unflattened_descent_step_list, previous_params, params
-            ):
+            for step, previous_param, param in zip(unflattened_descent_step_list, previous_params, params):
                 step = ratio * step
                 new_param = previous_param.data - step
                 param.data = new_param.data
@@ -269,9 +249,7 @@ class ConjugateGradientOptimizer(Optimizer):
             for previous_param, param in zip(previous_params, params):
                 param.data = previous_param.data
 
-    def unflatten_tensor(
-        self, flattened: Tensor, shapes: List[torch.Size]
-    ) -> List[Tensor]:
+    def unflatten_tensor(self, flattened: Tensor, shapes: List[torch.Size]) -> List[Tensor]:
         """
         Unflatten a flattened tensor into a list of unflattened tensors
 
@@ -283,6 +261,5 @@ class ConjugateGradientOptimizer(Optimizer):
         indices: Tensor = torch.from_numpy(np.cumsum(sizes)[:-1])
 
         return [
-            torch.reshape(subarray, shape)
-            for subarray, shape in zip(torch.tensor_split(flattened, indices), shapes)
+            torch.reshape(subarray, shape) for subarray, shape in zip(torch.tensor_split(flattened, indices), shapes)
         ]

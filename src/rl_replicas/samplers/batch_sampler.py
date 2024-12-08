@@ -21,9 +21,7 @@ class BatchSampler(Sampler):
         it samples experiences continuously across sample function calls.
     """
 
-    def __init__(
-        self, env: gym.Env, seed: Optional[int] = None, is_continuous: bool = False
-    ):
+    def __init__(self, env: gym.Env, seed: Optional[int] = None, is_continuous: bool = False):
         self.env = env
         self.seed = seed
         self.is_continuous = is_continuous
@@ -75,11 +73,7 @@ class BatchSampler(Sampler):
 
             if episode_done or epoch_ended:
                 if epoch_ended and not episode_done:
-                    logger.debug(
-                        "The trajectory cut off at {} steps on the current episode".format(
-                            episode_length
-                        )
-                    )
+                    logger.debug("The trajectory cut off at {} steps on the current episode".format(episode_length))
 
                 assert self.observation is not None
                 episode_last_observation: np.ndarray = self.observation
