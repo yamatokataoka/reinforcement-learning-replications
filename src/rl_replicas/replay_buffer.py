@@ -57,14 +57,10 @@ class ReplayBuffer:
         """
         indices = np.random.randint(0, self.current_size, minibatch_size)
 
-        sampled_observations: np.ndarray = np.vstack(
-            itemgetter(*indices)(self.observations)
-        )
+        sampled_observations: np.ndarray = np.vstack(itemgetter(*indices)(self.observations))
         sampled_actions: np.ndarray = np.vstack(itemgetter(*indices)(self.actions))
         sampled_rewards: np.ndarray = np.asarray(itemgetter(*indices)(self.rewards))
-        sampled_next_observations: np.ndarray = np.vstack(
-            itemgetter(*indices)(self.next_observations)
-        )
+        sampled_next_observations: np.ndarray = np.vstack(itemgetter(*indices)(self.next_observations))
         sampled_dones: np.ndarray = np.asarray(itemgetter(*indices)(self.dones))
 
         minibatch: Dict[str, np.ndarray] = {

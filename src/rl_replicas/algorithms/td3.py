@@ -72,9 +72,7 @@ class TD3:
         self.polyak_rho = polyak_rho
         self.action_noise_scale = action_noise_scale
 
-        self.noised_policy = add_noise_to_get_action(
-            self.policy, self.env.action_space, self.action_noise_scale
-        )
+        self.noised_policy = add_noise_to_get_action(self.policy, self.env.action_space, self.action_noise_scale)
         self.evaluation_env = gym.make(env.spec.id)
         self.target_policy = copy.deepcopy(self.policy)
 
@@ -145,9 +143,7 @@ class TD3:
 
             self.metrics_manager.record_scalar("epoch", current_epoch)
             self.metrics_manager.record_scalar("total_steps", self.current_total_steps)
-            self.metrics_manager.record_scalar(
-                "total_episodes", self.current_total_episodes
-            )
+            self.metrics_manager.record_scalar("total_episodes", self.current_total_episodes)
 
             if len(episode_lengths) > 0:
                 self.metrics_manager.record_scalar(
@@ -156,15 +152,9 @@ class TD3:
                     self.current_total_steps,
                     tensorboard=True,
                 )
-                self.metrics_manager.record_scalar(
-                    "sampling/episode_return_std", float(np.std(episode_returns))
-                )
-                self.metrics_manager.record_scalar(
-                    "sampling/max_episode_return", float(np.max(episode_returns))
-                )
-                self.metrics_manager.record_scalar(
-                    "sampling/min_episode_return", float(np.min(episode_returns))
-                )
+                self.metrics_manager.record_scalar("sampling/episode_return_std", float(np.std(episode_returns)))
+                self.metrics_manager.record_scalar("sampling/max_episode_return", float(np.max(episode_returns)))
+                self.metrics_manager.record_scalar("sampling/min_episode_return", float(np.min(episode_returns)))
                 self.metrics_manager.record_scalar(
                     "sampling/average_episode_length",
                     float(np.mean(episode_lengths)),
@@ -175,18 +165,13 @@ class TD3:
             if self.current_total_steps >= num_steps_before_update:
                 self.train(self.replay_buffer, num_train_steps, minibatch_size)
 
-            if (
-                num_evaluation_episodes > 0
-                and self.current_total_steps % evaluation_interval == 0
-            ):
+            if num_evaluation_episodes > 0 and self.current_total_steps % evaluation_interval == 0:
                 evaluation_episode_returns: List[float]
                 evaluation_episode_lengths: List[int]
                 (
                     evaluation_episode_returns,
                     evaluation_episode_lengths,
-                ) = self.evaluator.evaluate(
-                    self.policy, self.evaluation_env, num_evaluation_episodes
-                )
+                ) = self.evaluator.evaluate(self.policy, self.evaluation_env, num_evaluation_episodes)
 
                 self.metrics_manager.record_scalar(
                     "evaluation/average_episode_return",
@@ -226,9 +211,7 @@ class TD3:
 
         self.metrics_manager.close()
 
-    def train(
-        self, replay_buffer: ReplayBuffer, num_train_steps: int, minibatch_size: int
-    ) -> None:
+    def train(self, replay_buffer: ReplayBuffer, num_train_steps: int, minibatch_size: int) -> None:
         policy_losses: List[float] = []
         q_function_1_losses: List[float] = []
         q_function_2_losses: List[float] = []
@@ -236,16 +219,12 @@ class TD3:
         all_q_values_2: List[float] = []
 
         for train_step in range(num_train_steps):
-            minibatch: Dict[str, np.ndarray] = replay_buffer.sample_minibatch(
-                minibatch_size
-            )
+            minibatch: Dict[str, np.ndarray] = replay_buffer.sample_minibatch(minibatch_size)
 
             observations: Tensor = torch.from_numpy(minibatch["observations"]).float()
             actions: Tensor = torch.from_numpy(minibatch["actions"]).float()
             rewards: Tensor = torch.from_numpy(minibatch["rewards"]).float()
-            next_observations: Tensor = torch.from_numpy(
-                minibatch["next_observations"]
-            ).float()
+            next_observations: Tensor = torch.from_numpy(minibatch["next_observations"]).float()
             dones: Tensor = torch.from_numpy(minibatch["dones"]).int()
 
             # For logging
@@ -257,12 +236,8 @@ class TD3:
 
             targets: Tensor = self.compute_targets(next_observations, rewards, dones)
 
-            q_function_1_loss: Tensor = self.train_q_function(
-                self.q_function_1, observations, actions, targets
-            )
-            q_function_2_loss: Tensor = self.train_q_function(
-                self.q_function_2, observations, actions, targets
-            )
+            q_function_1_loss: Tensor = self.train_q_function(self.q_function_1, observations, actions, targets)
+            q_function_2_loss: Tensor = self.train_q_function(self.q_function_2, observations, actions, targets)
             q_function_1_losses.append(q_function_1_loss.item())
             q_function_2_losses.append(q_function_2_loss.item())
 
@@ -312,24 +287,16 @@ class TD3:
             self.current_total_steps,
             tensorboard=True,
         )
-        self.metrics_manager.record_scalar(
-            "q-function_1/max_q-value", float(np.max(all_q_values_1))
-        )
-        self.metrics_manager.record_scalar(
-            "q-function_1/min_q-value", float(np.min(all_q_values_1))
-        )
+        self.metrics_manager.record_scalar("q-function_1/max_q-value", float(np.max(all_q_values_1)))
+        self.metrics_manager.record_scalar("q-function_1/min_q-value", float(np.min(all_q_values_1)))
         self.metrics_manager.record_scalar(
             "q-function_2/avarage_q-value",
             float(np.mean(all_q_values_2)),
             self.current_total_steps,
             tensorboard=True,
         )
-        self.metrics_manager.record_scalar(
-            "q-function_2/max_q-value", float(np.max(all_q_values_2))
-        )
-        self.metrics_manager.record_scalar(
-            "q-function_2/min_q-value", float(np.min(all_q_values_2))
-        )
+        self.metrics_manager.record_scalar("q-function_2/max_q-value", float(np.max(all_q_values_2)))
+        self.metrics_manager.record_scalar("q-function_2/min_q-value", float(np.min(all_q_values_2)))
 
     def train_policy(self, observations: Tensor) -> Tensor:
         # Freeze Q-networks
@@ -355,9 +322,7 @@ class TD3:
 
         return policy_loss.detach()
 
-    def compute_targets(
-        self, next_observations: Tensor, rewards: Tensor, dones: Tensor
-    ) -> Tensor:
+    def compute_targets(self, next_observations: Tensor, rewards: Tensor, dones: Tensor) -> Tensor:
         with torch.no_grad():
             next_actions: Tensor = self.target_policy(next_observations)
         epsilon: Tensor = self.target_noise_scale * torch.randn_like(next_actions)
@@ -367,12 +332,8 @@ class TD3:
         next_actions = torch.clamp(next_actions, -action_limit, action_limit)
 
         with torch.no_grad():
-            target_q_values_1: Tensor = self.target_q_function_1(
-                next_observations, next_actions
-            )
-            target_q_values_2: Tensor = self.target_q_function_2(
-                next_observations, next_actions
-            )
+            target_q_values_1: Tensor = self.target_q_function_1(next_observations, next_actions)
+            target_q_values_2: Tensor = self.target_q_function_2(next_observations, next_actions)
         target_q_values: Tensor = torch.min(target_q_values_1, target_q_values_2)
 
         targets: Tensor = rewards + self.gamma * (1 - dones) * target_q_values

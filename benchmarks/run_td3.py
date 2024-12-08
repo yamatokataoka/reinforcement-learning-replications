@@ -35,12 +35,8 @@ def run_td3(environment_name: str, seed: int, output_dir: str) -> None:
 
     q_function_learning_rate: float = 1e-3
     q_function_network_sizes = [observation_size + action_size] + [256, 256] + [1]
-    q_function_1_network: nn.Module = MLP(
-        sizes=q_function_network_sizes, activation_function=nn.ReLU
-    )
-    q_function_2_network: nn.Module = MLP(
-        sizes=q_function_network_sizes, activation_function=nn.ReLU
-    )
+    q_function_1_network: nn.Module = MLP(sizes=q_function_network_sizes, activation_function=nn.ReLU)
+    q_function_2_network: nn.Module = MLP(sizes=q_function_network_sizes, activation_function=nn.ReLU)
 
     model: TD3 = TD3(
         DeterministicPolicy(
@@ -50,15 +46,11 @@ def run_td3(environment_name: str, seed: int, output_dir: str) -> None:
         RandomPolicy(env.action_space),
         QFunction(
             network=q_function_1_network,
-            optimizer=torch.optim.Adam(
-                q_function_1_network.parameters(), lr=q_function_learning_rate
-            ),
+            optimizer=torch.optim.Adam(q_function_1_network.parameters(), lr=q_function_learning_rate),
         ),
         QFunction(
             network=q_function_2_network,
-            optimizer=torch.optim.Adam(
-                q_function_2_network.parameters(), lr=q_function_learning_rate
-            ),
+            optimizer=torch.optim.Adam(q_function_2_network.parameters(), lr=q_function_learning_rate),
         ),
         env,
         BatchSampler(env, seed, is_continuous=True),
@@ -66,9 +58,7 @@ def run_td3(environment_name: str, seed: int, output_dir: str) -> None:
         Evaluator(seed),
     )
 
-    experiment_dir: str = os.path.join(
-        output_dir, f"{environment_name}/{ALGORITHM_NAME}/seed-{seed}"
-    )
+    experiment_dir: str = os.path.join(output_dir, f"{environment_name}/{ALGORITHM_NAME}/seed-{seed}")
     os.makedirs(experiment_dir, exist_ok=True)
 
     with open(os.path.join(experiment_dir, "experiment.log"), "w") as f:

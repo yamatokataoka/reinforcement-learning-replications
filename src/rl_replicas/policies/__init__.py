@@ -8,3 +8,12 @@ from rl_replicas.policies.gaussian_policy import GaussianPolicy
 from rl_replicas.policies.policy import Policy
 from rl_replicas.policies.random_policy import RandomPolicy
 from rl_replicas.policies.stochastic_policy import StochasticPolicy
+
+__all__ = [
+    "CategoricalPolicy",
+    "DeterministicPolicy",
+    "GaussianPolicy",
+    "Policy",
+    "RandomPolicy",
+    "StochasticPolicy",
+]
