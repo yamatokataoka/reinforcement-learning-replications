@@ -59,13 +59,12 @@ class BatchSampler(Sampler):
             action: np.ndarray = policy.get_action_numpy(self.observation)
             episode_actions.append(action)
 
-            reward: float
             episode_done: bool
             self.observation, reward, terminated, truncated, _ = self.env.step(action)
             episode_done = terminated or truncated
 
-            episode_return += reward
-            episode_rewards.append(reward)
+            episode_return += float(reward)
+            episode_rewards.append(float(reward))
             episode_dones.append(episode_done)
 
             episode_length += 1

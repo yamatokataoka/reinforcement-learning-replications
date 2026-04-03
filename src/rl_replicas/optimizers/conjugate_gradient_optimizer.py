@@ -1,24 +1,16 @@
 import logging
-from typing import Callable, Iterable, List, Tuple
+from collections import defaultdict
+from typing import Any, Callable, Iterable, List, Tuple
 
 import numpy as np
 import torch
 from torch import Tensor
 from torch.optim import Optimizer
-from typing_extensions import TypedDict
 
 logger = logging.getLogger(__name__)
 
-State = TypedDict(
-    "State",
-    {
-        "max_constraint": float,
-        "n_conjugate_gradients": int,
-        "max_backtracks": int,
-        "backtrack_ratio": float,
-        "hvp_damping_coefficient": float,
-    },
-)
+LossFunction = Callable[[], Tensor]
+ConstraintFunction = Callable[[], Tensor]
 
 
 class ConjugateGradientOptimizer(Optimizer):
@@ -56,12 +48,13 @@ class ConjugateGradientOptimizer(Optimizer):
         self.backtrack_ratio = backtrack_ratio
         self.hvp_damping_coefficient = hvp_damping_coefficient
 
-    def step(self, loss_function: Callable, kl_divergence_function: Callable) -> None:
+    def step_constrained(self, loss_function: LossFunction, kl_divergence_function: ConstraintFunction) -> None:
         """
-        Performs a single optimization step
+        Performs a single optimization step using the conjugate gradient method and backtracking line search.
+        This method updates the parameters to minimize the loss function while satisfying the KL divergence constraint.
 
-        :param loss_function: (Callable) A function to compute the loss.
-        :param kl_divergence_function: (Callable) A function to compute the kl divergence.
+        :param loss_function: (Callable) A function that computes the loss.
+        :param kl_divergence_function: (Callable) A function that computes the KL divergence.
         """
         # Collect trainable parameters and gradients
         params: List[Tensor] = []
@@ -83,35 +76,38 @@ class ConjugateGradientOptimizer(Optimizer):
         step_direction[step_direction.ne(step_direction)] = 0.0
 
         # Compute step size
-        step_size = np.sqrt(
-            2.0
-            * self.max_constraint
+        step_size: Tensor = torch.sqrt(
+            torch.tensor(2.0 * self.max_constraint, dtype=step_direction.dtype, device=step_direction.device)
             * (1.0 / (torch.dot(step_direction, hessian_vector_product_function(step_direction)) + 1e-8))
         )
 
-        if np.isnan(step_size):
-            step_size = 1.0
+        if torch.isnan(step_size):
+            step_size = torch.tensor(1.0, dtype=step_direction.dtype, device=step_direction.device)
 
-        descent_step = step_size * step_direction
+        descent_step: Tensor = step_size * step_direction
 
         # Update parameters using backtracking line search
         self._backtracking_line_search(params, descent_step, loss_function, kl_divergence_function)
 
     @property
-    def state(self) -> State:
+    def state(self) -> defaultdict[Any, Any]:
         """
-        :return: (State) The hyper-parameters of the optimizer.
+        :return: (defaultdict) The hyper-parameters of the optimizer.
         """
-        return {
-            "max_constraint": self.max_constraint,
-            "n_conjugate_gradients": self.n_conjugate_gradients,
-            "max_backtracks": self.max_backtracks,
-            "backtrack_ratio": self.backtrack_ratio,
-            "hvp_damping_coefficient": self.hvp_damping_coefficient,
-        }
+        state_dict: defaultdict[Any, Any] = defaultdict(dict)
+        state_dict.update(
+            {
+                "max_constraint": self.max_constraint,
+                "n_conjugate_gradients": self.n_conjugate_gradients,
+                "max_backtracks": self.max_backtracks,
+                "backtrack_ratio": self.backtrack_ratio,
+                "hvp_damping_coefficient": self.hvp_damping_coefficient,
+            }
+        )
+        return state_dict
 
     @state.setter
-    def state(self, state: State) -> None:
+    def state(self, state: defaultdict[Any, Any]) -> None:
         self.max_constraint = state.get("max_constraint", 0.01)
         self.n_conjugate_gradients = state.get("n_conjugate_gradients", 10)
         self.max_backtracks = state.get("max_backtracks", 15)
@@ -122,7 +118,7 @@ class ConjugateGradientOptimizer(Optimizer):
         """
         Restore the optimizer state
 
-        :param state: (dict) State dictionary.
+        :param state: (dict) state dictionary.
         """
         if "hvp_damping_coefficient" not in state["state"]:
             logger.warning("Resuming ConjugateGradientOptimizer with lost state.")
@@ -131,8 +127,8 @@ class ConjugateGradientOptimizer(Optimizer):
         self.param_groups = state["param_groups"]
 
     def _build_hessian_vector_product(
-        self, hessian_target_vector_function: Callable, params: List[Tensor]
-    ) -> Callable:
+        self, hessian_target_vector_function: ConstraintFunction, params: List[Tensor]
+    ) -> Callable[[Tensor], Tensor]:
         param_shapes: List[torch.Size] = [p.shape or torch.Size([1]) for p in params]
         hessian_target_vector = hessian_target_vector_function()
         hessian_target_vector_grads: Tuple[Tensor, ...] = torch.autograd.grad(
@@ -157,9 +153,6 @@ class ConjugateGradientOptimizer(Optimizer):
             grad_vector_product = torch.sum(torch.stack(grad_vector_product_list))
 
             hvp: List[Tensor] = list(torch.autograd.grad(grad_vector_product, params, retain_graph=True))
-            for i, (hx, p) in enumerate(zip(hvp, params)):
-                if hx is None:
-                    hvp[i] = torch.zeros_like(p)
 
             flat_output: Tensor = torch.cat([h.reshape(-1) for h in hvp])
             return flat_output + self.hvp_damping_coefficient * vector
@@ -168,7 +161,7 @@ class ConjugateGradientOptimizer(Optimizer):
 
     def _conjugate_gradient(
         self,
-        hessian_vector_product_function: Callable,
+        hessian_vector_product_function: Callable[[Tensor], Tensor],
         b: Tensor,
         residual_tol: float = 1e-10,
     ) -> Tensor:
@@ -204,18 +197,16 @@ class ConjugateGradientOptimizer(Optimizer):
     def _backtracking_line_search(
         self,
         params: List[Tensor],
-        descent_step: float,
-        loss_function: Callable,
-        constraint_function: Callable,
+        descent_step: Tensor,
+        loss_function: LossFunction,
+        constraint_function: ConstraintFunction,
     ) -> None:
         previous_params: List[Tensor] = [p.clone() for p in params]
         ratio_list: np.ndarray = self.backtrack_ratio ** np.arange(self.max_backtracks)
         loss_before: Tensor = loss_function()
 
         param_shapes: List[torch.Size] = [p.shape or torch.Size([1]) for p in params]
-        unflattened_descent_step_list: List[Tensor] = self.unflatten_tensor(
-            torch.as_tensor(descent_step), param_shapes
-        )
+        unflattened_descent_step_list: List[Tensor] = self.unflatten_tensor(descent_step, param_shapes)
         assert len(unflattened_descent_step_list) == len(params)
 
         for ratio in ratio_list:

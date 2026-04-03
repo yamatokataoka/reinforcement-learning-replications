@@ -44,14 +44,13 @@ class TestSamplers:
             action: np.ndarray = env.action_space.sample()
             expected_experience.actions.append(action)
 
-            reward: float
             episode_done: bool
             observation, reward, terminated, truncated, _ = env.step(action)
             episode_done = terminated or truncated
 
             expected_experience.next_observations.append(observation)
 
-            expected_experience.rewards.append(reward)
+            expected_experience.rewards.append(float(reward))
             expected_experience.dones.append(episode_done)
 
             epoch_ended: bool = current_step == num_samples - 1

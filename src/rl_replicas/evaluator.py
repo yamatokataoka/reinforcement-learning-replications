@@ -37,11 +37,10 @@ class Evaluator:
             while not done:
                 action: np.ndarray = policy.get_action_numpy(observation)
 
-                reward: float
                 observation, reward, terminated, truncated, _ = env.step(action)
                 done = terminated or truncated
 
-                episode_return += reward
+                episode_return += float(reward)
                 episode_length += 1
 
             observation, _ = env.reset()

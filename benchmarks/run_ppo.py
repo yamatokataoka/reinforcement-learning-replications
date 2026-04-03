@@ -22,7 +22,9 @@ def run_ppo(environment_name: str, seed: int, output_dir: str) -> None:
     env = gym.make(environment_name)
     env.action_space.seed(seed)
 
+    assert env.observation_space.shape is not None
     observation_size: int = env.observation_space.shape[0]
+    assert env.action_space.shape is not None
     action_size: int = env.action_space.shape[0]
 
     policy_network: nn.Module = MLP(sizes=[observation_size] + [64, 32] + [action_size])

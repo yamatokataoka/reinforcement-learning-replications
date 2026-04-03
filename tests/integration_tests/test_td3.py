@@ -31,7 +31,9 @@ class TestTD3:
 
         evaluation_env: Env = copy.deepcopy(env)
 
+        assert env.observation_space.shape is not None
         observation_size: int = env.observation_space.shape[0]
+        assert env.action_space.shape is not None
         action_size: int = env.action_space.shape[0]
 
         policy_network: nn.Module = MLP(
