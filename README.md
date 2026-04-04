@@ -77,6 +77,16 @@ model.learn(num_epochs=num_epochs, output_dir=output_dir)
 
 ```
 
+## Testing
+
+The project uses `tox` for local verification.
+
+```bash
+tox -e test
+tox -e check
+tox -e fix
+```
+
 ## Contributing
 
 All contributions are welcome.
