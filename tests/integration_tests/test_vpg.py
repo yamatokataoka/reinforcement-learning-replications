@@ -71,10 +71,11 @@ class TestVPG:
         assert episode_returns[0] == approx(-1021.275, 0.01)
 
     def create_vpg(self, env: Env, seed: int) -> VPG:
+        assert env.observation_space.shape is not None
         observation_size: int = env.observation_space.shape[0]
         action_size: int
         if isinstance(env.action_space, Discrete):
-            action_size = env.action_space.n
+            action_size = int(env.action_space.n)
         elif isinstance(env.action_space, Box):
             action_size = env.action_space.shape[0]
 

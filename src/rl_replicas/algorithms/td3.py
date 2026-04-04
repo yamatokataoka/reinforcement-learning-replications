@@ -5,6 +5,7 @@ import time
 from typing import Dict, List
 
 import gymnasium as gym
+from gymnasium.spaces import Box
 import numpy as np
 import torch
 from torch import Tensor
@@ -73,6 +74,12 @@ class TD3:
         self.action_noise_scale = action_noise_scale
 
         self.noised_policy = add_noise_to_get_action(self.policy, self.env.action_space, self.action_noise_scale)
+
+        if not isinstance(env.action_space, Box):
+            raise ValueError("TD3 requires a Box action space.")
+        if env.spec is None:
+            raise ValueError("TD3 requires an environment with a registered spec.")
+        self.action_limit: float = float(env.action_space.high[0])
         self.evaluation_env = gym.make(env.spec.id)
         self.target_policy = copy.deepcopy(self.policy)
 
@@ -328,8 +335,7 @@ class TD3:
         epsilon: Tensor = self.target_noise_scale * torch.randn_like(next_actions)
         epsilon = torch.clamp(epsilon, -self.target_noise_clip, self.target_noise_clip)
         next_actions = next_actions + epsilon
-        action_limit: float = self.env.action_space.high[0]
-        next_actions = torch.clamp(next_actions, -action_limit, action_limit)
+        next_actions = torch.clamp(next_actions, -self.action_limit, self.action_limit)
 
         with torch.no_grad():
             target_q_values_1: Tensor = self.target_q_function_1(next_observations, next_actions)

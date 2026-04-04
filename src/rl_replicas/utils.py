@@ -6,6 +6,7 @@ import scipy.signal
 import torch
 from gymnasium import Space
 from torch import Tensor, nn
+from gymnasium.spaces import Box
 
 from rl_replicas.policies.policy import Policy
 from rl_replicas.value_function import ValueFunction
@@ -106,8 +107,11 @@ class _NoisedPolicy(Policy):
         self.action_space = action_space
         self.action_noise_scale = action_noise_scale
 
-        self.action_limit = action_space.high[0]
-        self.action_size = action_space.shape[0]
+        if isinstance(action_space, Box):
+            self.action_limit = action_space.high[0]
+            self.action_size = action_space.shape[0]
+        else:
+            raise ValueError("Unsupported action space type")
 
     def get_action_tensor(self, observation: Tensor) -> Tensor:
         action = self.base_policy.get_action_tensor(observation)

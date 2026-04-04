@@ -63,6 +63,9 @@ class DDPG:
         self.action_noise_scale = action_noise_scale
 
         self.noised_policy = add_noise_to_get_action(self.policy, self.env.action_space, self.action_noise_scale)
+
+        if env.spec is None:
+            raise ValueError("DDPG requires an environment with a registered spec.")
         self.evaluation_env = gym.make(env.spec.id)
         self.target_policy = copy.deepcopy(self.policy)
         self.target_q_function = copy.deepcopy(self.q_function)

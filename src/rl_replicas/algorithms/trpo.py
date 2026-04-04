@@ -13,6 +13,7 @@ from torch.nn import functional as F
 
 from rl_replicas.experience import Experience
 from rl_replicas.metrics_manager import MetricsManager
+from rl_replicas.optimizers import ConjugateGradientOptimizer
 from rl_replicas.policies import Policy
 from rl_replicas.samplers import Sampler
 from rl_replicas.utils import (
@@ -235,9 +236,12 @@ class TRPO:
     ) -> None:
         policy_loss: Tensor = compute_surrogate_loss()
 
+        if not isinstance(self.policy.optimizer, ConjugateGradientOptimizer):
+            raise TypeError("TRPO policy optimizer must be ConjugateGradientOptimizer.")
+
         self.policy.optimizer.zero_grad()
         policy_loss.backward()
-        self.policy.optimizer.step(compute_surrogate_loss, compute_kl_constraint)
+        self.policy.optimizer.step_constrained(compute_surrogate_loss, compute_kl_constraint)
 
     def train_value_function(self, flattened_observations: Tensor, flattened_discounted_returns: Tensor) -> Tensor:
         value_function_loss: Tensor = self.compute_value_function_loss(

@@ -71,10 +71,11 @@ class TestPPO:
         assert np.mean(episode_returns) > -1300
 
     def create_ppo(self, env: Env, seed: int) -> PPO:
+        assert env.observation_space.shape is not None
         observation_size: int = env.observation_space.shape[0]
         action_size: int
         if isinstance(env.action_space, Discrete):
-            action_size = env.action_space.n
+            action_size = int(env.action_space.n)
         elif isinstance(env.action_space, Box):
             action_size = env.action_space.shape[0]
 
